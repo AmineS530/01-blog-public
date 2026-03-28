@@ -1,19 +1,18 @@
-package com._blog.backend.model;
+package com.zero1blog.backend.model;
 
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "user_credentials")
+@Table(name = "user_profiles")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class UserCredentials {
+public class UserProfile {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -23,8 +22,9 @@ public class UserCredentials {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @Column(nullable = false)
-    private String passwordHash;
+    private String fullName;
 
-    private LocalDateTime updatedAt = LocalDateTime.now();
+    private String bio;
+
+    private String avatarUrl;
 }

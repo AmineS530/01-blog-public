@@ -1,6 +1,6 @@
-package com._blog.backend.repository;
+package com.zero1blog.backend.repository;
 
-import com._blog.backend.model.User;
+import com.zero1blog.backend.model.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 import java.util.Optional;
