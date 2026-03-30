@@ -1,0 +1,15 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: zero1blog_db
+    environment:
+      POSTGRES_DB: blog_db
+      POSTGRES_USER: blog_user
+      POSTGRES_PASSWORD: asadik
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:

@@ -4,3 +4,4 @@ target/
 *.war
 application-local.properties
 .env
+vscode
