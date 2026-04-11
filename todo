@@ -1,0 +1,13 @@
+## backend
+add posts
+add a profile apis
+
+
+## frontend
+add header
+add notification to display errors 
+
+## makefile
+install docker if not exist
+run docker compose
+run backend & frontend
