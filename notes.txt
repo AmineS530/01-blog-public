@@ -1,0 +1,4 @@
+what is ddl-auto=update
+@ManyToOne(fetch = FetchType.LAZY)
+# learn about joining and what its used for
+    @PrePersist
