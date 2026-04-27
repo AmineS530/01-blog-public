@@ -16,8 +16,8 @@ import { AuthService } from './core/services/auth.service';
 export class App {
   constructor(public authService: AuthService, private router: Router) {}
 
-  logout(): void {
-    this.authService.logout();
-    this.router.navigate(['/login']);
-  }
+  // logout(): void {
+  //   this.authService.logout();
+  //   this.router.navigate(['/login']);
+  // }
 }

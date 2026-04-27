@@ -8,8 +8,8 @@ run-container: install-docker
 # cd backend && docker compose up -d 
 
 run-backend: run-container
-	cd backend && ./mvnw clean spring-boot:run
+	cd backend && ./mvnw clean spring-boot:run &
 
 run-frontend:
-	cd backend && ng serve
+	cd frontend && ng serve 
 #npm install for extended

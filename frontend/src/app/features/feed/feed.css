@@ -1,0 +1,40 @@
+.spacer { flex: 1 1 auto; }
+
+.username {
+  margin-right: 8px;
+  font-size: 14px;
+  opacity: 0.85;
+}
+
+.feed-container {
+  max-width: 720px;
+  margin: 32px auto;
+  padding: 0 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.post-card {
+  cursor: pointer;
+  transition: box-shadow 0.2s ease;
+}
+
+.post-card:hover {
+  box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+}
+
+.preview {
+  color: #555;
+  line-height: 1.6;
+  margin-top: 8px;
+}
+
+.centered {
+  display: flex;
+  justify-content: center;
+  margin-top: 64px;
+}
+
+.error { color: #c62828; }
+.muted { color: #888; }

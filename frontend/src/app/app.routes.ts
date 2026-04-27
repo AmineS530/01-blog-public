@@ -19,5 +19,11 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./features/feed/feed').then(m => m.FeedComponent)
   },
+  {
+    path: 'posts/create',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/post/create-post/create-post').then(m => m.CreatePostComponent)
+  },
   { path: '**', redirectTo: 'login' }
 ];

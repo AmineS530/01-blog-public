@@ -41,7 +41,7 @@ export class AuthService {
     return JSON.parse(atob(payload));
   }
   getUsername(): string | null {
-    return this.getDecodedToken()?.sub ?? null;
+    return this.getDecodedToken()?.username ?? null;
   }
 
   getRole(): string | null {
