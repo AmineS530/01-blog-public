@@ -1,29 +1,42 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './core/guards/auth.guard';
+import { noAuthGuard } from './core/guards/no-auth.guard';
 
 export const routes: Routes = [
   { path: '', redirectTo: 'login', pathMatch: 'full' },
   {
     path: 'register',
+    canActivate: [noAuthGuard],
     loadComponent: () =>
-      import('./features/auth/register/register').then(m => m.RegisterComponent)
+      import('./features/auth/register/register').then((m) => m.RegisterComponent),
   },
   {
     path: 'login',
-    loadComponent: () =>
-      import('./features/auth/login/login').then(m => m.LoginComponent)
+    canActivate: [noAuthGuard],
+    loadComponent: () => import('./features/auth/login/login').then((m) => m.LoginComponent),
   },
   {
     path: 'feed',
     canActivate: [authGuard],
-    loadComponent: () =>
-      import('./features/feed/feed').then(m => m.FeedComponent)
+    loadComponent: () => import('./features/feed/feed').then((m) => m.FeedComponent),
   },
   {
     path: 'posts/create',
     canActivate: [authGuard],
     loadComponent: () =>
-      import('./features/post/create-post/create-post').then(m => m.CreatePostComponent)
+      import('./features/post/create-post/create-post').then((m) => m.CreatePostComponent),
   },
-  { path: '**', redirectTo: 'login' }
+  {
+    path: 'posts/:id',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/post/single-post/single-post').then((m) => m.SinglePostComponent),
+  },
+  {
+    path: 'posts/:id/edit',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/post/edit-post/edit-post').then((m) => m.EditPostComponent),
+  },
+  { path: '**', redirectTo: 'login' },
 ];

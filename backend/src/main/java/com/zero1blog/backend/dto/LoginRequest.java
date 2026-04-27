@@ -1,15 +1,13 @@
 package com.zero1blog.backend.dto;
 
-import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 
 @Data
 public class LoginRequest {
 
-    @Email
     @NotBlank
-    private String email;
+    private String usernameOrEmail;
 
     @NotBlank
     private String password;

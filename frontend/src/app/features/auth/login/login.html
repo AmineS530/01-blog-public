@@ -5,8 +5,8 @@
       <form [formGroup]="form" (ngSubmit)="submit()">
 
         <mat-form-field appearance="outline" style="width: 100%; margin-top: 16px;">
-          <mat-label>Email</mat-label>
-          <input matInput type="email" formControlName="email" />
+          <mat-label>Email or Username</mat-label>
+          <input matInput type="text" formControlName="usernameOrEmail" />
         </mat-form-field>
 
         <mat-form-field appearance="outline" style="width: 100%;">

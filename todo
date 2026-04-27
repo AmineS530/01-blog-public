@@ -6,6 +6,7 @@ add a profile apis
 ## frontend
 add header
 add notification to display errors 
+check for content and input length
 
 ## makefile
 install docker if not exist

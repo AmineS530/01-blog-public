@@ -37,8 +37,21 @@ export class AuthService {
   getDecodedToken(): any {
     const token = this.getToken();
     if (!token) return null;
-    const payload = token.split('.')[1];
-    return JSON.parse(atob(payload));
+    try {
+      let payload = token.split('.')[1];
+      payload = payload.replace(/-/g, '+').replace(/_/g, '/');
+      const pad = payload.length % 4;
+      if (pad) {
+        if (pad === 1) {
+          throw new Error('InvalidLengthError: Input base64url string is the wrong length to determine padding');
+        }
+        payload += new Array(5 - pad).join('=');
+      }
+      return JSON.parse(atob(payload));
+    } catch (e) {
+      console.error('Failed to decode token:', e);
+      return null;
+    }
   }
   getUsername(): string | null {
     return this.getDecodedToken()?.username ?? null;

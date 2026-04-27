@@ -33,7 +33,7 @@ export class LoginComponent {
     private router: Router
   ) {
     this.form = this.fb.group({
-      email: ['', [Validators.required, Validators.email]],
+      usernameOrEmail: ['', [Validators.required]],
       password: ['', [Validators.required, Validators.minLength(6)]]
     });
   }
@@ -46,7 +46,7 @@ export class LoginComponent {
     this.auth.login(this.form.value).subscribe({
       next: () => this.router.navigate(['/feed']),
       error: err => {
-        this.error = err.error?.message || 'Invalid email or password';
+        this.error = err.error?.message || 'Invalid credentials';
         this.loading = false;
       }
     });

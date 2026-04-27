@@ -1,0 +1,60 @@
+<mat-toolbar color="primary">
+  <button mat-icon-button (click)="cancel()" matTooltip="Cancel">
+    <mat-icon>arrow_back</mat-icon>
+  </button>
+  <span>Edit post</span>
+</mat-toolbar>
+
+<div class="form-container">
+
+  <div *ngIf="loading" class="centered">
+    <mat-spinner diameter="48" />
+  </div>
+
+  <mat-card *ngIf="!loading" class="form-card">
+    <mat-card-content>
+
+      <div *ngIf="error" class="error">{{ error }}</div>
+
+      <form [formGroup]="postForm" (ngSubmit)="onSubmit()">
+
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Title</mat-label>
+          <input matInput formControlName="title" />
+          <mat-error *ngIf="postForm.get('title')?.hasError('required')">
+            Title is required
+          </mat-error>
+          <mat-error *ngIf="postForm.get('title')?.hasError('maxlength')">
+            Max 100 characters
+          </mat-error>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Content</mat-label>
+          <textarea matInput formControlName="content" rows="14"></textarea>
+          <mat-error *ngIf="postForm.get('content')?.hasError('required')">
+            Content is required
+          </mat-error>
+          <mat-error *ngIf="postForm.get('content')?.hasError('maxlength')">
+            Max 5000 characters
+          </mat-error>
+        </mat-form-field>
+
+        <div class="actions">
+          <button mat-button type="button" (click)="cancel()">Cancel</button>
+          <button
+            mat-raised-button
+            color="primary"
+            type="submit"
+            [disabled]="postForm.invalid || submitting"
+          >
+            {{ submitting ? 'Saving...' : 'Save changes' }}
+          </button>
+        </div>
+
+      </form>
+
+    </mat-card-content>
+  </mat-card>
+
+</div>

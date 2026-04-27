@@ -50,8 +50,9 @@ public class AuthService {
     }
 
     public AuthResponse login(LoginRequest request) {
-        User user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new RuntimeException("Invalid credentials"));
+        User user = userRepository.findByEmail(request.getUsernameOrEmail())
+                .orElseGet(() -> userRepository.findByUsername(request.getUsernameOrEmail())
+                        .orElseThrow(() -> new RuntimeException("Invalid credentials")));
 
         UserCredentials credentials = userCredentialsRepository.findByUser(user)
                 .orElseThrow(() -> new RuntimeException("Invalid credentials"));

@@ -1,0 +1,38 @@
+<mat-toolbar color="primary">
+  <button mat-icon-button (click)="back()" matTooltip="Back to feed">
+    <mat-icon>arrow_back</mat-icon>
+  </button>
+  <span>zero1blog</span>
+  <span class="spacer"></span>
+  <ng-container *ngIf="isAuthor">
+    <button mat-icon-button (click)="edit()" matTooltip="Edit post">
+      <mat-icon>edit</mat-icon>
+    </button>
+    <button mat-icon-button (click)="delete()" matTooltip="Delete post">
+      <mat-icon>delete</mat-icon>
+    </button>
+  </ng-container>
+</mat-toolbar>
+
+<div class="post-container">
+
+  <div *ngIf="loading" class="centered">
+    <mat-spinner diameter="48" />
+  </div>
+
+  <div *ngIf="error" class="centered error">{{ error }}</div>
+
+  <mat-card *ngIf="!loading && post" class="post-card">
+    <mat-card-header>
+      <mat-card-title>{{ post.title }}</mat-card-title>
+      <mat-card-subtitle>
+        by {{ post.authorUsername }} · {{ post.createdAt | date:'mediumDate' }}
+        <span *ngIf="post.updatedAt !== post.createdAt"> · edited {{ post.updatedAt | date:'mediumDate' }}</span>
+      </mat-card-subtitle>
+    </mat-card-header>
+    <mat-card-content>
+      <p class="content">{{ post.content }}</p>
+    </mat-card-content>
+  </mat-card>
+
+</div>
