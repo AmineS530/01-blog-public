@@ -17,7 +17,7 @@
 <div class="post-container">
 
   <div *ngIf="loading" class="centered">
-    <mat-spinner diameter="48" />
+    <mat-spinner diameter="48"></mat-spinner>
   </div>
 
   <div *ngIf="error" class="centered error">{{ error }}</div>
@@ -33,6 +33,46 @@
     <mat-card-content>
       <p class="content">{{ post.content }}</p>
     </mat-card-content>
+    <mat-card-actions>
+      <button mat-icon-button (click)="togglePostLike()" [color]="post.isLikedByCurrentUser ? 'warn' : ''">
+        <mat-icon>{{ post.isLikedByCurrentUser ? 'favorite' : 'favorite_border' }}</mat-icon>
+      </button>
+      <span>{{ post.likeCount }}</span>
+      <button mat-icon-button disabled>
+        <mat-icon>chat_bubble_outline</mat-icon>
+      </button>
+      <span>{{ post.commentCount }}</span>
+    </mat-card-actions>
   </mat-card>
+
+  <div class="comments-section" *ngIf="post">
+    <h3>Comments</h3>
+    <mat-card *ngFor="let comment of comments" class="comment-card">
+      <mat-card-header>
+        <mat-card-subtitle class="comment-subtitle">
+          by {{ comment.authorUsername }} · {{ comment.createdAt | date:'mediumDate' }}
+        </mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>
+        <p class="comment-content">{{ comment.content }}</p>
+      </mat-card-content>
+      <mat-card-actions>
+        <button mat-icon-button (click)="toggleCommentLike(comment)" [color]="comment.isLikedByCurrentUser ? 'warn' : ''">
+          <mat-icon>{{ comment.isLikedByCurrentUser ? 'favorite' : 'favorite_border' }}</mat-icon>
+        </button>
+        <span>{{ comment.likeCount }}</span>
+      </mat-card-actions>
+    </mat-card>
+
+    <form [formGroup]="commentForm" (ngSubmit)="submitComment()" class="comment-form">
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Add a comment</mat-label>
+        <textarea matInput formControlName="content" rows="3"></textarea>
+      </mat-form-field>
+      <div class="actions">
+        <button mat-flat-button color="primary" type="submit" [disabled]="commentForm.invalid">Post Comment</button>
+      </div>
+    </form>
+  </div>
 
 </div>

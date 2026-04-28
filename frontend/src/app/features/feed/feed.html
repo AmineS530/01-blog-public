@@ -36,6 +36,16 @@
     <mat-card-content>
       <p class="preview">{{ post.content | slice:0:200 }}{{ post.content.length > 200 ? '...' : '' }}</p>
     </mat-card-content>
+    <mat-card-actions>
+      <button mat-icon-button (click)="toggleLike($event, post)" [color]="post.isLikedByCurrentUser ? 'warn' : ''">
+        <mat-icon>{{ post.isLikedByCurrentUser ? 'favorite' : 'favorite_border' }}</mat-icon>
+      </button>
+      <span>{{ post.likeCount }}</span>
+      <button mat-icon-button disabled>
+        <mat-icon>chat_bubble_outline</mat-icon>
+      </button>
+      <span>{{ post.commentCount }}</span>
+    </mat-card-actions>
   </mat-card>
 
 </div>

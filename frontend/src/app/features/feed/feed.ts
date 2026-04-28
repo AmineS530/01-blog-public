@@ -65,6 +65,18 @@ export class FeedComponent implements OnInit {
     this.router.navigate(['/posts', id]);
   }
 
+  toggleLike(event: Event, post: PostResponse): void {
+    event.stopPropagation();
+    post.isLikedByCurrentUser = !post.isLikedByCurrentUser;
+    post.likeCount += post.isLikedByCurrentUser ? 1 : -1;
+    this.postService.togglePostLike(post.id).subscribe({
+      error: () => {
+        post.isLikedByCurrentUser = !post.isLikedByCurrentUser;
+        post.likeCount += post.isLikedByCurrentUser ? 1 : -1;
+      }
+    });
+  }
+
   logout(): void {
     this.authService.logout();
     this.router.navigate(['/login']);

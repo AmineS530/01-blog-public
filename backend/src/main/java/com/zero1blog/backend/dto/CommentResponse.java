@@ -2,38 +2,27 @@ package com.zero1blog.backend.dto;
 
 import java.time.LocalDateTime;
 
-public class PostResponse {
+public class CommentResponse {
     private Long id;
-    private String title;
     private String content;
     private String authorUsername;
     private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
-    private long commentCount;
     private long likeCount;
     private boolean isLikedByCurrentUser;
 
-    public PostResponse(Long id, String title, String content,
-                        String authorUsername, LocalDateTime createdAt, LocalDateTime updatedAt,
-                        long commentCount, long likeCount, boolean isLikedByCurrentUser) {
+    public CommentResponse(Long id, String content, String authorUsername, LocalDateTime createdAt, long likeCount, boolean isLikedByCurrentUser) {
         this.id = id;
-        this.title = title;
         this.content = content;
         this.authorUsername = authorUsername;
         this.createdAt = createdAt;
-        this.updatedAt = updatedAt;
-        this.commentCount = commentCount;
         this.likeCount = likeCount;
         this.isLikedByCurrentUser = isLikedByCurrentUser;
     }
 
     public Long getId() { return id; }
-    public String getTitle() { return title; }
     public String getContent() { return content; }
     public String getAuthorUsername() { return authorUsername; }
     public LocalDateTime getCreatedAt() { return createdAt; }
-    public LocalDateTime getUpdatedAt() { return updatedAt; }
-    public long getCommentCount() { return commentCount; }
     public long getLikeCount() { return likeCount; }
     public boolean isLikedByCurrentUser() { return isLikedByCurrentUser; }
 }
