@@ -21,13 +21,16 @@ public class ProfileService {
     private final UserProfileRepository userProfileRepository;
     private final SubscriptionRepository subscriptionRepository;
     private final UserBlockRepository userBlockRepository;
+    private final NotificationService notificationService;
 
     public ProfileService(UserRepository userRepository, UserProfileRepository userProfileRepository,
-                          SubscriptionRepository subscriptionRepository, UserBlockRepository userBlockRepository) {
+                          SubscriptionRepository subscriptionRepository, UserBlockRepository userBlockRepository,
+                          NotificationService notificationService) {
         this.userRepository = userRepository;
         this.userProfileRepository = userProfileRepository;
         this.subscriptionRepository = subscriptionRepository;
         this.userBlockRepository = userBlockRepository;
+        this.notificationService = notificationService;
     }
 
     public ProfileResponse getProfile(String targetUsername, String currentUserPublicId) {
@@ -104,6 +107,14 @@ public class ProfileService {
                     .followed(targetUser)
                     .build();
             subscriptionRepository.save(sub);
+
+            notificationService.createNotification(
+                "FOLLOW",
+                currentUser.getUsername() + " started following you",
+                targetUser,
+                currentUser,
+                null
+            );
         }
     }
 
