@@ -14,6 +14,9 @@ public class Comment {
     @Column(nullable = false, columnDefinition = "TEXT")
     private String content;
 
+    @Column
+    private String mediaUrl;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "post_id", nullable = false)
     private Post post;
@@ -44,6 +47,9 @@ public class Comment {
 
     public String getContent() { return content; }
     public void setContent(String content) { this.content = content; }
+
+    public String getMediaUrl() { return mediaUrl; }
+    public void setMediaUrl(String mediaUrl) { this.mediaUrl = mediaUrl; }
 
     public Post getPost() { return post; }
     public void setPost(Post post) { this.post = post; }

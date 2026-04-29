@@ -1,16 +1,8 @@
-<mat-toolbar color="primary">
-  <span>zero1blog</span>
-  <span class="spacer"></span>
-  <span class="username">{{ currentUsername }}</span>
-  <button mat-icon-button (click)="goToCreate()" matTooltip="New post">
-    <mat-icon>edit</mat-icon>
-  </button>
-  <button mat-icon-button (click)="logout()" matTooltip="Logout">
-    <mat-icon>logout</mat-icon>
-  </button>
-</mat-toolbar>
-
 <div class="feed-container">
+  
+  <div class="feed-header">
+    <h2>Your Feed</h2>
+  </div>
 
   <div *ngIf="loading" class="centered">
     <mat-spinner diameter="48"></mat-spinner>
@@ -19,32 +11,44 @@
   <div *ngIf="error" class="centered error">{{ error }}</div>
 
   <div *ngIf="!loading && !error && posts.length === 0" class="centered muted">
-    No posts yet. Be the first to write something.
+    <div class="empty-state">
+      <mat-icon>article</mat-icon>
+      <p>No posts yet. Be the first to write something!</p>
+    </div>
   </div>
 
-  <mat-card
-    *ngFor="let post of posts"
-    class="post-card"
-    (click)="goToPost(post.id)"
-  >
-    <mat-card-header>
-      <mat-card-title>{{ post.title }}</mat-card-title>
-      <mat-card-subtitle>
-        by {{ post.authorUsername }} · {{ post.createdAt | date:'mediumDate' }}
-      </mat-card-subtitle>
-    </mat-card-header>
+  <mat-card *ngFor="let post of posts" class="post-card" (click)="goToPost(post.id)">
+    <div class="post-header">
+      <div class="author-avatar" (click)="goToProfile($event, post.authorUsername)">
+        {{ post.authorUsername.charAt(0).toUpperCase() }}
+      </div>
+      <div class="header-text">
+        <a class="author-name" href="javascript:void(0)" (click)="goToProfile($event, post.authorUsername)">
+          {{ post.authorUsername }}
+        </a>
+        <span class="post-date">· {{ post.createdAt | date:'MMM d, y, h:mm a' }}</span>
+      </div>
+    </div>
+    
     <mat-card-content>
-      <p class="preview">{{ post.content | slice:0:200 }}{{ post.content.length > 200 ? '...' : '' }}</p>
+      <div class="post-media" *ngIf="post.mediaUrl">
+        <img *ngIf="post.mediaUrl.toLowerCase().match('\\.(jpg|jpeg|png|gif|webp)$')" [src]="'http://localhost:8080' + post.mediaUrl" alt="Media" />
+        <video *ngIf="post.mediaUrl.toLowerCase().match('\\.(mp4|webm|ogg)$')" [src]="'http://localhost:8080' + post.mediaUrl" controls></video>
+      </div>
+      <h3 class="post-title">{{ post.title }}</h3>
+      <p class="preview">{{ post.content | slice:0:300 }}{{ post.content.length > 300 ? '...' : '' }}</p>
     </mat-card-content>
-    <mat-card-actions>
-      <button mat-icon-button (click)="toggleLike($event, post)" [color]="post.isLikedByCurrentUser ? 'warn' : ''">
+    
+    <mat-card-actions class="post-actions">
+      <button mat-icon-button (click)="toggleLike($event, post)" [color]="post.isLikedByCurrentUser ? 'warn' : ''" matTooltip="Like">
         <mat-icon>{{ post.isLikedByCurrentUser ? 'favorite' : 'favorite_border' }}</mat-icon>
       </button>
-      <span>{{ post.likeCount }}</span>
-      <button mat-icon-button disabled>
+      <span class="action-count" [class.liked]="post.isLikedByCurrentUser">{{ post.likeCount }}</span>
+      
+      <button mat-icon-button disabled matTooltip="Comments">
         <mat-icon>chat_bubble_outline</mat-icon>
       </button>
-      <span>{{ post.commentCount }}</span>
+      <span class="action-count">{{ post.commentCount }}</span>
     </mat-card-actions>
   </mat-card>
 

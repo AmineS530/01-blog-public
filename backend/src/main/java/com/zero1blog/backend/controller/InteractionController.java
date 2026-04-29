@@ -34,6 +34,20 @@ public class InteractionController {
         return ResponseEntity.ok(interactionService.getCommentsForPost(postId, userDetails != null ? userDetails.getUsername() : null));
     }
 
+    @PutMapping("/comments/{commentId}")
+    public ResponseEntity<CommentResponse> updateComment(@PathVariable Long commentId,
+                                                         @RequestBody CommentRequest request,
+                                                         @AuthenticationPrincipal UserDetails userDetails) {
+        return ResponseEntity.ok(interactionService.updateComment(commentId, request, userDetails.getUsername()));
+    }
+
+    @DeleteMapping("/comments/{commentId}")
+    public ResponseEntity<Void> deleteComment(@PathVariable Long commentId,
+                                              @AuthenticationPrincipal UserDetails userDetails) {
+        interactionService.deleteComment(commentId, userDetails.getUsername());
+        return ResponseEntity.noContent().build();
+    }
+
     @PostMapping("/posts/{postId}/likes")
     public ResponseEntity<Void> togglePostLike(@PathVariable Long postId,
                                                @AuthenticationPrincipal UserDetails userDetails) {

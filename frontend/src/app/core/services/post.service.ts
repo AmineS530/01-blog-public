@@ -18,6 +18,10 @@ export class PostService {
     return this.http.get<PostResponse>(`${this.api}/${id}`);
   }
 
+  getByUsername(username: string): Observable<PostResponse[]> {
+    return this.http.get<PostResponse[]>(`${this.api}/user/${username}`);
+  }
+
   create(post: PostRequest): Observable<PostResponse> {
     return this.http.post<PostResponse>(this.api, post);
   }
@@ -36,6 +40,14 @@ export class PostService {
 
   getComments(postId: number): Observable<CommentResponse[]> {
     return this.http.get<CommentResponse[]>(`${this.interactionApi}/posts/${postId}/comments`);
+  }
+
+  updateComment(commentId: number, request: CommentRequest): Observable<CommentResponse> {
+    return this.http.put<CommentResponse>(`${this.interactionApi}/comments/${commentId}`, request);
+  }
+
+  deleteComment(commentId: number): Observable<void> {
+    return this.http.delete<void>(`${this.interactionApi}/comments/${commentId}`);
   }
 
   togglePostLike(postId: number): Observable<void> {

@@ -1,20 +1,19 @@
-<mat-toolbar color="primary">
-  <button mat-icon-button (click)="back()" matTooltip="Back to feed">
-    <mat-icon>arrow_back</mat-icon>
-  </button>
-  <span>zero1blog</span>
-  <span class="spacer"></span>
-  <ng-container *ngIf="isAuthor">
-    <button mat-icon-button (click)="edit()" matTooltip="Edit post">
-      <mat-icon>edit</mat-icon>
-    </button>
-    <button mat-icon-button (click)="delete()" matTooltip="Delete post">
-      <mat-icon>delete</mat-icon>
-    </button>
-  </ng-container>
-</mat-toolbar>
-
 <div class="post-container">
+
+  <div class="top-actions">
+    <button mat-icon-button (click)="back()" matTooltip="Back to feed" class="back-btn">
+      <mat-icon>arrow_back</mat-icon>
+    </button>
+    <span class="spacer"></span>
+    <ng-container *ngIf="isAuthor">
+      <button mat-icon-button (click)="edit()" matTooltip="Edit post">
+        <mat-icon>edit</mat-icon>
+      </button>
+      <button mat-icon-button color="warn" (click)="delete()" matTooltip="Delete post">
+        <mat-icon>delete</mat-icon>
+      </button>
+    </ng-container>
+  </div>
 
   <div *ngIf="loading" class="centered">
     <mat-spinner diameter="48"></mat-spinner>
@@ -22,57 +21,125 @@
 
   <div *ngIf="error" class="centered error">{{ error }}</div>
 
-  <mat-card *ngIf="!loading && post" class="post-card">
-    <mat-card-header>
-      <mat-card-title>{{ post.title }}</mat-card-title>
-      <mat-card-subtitle>
-        by {{ post.authorUsername }} · {{ post.createdAt | date:'mediumDate' }}
-        <span *ngIf="post.updatedAt !== post.createdAt"> · edited {{ post.updatedAt | date:'mediumDate' }}</span>
-      </mat-card-subtitle>
-    </mat-card-header>
+  <mat-card *ngIf="!loading && post" class="post-card main-post-card">
+    <div class="post-header">
+      <div class="author-avatar" (click)="goToProfile(post.authorUsername)">
+        {{ post.authorUsername.charAt(0).toUpperCase() }}
+      </div>
+      <div class="header-text">
+        <a class="author-name" href="javascript:void(0)" (click)="goToProfile(post.authorUsername)">
+          {{ post.authorUsername }}
+        </a>
+        <div class="post-date">
+          {{ post.createdAt | date:'MMM d, y, h:mm a' }}
+          <span *ngIf="post.updatedAt !== post.createdAt" class="edited-flag"> · edited {{ post.updatedAt | date:'MMM d, y, h:mm a' }}</span>
+        </div>
+      </div>
+    </div>
+
     <mat-card-content>
+      <h1 class="post-title">{{ post.title }}</h1>
+      <div class="post-media" *ngIf="post.mediaUrl">
+        <img *ngIf="post.mediaUrl.toLowerCase().match('\\.(jpg|jpeg|png|gif|webp)$')" [src]="'http://localhost:8080' + post.mediaUrl" alt="Media" />
+        <video *ngIf="post.mediaUrl.toLowerCase().match('\\.(mp4|webm|ogg)$')" [src]="'http://localhost:8080' + post.mediaUrl" controls></video>
+      </div>
       <p class="content">{{ post.content }}</p>
     </mat-card-content>
-    <mat-card-actions>
-      <button mat-icon-button (click)="togglePostLike()" [color]="post.isLikedByCurrentUser ? 'warn' : ''">
+
+    <hr class="divider" />
+
+    <mat-card-actions class="post-actions">
+      <button mat-icon-button (click)="togglePostLike()" [color]="post.isLikedByCurrentUser ? 'warn' : ''" matTooltip="Like">
         <mat-icon>{{ post.isLikedByCurrentUser ? 'favorite' : 'favorite_border' }}</mat-icon>
       </button>
-      <span>{{ post.likeCount }}</span>
-      <button mat-icon-button disabled>
+      <span class="action-count" [class.liked]="post.isLikedByCurrentUser">{{ post.likeCount }}</span>
+      
+      <button mat-icon-button disabled matTooltip="Comments">
         <mat-icon>chat_bubble_outline</mat-icon>
       </button>
-      <span>{{ post.commentCount }}</span>
+      <span class="action-count">{{ post.commentCount }}</span>
     </mat-card-actions>
   </mat-card>
 
   <div class="comments-section" *ngIf="post">
-    <h3>Comments</h3>
+    <h3>Replies</h3>
+    
     <mat-card *ngFor="let comment of comments" class="comment-card">
-      <mat-card-header>
-        <mat-card-subtitle class="comment-subtitle">
-          by {{ comment.authorUsername }} · {{ comment.createdAt | date:'mediumDate' }}
-        </mat-card-subtitle>
-      </mat-card-header>
-      <mat-card-content>
-        <p class="comment-content">{{ comment.content }}</p>
+      <div class="comment-header">
+        <div class="author-avatar small-avatar" (click)="goToProfile(comment.authorUsername)">
+          {{ comment.authorUsername.charAt(0).toUpperCase() }}
+        </div>
+        <div class="header-text">
+          <a class="author-name" href="javascript:void(0)" (click)="goToProfile(comment.authorUsername)">
+            {{ comment.authorUsername }}
+          </a>
+          <span class="post-date">· {{ comment.createdAt | date:'MMM d, y, h:mm a' }}</span>
+          <span *ngIf="comment.updatedAt !== comment.createdAt" class="edited-flag"> · edited</span>
+        </div>
+        <span class="spacer"></span>
+        <ng-container *ngIf="comment.authorUsername === currentUsername && editingCommentId !== comment.id">
+          <button mat-icon-button (click)="startEditComment(comment)" matTooltip="Edit comment" class="small-icon-btn">
+            <mat-icon>edit</mat-icon>
+          </button>
+          <button mat-icon-button (click)="deleteComment(comment.id)" matTooltip="Delete comment" class="small-icon-btn">
+            <mat-icon>delete</mat-icon>
+          </button>
+        </ng-container>
+      </div>
+
+      <mat-card-content class="comment-content-area">
+        <ng-container *ngIf="editingCommentId === comment.id">
+          <form [formGroup]="editCommentForm" (ngSubmit)="saveEditComment(comment)" class="full-width edit-form">
+            <mat-form-field appearance="outline" class="full-width">
+              <textarea matInput formControlName="content" rows="2" autoFocus></textarea>
+            </mat-form-field>
+            <div class="actions">
+              <button mat-button type="button" (click)="cancelEditComment()">Cancel</button>
+              <button mat-flat-button color="primary" type="submit" [disabled]="editCommentForm.invalid">Save</button>
+            </div>
+          </form>
+        </ng-container>
+
+        <p class="comment-content" *ngIf="editingCommentId !== comment.id">{{ comment.content }}</p>
       </mat-card-content>
-      <mat-card-actions>
-        <button mat-icon-button (click)="toggleCommentLike(comment)" [color]="comment.isLikedByCurrentUser ? 'warn' : ''">
+
+      <mat-card-actions class="comment-actions" *ngIf="editingCommentId !== comment.id">
+        <button mat-icon-button (click)="toggleCommentLike(comment)" [color]="comment.isLikedByCurrentUser ? 'warn' : ''" class="small-icon-btn">
           <mat-icon>{{ comment.isLikedByCurrentUser ? 'favorite' : 'favorite_border' }}</mat-icon>
         </button>
-        <span>{{ comment.likeCount }}</span>
+        <span class="action-count" [class.liked]="comment.isLikedByCurrentUser">{{ comment.likeCount }}</span>
       </mat-card-actions>
     </mat-card>
 
-    <form [formGroup]="commentForm" (ngSubmit)="submitComment()" class="comment-form">
-      <mat-form-field appearance="outline" class="full-width">
-        <mat-label>Add a comment</mat-label>
-        <textarea matInput formControlName="content" rows="3"></textarea>
-      </mat-form-field>
-      <div class="actions">
-        <button mat-flat-button color="primary" type="submit" [disabled]="commentForm.invalid">Post Comment</button>
+    <div class="comment-form-container">
+      <div class="author-avatar small-avatar me-avatar">
+        {{ currentUsername.charAt(0).toUpperCase() }}
       </div>
-    </form>
+      <form [formGroup]="commentForm" (ngSubmit)="submitComment()" class="comment-form">
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Post your reply</mat-label>
+          <textarea matInput formControlName="content" rows="2"></textarea>
+        </mat-form-field>
+
+        <div class="comment-media-upload">
+          <input type="file" id="commentMediaUpload" (change)="onCommentFileSelected($event)" accept="image/*,video/*" style="display: none" #commentFileInput>
+          <button mat-icon-button type="button" (click)="commentFileInput.click()" [disabled]="uploadingCommentMedia" matTooltip="Attach Image or Video">
+            <mat-icon>add_photo_alternate</mat-icon>
+          </button>
+          
+          <div class="comment-media-preview" *ngIf="commentMediaUrl">
+            <img *ngIf="commentMediaUrl.toLowerCase().match('\\.(jpg|jpeg|png|gif|webp)$')" [src]="'http://localhost:8080' + commentMediaUrl" alt="Preview" />
+            <button mat-icon-button color="warn" type="button" class="remove-comment-media" (click)="removeCommentMedia()">
+              <mat-icon>close</mat-icon>
+            </button>
+          </div>
+        </div>
+
+        <div class="actions">
+          <button mat-flat-button color="primary" type="submit" [disabled]="commentForm.invalid || uploadingCommentMedia">Reply</button>
+        </div>
+      </form>
+    </div>
   </div>
 
 </div>

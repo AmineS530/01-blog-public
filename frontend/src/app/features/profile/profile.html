@@ -1,0 +1,108 @@
+<div class="profile-container">
+
+  <div *ngIf="loading" class="centered">
+    <mat-spinner diameter="48"></mat-spinner>
+  </div>
+
+  <div *ngIf="error" class="centered error">{{ error }}</div>
+
+  <ng-container *ngIf="!loading && profile">
+    <div class="profile-header-wrapper">
+      <div class="profile-banner">
+        <button mat-icon-button (click)="back()" matTooltip="Back" class="back-btn-overlay">
+          <mat-icon>arrow_back</mat-icon>
+        </button>
+      </div>
+      
+      <div class="profile-details-card">
+        <div class="profile-top-row">
+          <div class="large-avatar">
+            {{ profile.username.charAt(0).toUpperCase() }}
+          </div>
+          
+          <div class="profile-actions" *ngIf="currentUsername !== targetUsername">
+            <button mat-stroked-button color="warn" (click)="toggleBlock()" class="block-btn" matTooltip="Block User">
+              <mat-icon>{{ profile.isBlocked ? 'block' : 'not_interested' }}</mat-icon>
+                            {{ profile.isBlocked ? 'Unblock' : 'Block' }}
+            </button>
+            <button mat-flat-button [color]="profile.isFollowing ? '' : 'primary'" 
+                    *ngIf="!profile.isBlocked && !profile.isBlockingMe"
+                    (click)="toggleFollow()" class="follow-btn">
+              {{ profile.isFollowing ? 'Following' : 'Follow' }}
+            </button>
+          </div>
+        </div>
+
+        <div class="profile-info">
+          <h1 class="profile-name">{{ profile.fullName || profile.username }}</h1>
+          <h2 class="profile-handle">@{{ profile.username }}</h2>
+          
+          <p class="profile-bio" *ngIf="profile.bio">{{ profile.bio }}</p>
+          <p class="profile-bio empty-bio" *ngIf="!profile.bio && currentUsername === targetUsername">No bio yet.</p>
+          
+          <div class="profile-stats">
+            <span class="stat"><strong>{{ profile.followingCount }}</strong> Following</span>
+            <span class="stat"><strong>{{ profile.followerCount }}</strong> Followers</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="blocked-state" *ngIf="profile.isBlockingMe && !profile.isBlocked">
+      <div class="empty-state">
+        <mat-icon color="warn">block</mat-icon>
+        <h2>You're blocked</h2>
+        <p>You are blocked from viewing @{{profile.username}}'s posts.</p>
+      </div>
+    </div>
+
+    <div class="blocked-state" *ngIf="profile.isBlocked">
+      <div class="empty-state">
+        <mat-icon color="warn">visibility_off</mat-icon>
+        <h2>User Blocked</h2>
+        <p>You blocked @{{profile.username}}. Unblock them to see their posts.</p>
+      </div>
+    </div>
+
+    <div class="posts-section" *ngIf="!profile.isBlocked && !profile.isBlockingMe">
+      <h3 class="section-title">Posts</h3>
+      
+      <div *ngIf="posts.length === 0" class="centered muted">
+        <div class="empty-state">
+          <mat-icon>article</mat-icon>
+          <p>No posts yet.</p>
+        </div>
+      </div>
+      
+      <mat-card *ngFor="let post of posts" class="post-card" (click)="goToPost(post.id)">
+        <div class="post-header">
+          <div class="author-avatar">
+            {{ post.authorUsername.charAt(0).toUpperCase() }}
+          </div>
+          <div class="header-text">
+            <span class="author-name">{{ post.authorUsername }}</span>
+            <span class="post-date">{{ post.createdAt | date:'MMM d, y, h:mm a' }}</span>
+          </div>
+        </div>
+        <mat-card-content>
+          <div class="post-media" *ngIf="post.mediaUrl">
+            <img *ngIf="post.mediaUrl.toLowerCase().match('\\.(jpg|jpeg|png|gif|webp)$')" [src]="'http://localhost:8080' + post.mediaUrl" alt="Media" />
+            <video *ngIf="post.mediaUrl.toLowerCase().match('\\.(mp4|webm|ogg)$')" [src]="'http://localhost:8080' + post.mediaUrl" controls></video>
+          </div>
+          <p class="preview">{{ post.content | slice:0:200 }}{{ post.content.length > 200 ? '...' : '' }}</p>
+        </mat-card-content>
+        <mat-card-actions class="post-actions">
+          <button mat-icon-button (click)="togglePostLike($event, post)" [color]="post.isLikedByCurrentUser ? 'warn' : ''">
+            <mat-icon>{{ post.isLikedByCurrentUser ? 'favorite' : 'favorite_border' }}</mat-icon>
+          </button>
+          <span class="action-count" [class.liked]="post.isLikedByCurrentUser">{{ post.likeCount }}</span>
+          <button mat-icon-button disabled>
+            <mat-icon>chat_bubble_outline</mat-icon>
+          </button>
+          <span class="action-count">{{ post.commentCount }}</span>
+        </mat-card-actions>
+      </mat-card>
+    </div>
+  </ng-container>
+
+</div>

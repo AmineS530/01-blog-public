@@ -30,3 +30,30 @@
   color: #c62828;
   margin-bottom: 16px;
 }
+
+.media-upload-section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 16px;
+  margin-bottom: 16px;
+}
+
+.media-preview-inner {
+  position: relative;
+  display: inline-block;
+  max-width: 100%;
+}
+
+.media-preview-inner img, .media-preview-inner video {
+  max-width: 100%;
+  max-height: 400px;
+  border-radius: 8px;
+}
+
+.remove-media-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: rgba(0,0,0,0.5) !important;
+}

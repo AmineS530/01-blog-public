@@ -40,13 +40,31 @@
           </mat-error>
         </mat-form-field>
 
+        <div class="media-upload-section">
+          <input type="file" id="mediaUploadEdit" (change)="onFileSelected($event)" accept="image/*,video/*" style="display: none" #fileInput>
+          <button mat-stroked-button type="button" (click)="fileInput.click()" [disabled]="uploadingMedia">
+            <mat-icon>attach_file</mat-icon>
+            {{ uploadingMedia ? 'Uploading...' : 'Attach Image or Video' }}
+          </button>
+          
+          <div class="media-preview" *ngIf="mediaUrl">
+            <div class="media-preview-inner">
+              <img *ngIf="mediaUrl.toLowerCase().match('\\.(jpg|jpeg|png|gif|webp)$')" [src]="'http://localhost:8080' + mediaUrl" alt="Preview" />
+              <video *ngIf="mediaUrl.toLowerCase().match('\\.(mp4|webm|ogg)$')" [src]="'http://localhost:8080' + mediaUrl" controls></video>
+              <button mat-icon-button color="warn" type="button" class="remove-media-btn" (click)="removeMedia()">
+                <mat-icon>close</mat-icon>
+              </button>
+            </div>
+          </div>
+        </div>
+
         <div class="actions">
           <button mat-button type="button" (click)="cancel()">Cancel</button>
           <button
             mat-raised-button
             color="primary"
             type="submit"
-            [disabled]="postForm.invalid || submitting"
+            [disabled]="postForm.invalid || submitting || uploadingMedia"
           >
             {{ submitting ? 'Saving...' : 'Save changes' }}
           </button>

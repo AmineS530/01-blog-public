@@ -12,6 +12,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { PostService } from '../../../core/services/post.service';
 import { AuthService } from '../../../core/services/auth.service';
+import { MediaService } from '../../../core/services/media.service';
 import { PostResponse, CommentResponse } from '../../../shared/models/post.models';
 
 @Component({
@@ -37,23 +38,35 @@ export class SinglePostComponent implements OnInit {
   loading = true;
   error = '';
   isAuthor = false;
+  currentUsername = '';
 
   commentForm: FormGroup;
   comments: CommentResponse[] = [];
+
+  editingCommentId: number | null = null;
+  editCommentForm: FormGroup;
+
+  commentMediaUrl: string | null = null;
+  uploadingCommentMedia = false;
 
   constructor(
     private route: ActivatedRoute,
     private router: Router,
     private postService: PostService,
     private authService: AuthService,
+    private mediaService: MediaService,
     private fb: FormBuilder
   ) {
     this.commentForm = this.fb.group({
       content: ['', [Validators.required, Validators.maxLength(1000)]]
     });
+    this.editCommentForm = this.fb.group({
+      content: ['', [Validators.required, Validators.maxLength(1000)]]
+    });
   }
 
   ngOnInit(): void {
+    this.currentUsername = this.authService.getUsername() ?? '';
     const id = Number(this.route.snapshot.paramMap.get('id'));
     if (isNaN(id)) {
       this.router.navigate(['/feed']);
@@ -63,7 +76,7 @@ export class SinglePostComponent implements OnInit {
     this.postService.getById(id).subscribe({
       next: (post) => {
         this.post = post;
-        this.isAuthor = this.authService.getUsername() === post.authorUsername;
+        this.isAuthor = this.currentUsername === post.authorUsername;
         this.loadComments(id);
         this.loading = false;
       },
@@ -80,15 +93,79 @@ export class SinglePostComponent implements OnInit {
     });
   }
 
-  submitComment(): void {
-    if (this.commentForm.invalid || !this.post) return;
+  onCommentFileSelected(event: Event): void {
+    const file = (event.target as HTMLInputElement).files?.[0];
+    if (!file) return;
 
-    this.postService.addComment(this.post.id, this.commentForm.value).subscribe({
+    this.uploadingCommentMedia = true;
+    this.mediaService.upload(file).subscribe({
+      next: (res) => {
+        this.commentMediaUrl = res.url;
+        this.uploadingCommentMedia = false;
+      },
+      error: () => {
+        alert('Failed to upload comment media');
+        this.uploadingCommentMedia = false;
+      }
+    });
+  }
+
+  removeCommentMedia(): void {
+    this.commentMediaUrl = null;
+  }
+
+  submitComment(): void {
+    if (this.commentForm.invalid || !this.post || this.uploadingCommentMedia) return;
+
+    const request = {
+      ...this.commentForm.value,
+      mediaUrl: this.commentMediaUrl
+    };
+
+    this.postService.addComment(this.post.id, request).subscribe({
       next: (comment) => {
         this.comments.push(comment);
         this.post!.commentCount++;
         this.commentForm.reset();
+        this.commentMediaUrl = null;
       }
+    });
+  }
+
+  startEditComment(comment: CommentResponse): void {
+    this.editingCommentId = comment.id;
+    this.editCommentForm.patchValue({ content: comment.content });
+  }
+
+  cancelEditComment(): void {
+    this.editingCommentId = null;
+    this.editCommentForm.reset();
+  }
+
+  saveEditComment(comment: CommentResponse): void {
+    if (this.editCommentForm.invalid) return;
+
+    this.postService.updateComment(comment.id, this.editCommentForm.value).subscribe({
+      next: (updatedComment) => {
+        const index = this.comments.findIndex(c => c.id === updatedComment.id);
+        if (index !== -1) {
+          this.comments[index] = updatedComment;
+        }
+        this.cancelEditComment();
+      },
+      error: () => alert('Failed to update comment')
+    });
+  }
+
+  deleteComment(commentId: number): void {
+    if (!confirm('Delete this comment?')) return;
+
+    this.postService.deleteComment(commentId).subscribe({
+      next: () => {
+        this.comments = this.comments.filter(c => c.id !== commentId);
+        if (this.post) this.post.commentCount--;
+      },
+      error: () => alert('Failed to delete comment')
     });
   }
 
@@ -117,6 +194,10 @@ export class SinglePostComponent implements OnInit {
 
   edit(): void {
     this.router.navigate(['/posts', this.post!.id, 'edit']);
+  }
+
+  goToProfile(username: string): void {
+    this.router.navigate(['/profile', username]);
   }
 
   delete(): void {

@@ -1,7 +1,24 @@
-<!-- <mat-toolbar *ngIf="authService.isLoggedIn()" color="primary">
-  <span>zero1blog</span>
-  <span style="flex: 1;"></span>
-  <button mat-button (click)="logout()">Logout</button>
-</mat-toolbar> -->
+<mat-toolbar color="primary" *ngIf="authService.isLoggedIn()" class="global-header">
+  <span class="brand" (click)="goToFeed()">zero1</span>
+  
+  <span class="spacer"></span>
+  
+  <div class="nav-actions">
+    <button mat-icon-button (click)="goToCreate()" matTooltip="Write a Post">
+      <mat-icon>add_box</mat-icon>
+    </button>
+    
+    <button mat-button class="profile-btn" (click)="goToMyProfile()">
+      <!-- <div class="nav-avatar">{{ authService.getUsername()?.charAt(0)?.toUpperCase() }}</div> -->
+      <span class="nav-username">{{ authService.getUsername() }}</span>
+    </button>
 
-<router-outlet />
+    <button mat-icon-button (click)="logout()" matTooltip="Logout">
+      <mat-icon>logout</mat-icon>
+    </button>
+  </div>
+</mat-toolbar>
+
+<main [class.main-bg]="authService.isLoggedIn()">
+  <router-outlet></router-outlet>
+</main>

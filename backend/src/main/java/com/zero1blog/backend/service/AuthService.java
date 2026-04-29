@@ -8,7 +8,9 @@ import com.zero1blog.backend.dto.LoginRequest;
 import com.zero1blog.backend.dto.RegisterRequest;
 import com.zero1blog.backend.model.User;
 import com.zero1blog.backend.model.UserCredentials;
+import com.zero1blog.backend.model.UserProfile;
 import com.zero1blog.backend.repository.UserCredentialsRepository;
+import com.zero1blog.backend.repository.UserProfileRepository;
 import com.zero1blog.backend.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -19,6 +21,7 @@ public class AuthService {
 
     private final UserRepository userRepository;
     private final UserCredentialsRepository userCredentialsRepository;
+    private final UserProfileRepository userProfileRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
 
@@ -44,6 +47,11 @@ public class AuthService {
                 .build();
 
         userCredentialsRepository.save(credentials);
+
+        UserProfile profile = UserProfile.builder()
+                .user(user)
+                .build();
+        userProfileRepository.save(profile);
 
         String token = jwtService.generateToken(user.getPublicId(), user.getRole().name(), user.getUsername());
         return new AuthResponse(token, user.getUsername(), user.getRole().name());

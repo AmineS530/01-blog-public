@@ -1,6 +1,7 @@
 package com.zero1blog.backend.service;
 
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
@@ -17,6 +18,7 @@ import com.zero1blog.backend.repository.CommentRepository;
 import com.zero1blog.backend.repository.PostLikeRepository;
 import com.zero1blog.backend.repository.PostRepository;
 import com.zero1blog.backend.repository.UserRepository;
+import com.zero1blog.backend.repository.UserBlockRepository;
 
 @Service
 public class InteractionService {
@@ -26,20 +28,28 @@ public class InteractionService {
     private final UserRepository userRepository;
     private final PostLikeRepository postLikeRepository;
     private final CommentLikeRepository commentLikeRepository;
+    private final UserBlockRepository userBlockRepository;
 
     public InteractionService(CommentRepository commentRepository, PostRepository postRepository,
                               UserRepository userRepository, PostLikeRepository postLikeRepository,
-                              CommentLikeRepository commentLikeRepository) {
+                              CommentLikeRepository commentLikeRepository,
+                              UserBlockRepository userBlockRepository) {
         this.commentRepository = commentRepository;
         this.postRepository = postRepository;
         this.userRepository = userRepository;
         this.postLikeRepository = postLikeRepository;
         this.commentLikeRepository = commentLikeRepository;
+        this.userBlockRepository = userBlockRepository;
     }
 
     public CommentResponse addComment(Long postId, CommentRequest request, String userPublicId) {
         User user = userRepository.findByPublicId(userPublicId).orElseThrow(() -> new RuntimeException("User not found"));
         Post post = postRepository.findById(postId).orElseThrow(() -> new RuntimeException("Post not found"));
+        
+        if (userBlockRepository.existsByBlockerAndBlocked(post.getAuthor(), user) || 
+            userBlockRepository.existsByBlockerAndBlocked(user, post.getAuthor())) {
+            throw new RuntimeException("Cannot comment on this post");
+        }
 
         Comment comment = new Comment();
         comment.setContent(request.getContent());
@@ -51,14 +61,58 @@ public class InteractionService {
     }
 
     public List<CommentResponse> getCommentsForPost(Long postId, String userPublicId) {
-        return commentRepository.findByPostIdOrderByCreatedAtAsc(postId).stream()
+        List<Comment> allComments = commentRepository.findByPostIdOrderByCreatedAtAsc(postId);
+        
+        if (userPublicId == null) {
+            return allComments.stream().map(c -> toCommentResponse(c, null)).collect(Collectors.toList());
+        }
+
+        User currentUser = userRepository.findByPublicId(userPublicId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        Set<Long> blockedIds = userBlockRepository.findByBlocker(currentUser).stream()
+                .map(ub -> ub.getBlocked().getId()).collect(Collectors.toSet());
+        Set<Long> blockingIds = userBlockRepository.findByBlocked(currentUser).stream()
+                .map(ub -> ub.getBlocker().getId()).collect(Collectors.toSet());
+
+        return allComments.stream()
+                .filter(c -> !blockedIds.contains(c.getAuthor().getId()) && !blockingIds.contains(c.getAuthor().getId()))
                 .map(c -> toCommentResponse(c, userPublicId))
                 .collect(Collectors.toList());
+    }
+
+    public CommentResponse updateComment(Long commentId, CommentRequest request, String userPublicId) {
+        Comment comment = commentRepository.findById(commentId).orElseThrow(() -> new RuntimeException("Comment not found"));
+        User user = userRepository.findByPublicId(userPublicId).orElseThrow(() -> new RuntimeException("User not found"));
+
+        if (!comment.getAuthor().getId().equals(user.getId())) {
+            throw new RuntimeException("Not authorized to edit this comment");
+        }
+
+        comment.setContent(request.getContent());
+        Comment saved = commentRepository.save(comment);
+        return toCommentResponse(saved, userPublicId);
+    }
+
+    public void deleteComment(Long commentId, String userPublicId) {
+        Comment comment = commentRepository.findById(commentId).orElseThrow(() -> new RuntimeException("Comment not found"));
+        User user = userRepository.findByPublicId(userPublicId).orElseThrow(() -> new RuntimeException("User not found"));
+
+        if (!comment.getAuthor().getId().equals(user.getId())) {
+            throw new RuntimeException("Not authorized to delete this comment");
+        }
+
+        commentRepository.delete(comment);
     }
 
     public void togglePostLike(Long postId, String userPublicId) {
         User user = userRepository.findByPublicId(userPublicId).orElseThrow(() -> new RuntimeException("User not found"));
         Post post = postRepository.findById(postId).orElseThrow(() -> new RuntimeException("Post not found"));
+
+        if (userBlockRepository.existsByBlockerAndBlocked(post.getAuthor(), user) || 
+            userBlockRepository.existsByBlockerAndBlocked(user, post.getAuthor())) {
+            throw new RuntimeException("Cannot like this post");
+        }
 
         postLikeRepository.findByPostIdAndUserId(post.getId(), user.getId()).ifPresentOrElse(
             postLikeRepository::delete,
@@ -74,6 +128,11 @@ public class InteractionService {
     public void toggleCommentLike(Long commentId, String userPublicId) {
         User user = userRepository.findByPublicId(userPublicId).orElseThrow(() -> new RuntimeException("User not found"));
         Comment comment = commentRepository.findById(commentId).orElseThrow(() -> new RuntimeException("Comment not found"));
+
+        if (userBlockRepository.existsByBlockerAndBlocked(comment.getAuthor(), user) || 
+            userBlockRepository.existsByBlockerAndBlocked(user, comment.getAuthor())) {
+            throw new RuntimeException("Cannot like this comment");
+        }
 
         commentLikeRepository.findByCommentIdAndUserId(comment.getId(), user.getId()).ifPresentOrElse(
             commentLikeRepository::delete,
@@ -98,8 +157,10 @@ public class InteractionService {
         return new CommentResponse(
                 comment.getId(),
                 comment.getContent(),
+                comment.getMediaUrl(),
                 comment.getAuthor().getUsername(),
                 comment.getCreatedAt(),
+                comment.getUpdatedAt(),
                 likeCount,
                 isLiked
         );

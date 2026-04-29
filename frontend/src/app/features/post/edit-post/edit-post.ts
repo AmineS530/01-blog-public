@@ -4,11 +4,13 @@ import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { ActivatedRoute, Router } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
 import { MatInputModule } from '@angular/material/input';
+import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatButtonModule } from '@angular/material/button';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { PostService } from '../../../core/services/post.service';
+import { MediaService } from '../../../core/services/media.service';
 
 @Component({
   selector: 'app-edit-post',
@@ -18,6 +20,7 @@ import { PostService } from '../../../core/services/post.service';
     ReactiveFormsModule,
     MatCardModule,
     MatInputModule,
+    MatFormFieldModule,
     MatButtonModule,
     MatToolbarModule,
     MatIconModule,
@@ -30,14 +33,17 @@ export class EditPostComponent implements OnInit {
   postForm: FormGroup;
   loading = true;
   submitting = false;
+  uploadingMedia = false;
   error = '';
   postId!: number;
+  mediaUrl: string | null = null;
 
   constructor(
     private fb: FormBuilder,
     private route: ActivatedRoute,
     private router: Router,
-    private postService: PostService
+    private postService: PostService,
+    private mediaService: MediaService
   ) {
     this.postForm = this.fb.group({
       title: ['', [Validators.required, Validators.maxLength(100)]],
@@ -58,6 +64,7 @@ export class EditPostComponent implements OnInit {
           title: post.title,
           content: post.content
         });
+        this.mediaUrl = post.mediaUrl || null;
         this.loading = false;
       },
       error: () => {
@@ -67,13 +74,41 @@ export class EditPostComponent implements OnInit {
     });
   }
 
+  onFileSelected(event: Event): void {
+    const file = (event.target as HTMLInputElement).files?.[0];
+    if (!file) return;
+
+    this.uploadingMedia = true;
+    this.error = '';
+
+    this.mediaService.upload(file).subscribe({
+      next: (response) => {
+        this.mediaUrl = response.url;
+        this.uploadingMedia = false;
+      },
+      error: () => {
+        this.error = 'Failed to upload media. Please try again.';
+        this.uploadingMedia = false;
+      }
+    });
+  }
+
+  removeMedia(): void {
+    this.mediaUrl = null;
+  }
+
   onSubmit(): void {
-    if (this.postForm.invalid) return;
+    if (this.postForm.invalid || this.uploadingMedia) return;
 
     this.submitting = true;
     this.error = '';
 
-    this.postService.update(this.postId, this.postForm.value).subscribe({
+    const postData = {
+      ...this.postForm.value,
+      mediaUrl: this.mediaUrl
+    };
+
+    this.postService.update(this.postId, postData).subscribe({
       next: () => this.router.navigate(['/posts', this.postId]),
       error: () => {
         this.error = 'Failed to update post. Please try again.';

@@ -1,0 +1,65 @@
+.global-header {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  display: flex;
+  align-items: center;
+  padding: 0 24px;
+}
+
+.brand {
+  font-weight: 800;
+  font-size: 24px;
+  cursor: pointer;
+  letter-spacing: -0.5px;
+  transition: opacity 0.2s;
+}
+
+.brand:hover {
+  opacity: 0.8;
+}
+
+.spacer {
+  flex: 1 1 auto;
+}
+
+.nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.profile-btn {
+  display: flex;
+  align-items: center;
+  border-radius: 20px;
+  padding: 0 1px 0 4px;
+}
+
+.profile-btn ::ng-deep .mat-mdc-button-touch-target { 
+  display: none;
+}
+
+.nav-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--mat-sys-on-primary);
+  color: var(--mat-sys-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 14px;
+  margin-right: 8px;
+}
+
+.nav-username {
+  font-weight: 500;
+}
+
+.main-bg {
+  min-height: calc(100vh - 64px);
+  padding-bottom: 64px;
+}

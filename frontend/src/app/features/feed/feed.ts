@@ -65,6 +65,11 @@ export class FeedComponent implements OnInit {
     this.router.navigate(['/posts', id]);
   }
 
+  goToProfile(event: Event, username: string): void {
+    event.stopPropagation();
+    this.router.navigate(['/profile', username]);
+  }
+
   toggleLike(event: Event, post: PostResponse): void {
     event.stopPropagation();
     post.isLikedByCurrentUser = !post.isLikedByCurrentUser;

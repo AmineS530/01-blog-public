@@ -40,6 +40,11 @@ public class PostController {
         return ResponseEntity.ok(postService.getAllPosts(userDetails != null ? userDetails.getUsername() : null));
     }
 
+    @GetMapping("/user/{username}")
+    public ResponseEntity<List<PostResponse>> getPostsByUsername(@PathVariable String username, @AuthenticationPrincipal UserDetails userDetails) {
+        return ResponseEntity.ok(postService.getPostsByUsername(username, userDetails != null ? userDetails.getUsername() : null));
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<PostResponse> getPostById(@PathVariable Long id, @AuthenticationPrincipal UserDetails userDetails) {
         return ResponseEntity.ok(postService.getPostById(id, userDetails != null ? userDetails.getUsername() : null));
