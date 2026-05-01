@@ -29,17 +29,20 @@ public class InteractionService {
     private final PostLikeRepository postLikeRepository;
     private final CommentLikeRepository commentLikeRepository;
     private final UserBlockRepository userBlockRepository;
+    private final NotificationService notificationService;
 
     public InteractionService(CommentRepository commentRepository, PostRepository postRepository,
                               UserRepository userRepository, PostLikeRepository postLikeRepository,
                               CommentLikeRepository commentLikeRepository,
-                              UserBlockRepository userBlockRepository) {
+                              UserBlockRepository userBlockRepository,
+                              NotificationService notificationService) {
         this.commentRepository = commentRepository;
         this.postRepository = postRepository;
         this.userRepository = userRepository;
         this.postLikeRepository = postLikeRepository;
         this.commentLikeRepository = commentLikeRepository;
         this.userBlockRepository = userBlockRepository;
+        this.notificationService = notificationService;
     }
 
     public CommentResponse addComment(Long postId, CommentRequest request, String userPublicId) {
@@ -57,6 +60,15 @@ public class InteractionService {
         comment.setPost(post);
 
         Comment saved = commentRepository.save(comment);
+
+        notificationService.createNotification(
+            "COMMENT",
+            user.getUsername() + " commented on your post: " + post.getTitle(),
+            post.getAuthor(),
+            user,
+            post
+        );
+
         return toCommentResponse(saved, userPublicId);
     }
 
@@ -121,6 +133,14 @@ public class InteractionService {
                 like.setPost(post);
                 like.setUser(user);
                 postLikeRepository.save(like);
+
+                notificationService.createNotification(
+                    "LIKE",
+                    user.getUsername() + " liked your post: " + post.getTitle(),
+                    post.getAuthor(),
+                    user,
+                    post
+                );
             }
         );
     }
