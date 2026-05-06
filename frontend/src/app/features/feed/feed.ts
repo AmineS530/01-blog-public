@@ -10,6 +10,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { PostService } from '../../core/services/post.service';
 import { AuthService } from '../../core/services/auth.service';
 import { PostResponse } from '../../shared/models/post.models';
+import { MarkdownPipe } from '../../shared/pipes/markdown.pipe';
 
 @Component({
   selector: 'app-feed',
@@ -22,6 +23,7 @@ import { PostResponse } from '../../shared/models/post.models';
     MatIconModule,
     MatProgressSpinnerModule,
     MatTooltipModule,
+    MarkdownPipe
   ],
   templateUrl: './feed.html',
   styleUrl: './feed.css',

@@ -14,6 +14,7 @@ import { PostService } from '../../../core/services/post.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { MediaService } from '../../../core/services/media.service';
 import { PostResponse, CommentResponse } from '../../../shared/models/post.models';
+import { MarkdownPipe } from '../../../shared/pipes/markdown.pipe';
 
 @Component({
   selector: 'app-single-post',
@@ -28,7 +29,8 @@ import { PostResponse, CommentResponse } from '../../../shared/models/post.model
     MatInputModule,
     MatFormFieldModule,
     MatProgressSpinnerModule,
-    MatTooltipModule
+    MatTooltipModule,
+    MarkdownPipe
   ],
   templateUrl: './single-post.html',
   styleUrl: './single-post.css'

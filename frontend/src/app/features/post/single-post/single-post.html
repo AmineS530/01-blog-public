@@ -43,7 +43,7 @@
         <img *ngIf="post.mediaUrl.toLowerCase().match('\\.(jpg|jpeg|png|gif|webp)$')" [src]="'http://localhost:8080' + post.mediaUrl" alt="Media" />
         <video *ngIf="post.mediaUrl.toLowerCase().match('\\.(mp4|webm|ogg)$')" [src]="'http://localhost:8080' + post.mediaUrl" controls></video>
       </div>
-      <p class="content">{{ post.content }}</p>
+      <p class="content" [innerHTML]="post.content | markdown"></p>
     </mat-card-content>
 
     <hr class="divider" />
@@ -100,7 +100,7 @@
           </form>
         </ng-container>
 
-        <p class="comment-content" *ngIf="editingCommentId !== comment.id">{{ comment.content }}</p>
+        <p class="comment-content" *ngIf="editingCommentId !== comment.id" [innerHTML]="comment.content | markdown"></p>
       </mat-card-content>
 
       <mat-card-actions class="comment-actions" *ngIf="editingCommentId !== comment.id">

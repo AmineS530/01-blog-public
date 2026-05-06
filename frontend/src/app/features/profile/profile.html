@@ -89,7 +89,7 @@
             <img *ngIf="post.mediaUrl.toLowerCase().match('\\.(jpg|jpeg|png|gif|webp)$')" [src]="'http://localhost:8080' + post.mediaUrl" alt="Media" />
             <video *ngIf="post.mediaUrl.toLowerCase().match('\\.(mp4|webm|ogg)$')" [src]="'http://localhost:8080' + post.mediaUrl" controls></video>
           </div>
-          <p class="preview">{{ post.content | slice:0:200 }}{{ post.content.length > 200 ? '...' : '' }}</p>
+          <p class="preview" [innerHTML]="(post.content | slice:0:200) + (post.content.length > 200 ? '...' : '') | markdown"></p>
         </mat-card-content>
         <mat-card-actions class="post-actions">
           <button mat-icon-button (click)="togglePostLike($event, post)" [color]="post.isLikedByCurrentUser ? 'warn' : ''">

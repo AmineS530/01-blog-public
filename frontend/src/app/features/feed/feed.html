@@ -37,7 +37,7 @@
         <video *ngIf="post.mediaUrl.toLowerCase().match('\\.(mp4|webm|ogg)$')" [src]="'http://localhost:8080' + post.mediaUrl" controls></video>
       </div>
       <h3 class="post-title">{{ post.title }}</h3>
-      <p class="preview">{{ post.content | slice:0:300 }}{{ post.content.length > 300 ? '...' : '' }}</p>
+      <p class="preview" [innerHTML]="(post.content | slice:0:300) + (post.content.length > 300 ? '...' : '') | markdown"></p>
     </mat-card-content>
     
     <mat-card-actions class="post-actions">

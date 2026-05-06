@@ -12,6 +12,7 @@ import { PostService } from '../../core/services/post.service';
 import { AuthService } from '../../core/services/auth.service';
 import { ProfileResponse } from '../../shared/models/profile.models';
 import { PostResponse } from '../../shared/models/post.models';
+import { MarkdownPipe } from '../../shared/pipes/markdown.pipe';
 
 @Component({
   selector: 'app-profile',
@@ -23,7 +24,8 @@ import { PostResponse } from '../../shared/models/post.models';
     MatToolbarModule,
     MatIconModule,
     MatProgressSpinnerModule,
-    MatTooltipModule
+    MatTooltipModule,
+    MarkdownPipe
   ],
   templateUrl: './profile.html',
   styleUrl: './profile.css'

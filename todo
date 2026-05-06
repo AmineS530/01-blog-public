@@ -15,6 +15,10 @@
 - [x] add author avatars to feed
 
 ## makefile
-- [ ] install docker if not exist
-- [ ] run docker compose
-- [ ] run backend & frontend
+- [x] install docker if not exist
+- [x] run docker compose
+- [x] run backend & frontend
+
+## bonus
+- [x] implement dark mode toggle
+- [x] add basic markdown support for posts

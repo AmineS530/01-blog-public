@@ -17,6 +17,10 @@
       <span class="nav-username">{{ authService.getUsername() }}</span>
     </button>
 
+    <button mat-icon-button (click)="themeService.toggleDarkMode()" matTooltip="Toggle Dark Mode">
+      <mat-icon>{{ themeService.isDarkMode() ? 'light_mode' : 'dark_mode' }}</mat-icon>
+    </button>
+
     <button mat-icon-button (click)="logout()" matTooltip="Logout">
       <mat-icon>logout</mat-icon>
     </button>
