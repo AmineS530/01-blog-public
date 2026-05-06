@@ -10,11 +10,11 @@ import com.zero1blog.backend.dto.PostRequest;
 import com.zero1blog.backend.dto.PostResponse;
 import com.zero1blog.backend.model.Post;
 import com.zero1blog.backend.model.User;
-import com.zero1blog.backend.repository.PostRepository;
-import com.zero1blog.backend.repository.UserRepository;
 import com.zero1blog.backend.repository.CommentRepository;
 import com.zero1blog.backend.repository.PostLikeRepository;
+import com.zero1blog.backend.repository.PostRepository;
 import com.zero1blog.backend.repository.UserBlockRepository;
+import com.zero1blog.backend.repository.UserRepository;
 
 @Service
 public class PostService {
