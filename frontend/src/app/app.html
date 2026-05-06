@@ -4,6 +4,10 @@
   <span class="spacer"></span>
   
   <div class="nav-actions">
+    <button mat-icon-button (click)="goToNotifications()" matTooltip="Notifications">
+      <mat-icon [matBadge]="unreadCount" matBadgeColor="warn" [matBadgeHidden]="unreadCount === 0">notifications</mat-icon>
+    </button>
+
     <button mat-icon-button (click)="goToCreate()" matTooltip="Write a Post">
       <mat-icon>add_box</mat-icon>
     </button>
