@@ -10,12 +10,14 @@ export interface PostResponse {
   content: string;
   mediaUrl?: string;
   authorUsername: string;
+  authorAvatarUrl?: string;
   createdAt: string;
   updatedAt: string;
-  commentCount: number;
   likeCount: number;
+  commentCount: number;
   isLikedByCurrentUser: boolean;
 }
+
 
 export interface CommentRequest {
   content: string;

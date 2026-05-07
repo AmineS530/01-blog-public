@@ -20,7 +20,8 @@
   <mat-card *ngFor="let post of posts" class="post-card" (click)="goToPost(post.id)">
     <div class="post-header">
       <div class="author-avatar" (click)="goToProfile($event, post.authorUsername)">
-        {{ post.authorUsername.charAt(0).toUpperCase() }}
+        <img *ngIf="post.authorAvatarUrl" [src]="'http://localhost:8080' + post.authorAvatarUrl" alt="Avatar" />
+        <span *ngIf="!post.authorAvatarUrl">{{ post.authorUsername.charAt(0).toUpperCase() }}</span>
       </div>
       <div class="header-text">
         <a class="author-name" href="javascript:void(0)" (click)="goToProfile($event, post.authorUsername)">

@@ -9,6 +9,7 @@ public class PostResponse {
     private String content;
     private String mediaUrl;
     private String authorUsername;
+    private String authorAvatarUrl;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private long commentCount;
