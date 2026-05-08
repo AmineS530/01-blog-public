@@ -41,7 +41,7 @@ public class AdminService {
                 .totalComments(commentRepository.count())
                 .totalReports(reportRepository.count())
                 .pendingReports(reportRepository.countByStatus("pending"))
-                .bannedUsers(0) // Need to add isBanned to User
+                .bannedUsers(userRepository.countByIsBanned(true))
                 .build();
     }
 
@@ -61,5 +61,18 @@ public class AdminService {
         report.setStatus(action.equals("resolve") ? "resolved" : "dismissed");
         report.setNote(note);
         reportRepository.save(report);
+    }
+
+    @Transactional
+    public void banUser(String username) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        user.setBanned(true);
+        userRepository.save(user);
+    }
+
+    @Transactional
+    public void deletePost(Long postId) {
+        postRepository.deleteById(postId);
     }
 }

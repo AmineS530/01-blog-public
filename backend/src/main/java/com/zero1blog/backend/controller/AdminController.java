@@ -39,4 +39,16 @@ public class AdminController {
         adminService.resolveReport(id, body.get("action"), body.get("note"));
         return ResponseEntity.ok().build();
     }
+
+    @PostMapping("/users/{username}/ban")
+    public ResponseEntity<Void> banUser(@PathVariable String username) {
+        adminService.banUser(username);
+        return ResponseEntity.ok().build();
+    }
+
+    @DeleteMapping("/posts/{id}")
+    public ResponseEntity<Void> deletePost(@PathVariable Long id) {
+        adminService.deletePost(id);
+        return ResponseEntity.ok().build();
+    }
 }

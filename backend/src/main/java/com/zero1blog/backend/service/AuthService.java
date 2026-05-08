@@ -69,6 +69,10 @@ public class AuthService {
             throw new RuntimeException("Invalid credentials");
         }
 
+        if (user.isBanned()) {
+            throw new RuntimeException("Your account has been banned");
+        }
+
         String token = jwtService.generateToken(user.getPublicId(), user.getRole().name(), user.getUsername());
         return new AuthResponse(token, user.getUsername(), user.getRole().name());
     }

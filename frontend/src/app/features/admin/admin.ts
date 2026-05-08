@@ -49,8 +49,12 @@ import { MatTabsModule } from '@angular/material/tabs';
             <ng-container matColumnDef="actions">
               <th mat-header-cell *matHeaderCellDef> Actions </th>
               <td mat-cell *matCellDef="let r">
-                <button mat-button color="primary" *ngIf="r.status === 'pending'" (click)="resolve(r, 'resolve')">Resolve</button>
-                <button mat-button color="warn" *ngIf="r.status === 'pending'" (click)="resolve(r, 'dismiss')">Dismiss</button>
+                <div class="action-buttons">
+                  <button mat-button color="primary" *ngIf="r.status === 'pending'" (click)="resolve(r, 'resolve')">Resolve</button>
+                  <button mat-button color="warn" *ngIf="r.status === 'pending'" (click)="resolve(r, 'dismiss')">Dismiss</button>
+                  <button mat-button color="warn" *ngIf="r.targetType === 'USER'" (click)="banUser(r.targetUsername)">Ban User</button>
+                  <button mat-button color="warn" *ngIf="r.targetType === 'POST'" (click)="deletePost(r.targetId)">Delete Post</button>
+                </div>
               </td>
             </ng-container>
 
@@ -81,6 +85,10 @@ import { MatTabsModule } from '@angular/material/tabs';
     }
     .w-full {
       width: 100%;
+    }
+    .action-buttons {
+      display: flex;
+      gap: 8px;
     }
   `]
 })
@@ -118,6 +126,25 @@ export class AdminComponent implements OnInit {
     this.http.post(`http://localhost:8080/api/admin/reports/${report.id}/resolve`, { action, note: 'Processed by admin' })
       .subscribe(() => {
         report.status = action === 'resolve' ? 'resolved' : 'dismissed';
+        this.fetchStats();
       });
+  }
+
+  banUser(username: string): void {
+    if (confirm(`Are you sure you want to ban ${username}?`)) {
+      this.http.post(`http://localhost:8080/api/admin/users/${username}/ban`, {}).subscribe(() => {
+        alert(`${username} has been banned.`);
+        this.fetchStats();
+      });
+    }
+  }
+
+  deletePost(postId: number): void {
+    if (confirm(`Are you sure you want to delete post #${postId}?`)) {
+      this.http.delete(`http://localhost:8080/api/admin/posts/${postId}`).subscribe(() => {
+        alert(`Post #${postId} has been deleted.`);
+        this.fetchStats();
+      });
+    }
   }
 }

@@ -58,6 +58,10 @@ public class User {
         USER, ADMIN
     }
 
+    @Column(nullable = false)
+    @Builder.Default
+    private boolean isBanned = false;
+
     @PrePersist
     public void prePersist() {
         if (this.publicId == null) {
