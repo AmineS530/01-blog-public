@@ -1,17 +1,17 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { SinglePost } from './single-post';
+import { SinglePostComponent } from './single-post';
 
-describe('SinglePost', () => {
-  let component: SinglePost;
-  let fixture: ComponentFixture<SinglePost>;
+describe('SinglePostComponent', () => {
+  let component: SinglePostComponent;
+  let fixture: ComponentFixture<SinglePostComponent>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [SinglePost],
+      imports: [SinglePostComponent],
     }).compileComponents();
 
-    fixture = TestBed.createComponent(SinglePost);
+    fixture = TestBed.createComponent(SinglePostComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });
