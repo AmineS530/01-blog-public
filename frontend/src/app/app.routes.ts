@@ -39,6 +39,11 @@ export const routes: Routes = [
       import('./features/post/edit-post/edit-post').then((m) => m.EditPostComponent),
   },
   {
+    path: 'notifications',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/notifications/notifications').then((m) => m.NotificationsComponent),
+  },
+  {
     path: 'profile/:username',
     canActivate: [authGuard],
     loadComponent: () =>
