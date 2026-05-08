@@ -75,4 +75,9 @@ public class AdminService {
     public void deletePost(Long postId) {
         postRepository.deleteById(postId);
     }
+
+    @Transactional
+    public void deleteComment(Long commentId) {
+        commentRepository.deleteById(commentId);
+    }
 }

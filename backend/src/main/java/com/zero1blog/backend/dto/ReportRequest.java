@@ -7,4 +7,5 @@ public class ReportRequest {
     private String reason;
     private Long targetUserId;
     private Long targetPostId;
+    private Long targetCommentId;
 }

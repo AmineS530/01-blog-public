@@ -10,6 +10,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { ProfileService } from '../../core/services/profile.service';
 import { PostService } from '../../core/services/post.service';
 import { AuthService } from '../../core/services/auth.service';
+import { ReportService } from '../../core/services/report.service';
 import { ProfileResponse } from '../../shared/models/profile.models';
 import { PostResponse } from '../../shared/models/post.models';
 import { MarkdownPipe } from '../../shared/pipes/markdown.pipe';
@@ -45,7 +46,8 @@ export class ProfileComponent implements OnInit {
     private router: Router,
     private profileService: ProfileService,
     private postService: PostService,
-    private authService: AuthService
+    private authService: AuthService,
+    private reportService: ReportService
   ) {}
 
   ngOnInit(): void {
@@ -136,6 +138,28 @@ export class ProfileComponent implements OnInit {
         post.likeCount += post.isLikedByCurrentUser ? 1 : -1;
       }
     });
+  }
+
+  reportUser(): void {
+    if (!this.profile) return;
+    const reason = prompt(`Why are you reporting user ${this.profile.username}?`);
+    if (reason) {
+      this.reportService.reportUser(this.profile.id, reason).subscribe({
+        next: () => alert('User reported successfully.'),
+        error: () => alert('Failed to report user.')
+      });
+    }
+  }
+
+  reportPost(event: Event, post: PostResponse): void {
+    event.stopPropagation();
+    const reason = prompt(`Why are you reporting this post by ${post.authorUsername}?`);
+    if (reason) {
+      this.reportService.reportPost(post.id, reason).subscribe({
+        next: () => alert('Post reported successfully.'),
+        error: () => alert('Failed to report post.')
+      });
+    }
   }
 
   goToPost(id: number): void {

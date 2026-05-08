@@ -18,5 +18,8 @@ public class ReportResponse {
     private String reporterUsername;
     private String targetUsername;
     private Long targetPostId;
+    private Long targetCommentId;
+    private String targetType; // 'USER', 'POST', 'COMMENT'
+    private Long targetId; // the ID corresponding to the targetType (could be userId, postId, commentId)
     private LocalDateTime createdAt;
 }

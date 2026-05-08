@@ -51,4 +51,10 @@ public class AdminController {
         adminService.deletePost(id);
         return ResponseEntity.ok().build();
     }
+
+    @DeleteMapping("/comments/{id}")
+    public ResponseEntity<Void> deleteComment(@PathVariable Long id) {
+        adminService.deleteComment(id);
+        return ResponseEntity.ok().build();
+    }
 }

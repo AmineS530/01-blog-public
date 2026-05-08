@@ -104,10 +104,16 @@
       </mat-card-content>
 
       <mat-card-actions class="comment-actions" *ngIf="editingCommentId !== comment.id">
-        <button mat-icon-button (click)="toggleCommentLike(comment)" [color]="comment.isLikedByCurrentUser ? 'warn' : ''" class="small-icon-btn">
-          <mat-icon>{{ comment.isLikedByCurrentUser ? 'favorite' : 'favorite_border' }}</mat-icon>
+        <div class="actions-left">
+          <button mat-icon-button (click)="toggleCommentLike(comment)" [color]="comment.isLikedByCurrentUser ? 'warn' : ''" class="small-icon-btn" matTooltip="Like">
+            <mat-icon>{{ comment.isLikedByCurrentUser ? 'favorite' : 'favorite_border' }}</mat-icon>
+          </button>
+          <span class="action-count" [class.liked]="comment.isLikedByCurrentUser">{{ comment.likeCount }}</span>
+        </div>
+        <span class="spacer"></span>
+        <button mat-icon-button (click)="reportComment(comment)" matTooltip="Report Comment" class="small-icon-btn">
+          <mat-icon>flag</mat-icon>
         </button>
-        <span class="action-count" [class.liked]="comment.isLikedByCurrentUser">{{ comment.likeCount }}</span>
       </mat-card-actions>
     </mat-card>
 

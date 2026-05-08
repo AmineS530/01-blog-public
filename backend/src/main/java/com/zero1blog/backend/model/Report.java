@@ -42,6 +42,10 @@ public class Report {
     @JoinColumn(name = "target_post_id")
     private Post targetPost;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "target_comment_id")
+    private Comment targetComment;
+
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 

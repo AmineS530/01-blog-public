@@ -54,6 +54,7 @@ import { MatTabsModule } from '@angular/material/tabs';
                   <button mat-button color="warn" *ngIf="r.status === 'pending'" (click)="resolve(r, 'dismiss')">Dismiss</button>
                   <button mat-button color="warn" *ngIf="r.targetType === 'USER'" (click)="banUser(r.targetUsername)">Ban User</button>
                   <button mat-button color="warn" *ngIf="r.targetType === 'POST'" (click)="deletePost(r.targetId)">Delete Post</button>
+                  <button mat-button color="warn" *ngIf="r.targetType === 'COMMENT'" (click)="deleteComment(r.targetId)">Delete Comment</button>
                 </div>
               </td>
             </ng-container>
@@ -143,6 +144,15 @@ export class AdminComponent implements OnInit {
     if (confirm(`Are you sure you want to delete post #${postId}?`)) {
       this.http.delete(`http://localhost:8080/api/admin/posts/${postId}`).subscribe(() => {
         alert(`Post #${postId} has been deleted.`);
+        this.fetchStats();
+      });
+    }
+  }
+
+  deleteComment(commentId: number): void {
+    if (confirm(`Are you sure you want to delete comment #${commentId}?`)) {
+      this.http.delete(`http://localhost:8080/api/admin/comments/${commentId}`).subscribe(() => {
+        alert(`Comment #${commentId} has been deleted.`);
         this.fetchStats();
       });
     }

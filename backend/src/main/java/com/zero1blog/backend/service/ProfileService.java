@@ -56,6 +56,7 @@ public class ProfileService {
         }
 
         return ProfileResponse.builder()
+                .id(targetUser.getId())
                 .username(targetUser.getUsername())
                 .fullName(profile.getFullName())
                 .bio(profile.getBio())

@@ -9,6 +9,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { PostService } from '../../core/services/post.service';
 import { AuthService } from '../../core/services/auth.service';
+import { ReportService } from '../../core/services/report.service';
 import { PostResponse } from '../../shared/models/post.models';
 import { MarkdownPipe } from '../../shared/pipes/markdown.pipe';
 
@@ -37,6 +38,7 @@ export class FeedComponent implements OnInit {
   constructor(
     private postService: PostService,
     private authService: AuthService,
+    private reportService: ReportService,
     private router: Router,
   ) {}
 
@@ -82,6 +84,17 @@ export class FeedComponent implements OnInit {
         post.likeCount += post.isLikedByCurrentUser ? 1 : -1;
       }
     });
+  }
+
+  reportPost(event: Event, post: PostResponse): void {
+    event.stopPropagation();
+    const reason = prompt(`Why are you reporting this post by ${post.authorUsername}?`);
+    if (reason) {
+      this.reportService.reportPost(post.id, reason).subscribe({
+        next: () => alert('Post reported successfully.'),
+        error: () => alert('Failed to report post.')
+      });
+    }
   }
 
   logout(): void {

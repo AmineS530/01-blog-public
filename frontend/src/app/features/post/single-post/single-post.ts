@@ -13,6 +13,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { PostService } from '../../../core/services/post.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { MediaService } from '../../../core/services/media.service';
+import { ReportService } from '../../../core/services/report.service';
 import { PostResponse, CommentResponse } from '../../../shared/models/post.models';
 import { MarkdownPipe } from '../../../shared/pipes/markdown.pipe';
 
@@ -57,6 +58,7 @@ export class SinglePostComponent implements OnInit {
     private postService: PostService,
     private authService: AuthService,
     private mediaService: MediaService,
+    private reportService: ReportService,
     private fb: FormBuilder
   ) {
     this.commentForm = this.fb.group({
@@ -192,6 +194,27 @@ export class SinglePostComponent implements OnInit {
         comment.likeCount += comment.isLikedByCurrentUser ? 1 : -1;
       }
     });
+  }
+
+  reportPost(): void {
+    if (!this.post) return;
+    const reason = prompt(`Why are you reporting this post by ${this.post.authorUsername}?`);
+    if (reason) {
+      this.reportService.reportPost(this.post.id, reason).subscribe({
+        next: () => alert('Post reported successfully.'),
+        error: () => alert('Failed to report post.')
+      });
+    }
+  }
+
+  reportComment(comment: CommentResponse): void {
+    const reason = prompt(`Why are you reporting this comment by ${comment.authorUsername}?`);
+    if (reason) {
+      this.reportService.reportComment(comment.id, reason).subscribe({
+        next: () => alert('Comment reported successfully.'),
+        error: () => alert('Failed to report comment.')
+      });
+    }
   }
 
   edit(): void {

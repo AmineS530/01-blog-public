@@ -243,6 +243,12 @@
 .action-count.liked {
   color: #ff5252;
 }
+
+.actions-left {
+  display: flex;
+  align-items: center;
+}
+
 .post-media { margin-bottom: 12px; }
 .post-media img, .post-media video { max-width: 100%; border-radius: 12px; max-height: 500px; object-fit: contain; }
 

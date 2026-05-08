@@ -130,3 +130,6 @@
 .post-media { margin-bottom: 12px; }
 .post-media img, .post-media video { max-width: 100%; border-radius: 12px; max-height: 500px; object-fit: contain; }
 
+
+.actions-left { display: flex; align-items: center; }
+.spacer { flex: 1 1 auto; }
