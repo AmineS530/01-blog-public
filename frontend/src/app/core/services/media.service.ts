@@ -13,8 +13,22 @@ export class MediaService {
   constructor(private http: HttpClient) {}
 
   upload(file: File): Observable<UploadResponse> {
-    const formData = new FormData();
-    formData.append('file', file);
-    return this.http.post<UploadResponse>(`${this.api}/upload`, formData);
+    return new Observable(observer => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => {
+        const base64Data = (reader.result as string).split(',')[1];
+        this.http.post<UploadResponse>(`${this.api}/upload`, {
+          data: base64Data,
+          fileName: file.name,
+          mediaType: file.type.startsWith('image') ? 'image' : 'video'
+        }).subscribe({
+          next: (res) => observer.next(res),
+          error: (err) => observer.error(err),
+          complete: () => observer.complete()
+        });
+      };
+      reader.onerror = (error) => observer.error(error);
+    });
   }
 }
