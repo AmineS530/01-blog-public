@@ -10,6 +10,7 @@ import org.springframework.security.core.userdetails.User;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
+import com.zero1blog.backend.repository.UserRepository;
 import com.zero1blog.backend.service.JwtService;
 
 import jakarta.servlet.FilterChain;
@@ -23,6 +24,7 @@ import lombok.RequiredArgsConstructor;
 public class JwtAuthFilter extends OncePerRequestFilter {
 
     private final JwtService jwtService;
+    private final UserRepository userRepository;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
@@ -41,6 +43,18 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
         if (jwtService.isTokenValid(token)) {
             String publicId = jwtService.extractPublicId(token);
+            
+            // SECURITY BUG: Banned users could still act until their token expires.
+            // Fix: Check database for isBanned status on every request.
+            boolean isBanned = userRepository.findByPublicId(publicId)
+                    .map(com.zero1blog.backend.model.User::isBanned)
+                    .orElse(true);
+
+            if (isBanned) {
+                filterChain.doFilter(request, response);
+                return;
+            }
+
             String role = jwtService.extractRole(token);
     
             User userDetails = new User(

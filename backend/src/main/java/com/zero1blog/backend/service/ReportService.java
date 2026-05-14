@@ -33,6 +33,16 @@ public class ReportService {
         User reporter = userRepository.findByPublicId(reporterPublicId)
                 .orElseThrow(() -> new RuntimeException("Reporter not found"));
 
+        // BUG FIX: Ensure exactly one target is provided
+        int targetCount = 0;
+        if (request.getTargetUserId() != null) targetCount++;
+        if (request.getTargetPostId() != null) targetCount++;
+        if (request.getTargetCommentId() != null) targetCount++;
+
+        if (targetCount != 1) {
+            throw new RuntimeException("Report must have exactly one target (User, Post, or Comment)");
+        }
+
         Report report = Report.builder()
                 .reason(request.getReason())
                 .reporter(reporter)
@@ -41,18 +51,31 @@ public class ReportService {
         if (request.getTargetUserId() != null) {
             User targetUser = userRepository.findById(request.getTargetUserId())
                     .orElseThrow(() -> new RuntimeException("Target user not found"));
+            
+            // BUG FIX: Prevent self-reporting
+            if (targetUser.getId().equals(reporter.getId())) {
+                throw new RuntimeException("Cannot report yourself");
+            }
             report.setTargetUser(targetUser);
         }
 
         if (request.getTargetPostId() != null) {
             Post targetPost = postRepository.findById(request.getTargetPostId())
                     .orElseThrow(() -> new RuntimeException("Target post not found"));
+            
+            if (targetPost.getAuthor().getId().equals(reporter.getId())) {
+                throw new RuntimeException("Cannot report your own post");
+            }
             report.setTargetPost(targetPost);
         }
 
         if (request.getTargetCommentId() != null) {
             Comment targetComment = commentRepository.findById(request.getTargetCommentId())
                     .orElseThrow(() -> new RuntimeException("Target comment not found"));
+            
+            if (targetComment.getAuthor().getId().equals(reporter.getId())) {
+                throw new RuntimeException("Cannot report your own comment");
+            }
             report.setTargetComment(targetComment);
         }
 

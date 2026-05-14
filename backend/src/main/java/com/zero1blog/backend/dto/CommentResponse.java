@@ -8,6 +8,7 @@ public class CommentResponse {
     private String content;
     private String mediaUrl;
     private String authorUsername;
+    private String authorAvatarUrl;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private long likeCount;
@@ -15,11 +16,12 @@ public class CommentResponse {
     @JsonProperty("isLikedByCurrentUser")
     private boolean isLikedByCurrentUser;
 
-    public CommentResponse(Long id, String content, String mediaUrl, String authorUsername, LocalDateTime createdAt, LocalDateTime updatedAt, long likeCount, boolean isLikedByCurrentUser) {
+    public CommentResponse(Long id, String content, String mediaUrl, String authorUsername, String authorAvatarUrl, LocalDateTime createdAt, LocalDateTime updatedAt, long likeCount, boolean isLikedByCurrentUser) {
         this.id = id;
         this.content = content;
         this.mediaUrl = mediaUrl;
         this.authorUsername = authorUsername;
+        this.authorAvatarUrl = authorAvatarUrl;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
         this.likeCount = likeCount;
@@ -30,6 +32,7 @@ public class CommentResponse {
     public String getContent() { return content; }
     public String getMediaUrl() { return mediaUrl; }
     public String getAuthorUsername() { return authorUsername; }
+    public String getAuthorAvatarUrl() { return authorAvatarUrl; }
     public LocalDateTime getCreatedAt() { return createdAt; }
     public LocalDateTime getUpdatedAt() { return updatedAt; }
     public long getLikeCount() { return likeCount; }

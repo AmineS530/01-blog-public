@@ -29,6 +29,7 @@ export interface CommentResponse {
   content: string;
   mediaUrl?: string;
   authorUsername: string;
+  authorAvatarUrl?: string;
   createdAt: string;
   updatedAt: string;
   likeCount: number;

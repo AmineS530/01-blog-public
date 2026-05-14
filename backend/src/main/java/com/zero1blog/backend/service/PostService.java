@@ -1,5 +1,8 @@
 package com.zero1blog.backend.service;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -42,6 +45,7 @@ public class PostService {
         Post post = new Post();
         post.setTitle(request.getTitle());
         post.setContent(request.getContent());
+        post.setMediaUrl(request.getMediaUrl());
         post.setAuthor(author);
 
         Post saved = postRepository.save(post);
@@ -128,6 +132,17 @@ public class PostService {
 
         if (!post.getAuthor().getPublicId().equals(authorPublicId)) {
             throw new RuntimeException("Not authorized to delete this post");
+        }
+
+        // BUG FIX: Delete physical media file if it exists
+        if (post.getMediaUrl() != null && post.getMediaUrl().startsWith("/api/media/files/")) {
+            try {
+                String fileName = post.getMediaUrl().substring("/api/media/files/".length());
+                Path filePath = Paths.get("uploads").resolve(fileName);
+                Files.deleteIfExists(filePath);
+            } catch (Exception e) {
+                // Log and continue - don't block DB deletion if file delete fails
+            }
         }
 
         postRepository.delete(post);
