@@ -166,18 +166,18 @@
   border-radius: 16px;
   cursor: pointer;
   transition: all 0.2s ease;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.2) !important;
-  background-color: var(--mat-sys-surface-container-low) !important;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  background-color: var(--mat-sys-surface-container-low);
   border: 1px solid var(--mat-sys-outline-variant);
   padding: 16px;
   margin-bottom: 16px;
 }
 
 .post-card:hover {
-  background-color: var(--mat-sys-surface-container) !important;
+  background-color: var(--mat-sys-surface-container);
   transform: translateY(-2px);
   border-color: var(--mat-sys-outline);
-  box-shadow: 0 8px 24px rgba(0,0,0,0.4) !important;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.4);
 }
 
 .post-header {

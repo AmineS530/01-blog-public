@@ -24,7 +24,7 @@
   box-shadow: 0 1px 3px rgba(0,0,0,0.15);
   border: 1px solid var(--mat-sys-outline-variant);
   padding: 8px 0;
-  background-color: var(--mat-sys-surface-container-low) !important;
+  background-color: var(--mat-sys-surface-container-low);
 }
 
 .main-post-card {
@@ -167,9 +167,9 @@
 }
 
 .comment-content-area {
-  padding-left: 64px !important;
-  padding-right: 16px !important;
-  padding-bottom: 0 !important;
+  padding-left: 64px;
+  padding-right: 16px;
+  padding-bottom: 0;
 }
 
 .comment-content {
@@ -181,8 +181,8 @@
 }
 
 .comment-actions {
-  padding-left: 56px !important;
-  padding-top: 0 !important;
+  padding-left: 56px;
+  padding-top: 0;
 }
 
 .small-icon-btn {
@@ -232,7 +232,7 @@
 .comment-media-upload { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
 .comment-media-preview { position: relative; display: inline-block; }
 .comment-media-preview img { height: 60px; border-radius: 4px; }
-.remove-comment-media { position: absolute; top: -10px; right: -10px; transform: scale(0.7); background: rgba(0,0,0,0.5) !important; }
+.remove-comment-media { position: absolute; top: -10px; right: -10px; transform: scale(0.7); background: rgba(0,0,0,0.5); }
 
 
 .actions-left { display: flex; align-items: center; }
