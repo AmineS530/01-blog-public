@@ -10,11 +10,13 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
+@Slf4j
 public class AdminService {
 
     private final UserRepository userRepository;
@@ -58,6 +60,7 @@ public class AdminService {
         Report report = reportRepository.findById(reportId)
                 .orElseThrow(() -> new RuntimeException("Report not found"));
         
+        log.info("Admin resolving report ID: {}. Action: {}", reportId, action);
         report.setStatus(action.equals("resolve") ? "resolved" : "dismissed");
         report.setNote(note);
         reportRepository.save(report);
@@ -67,17 +70,20 @@ public class AdminService {
     public void banUser(String username) {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
+        log.warn("Admin BANNING user: {}", username);
         user.setBanned(true);
         userRepository.save(user);
     }
 
     @Transactional
     public void deletePost(Long postId) {
+        log.warn("Admin DELETING post ID: {}", postId);
         postRepository.deleteById(postId);
     }
 
     @Transactional
     public void deleteComment(Long commentId) {
+        log.warn("Admin DELETING comment ID: {}", commentId);
         commentRepository.deleteById(commentId);
     }
 }
