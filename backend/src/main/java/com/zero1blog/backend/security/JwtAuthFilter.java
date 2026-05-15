@@ -18,9 +18,11 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class JwtAuthFilter extends OncePerRequestFilter {
 
     private final JwtService jwtService;
@@ -44,18 +46,20 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         if (jwtService.isTokenValid(token)) {
             String publicId = jwtService.extractPublicId(token);
             
-            // SECURITY BUG: Banned users could still act until their token expires.
-            // Fix: Check database for isBanned status on every request.
-            boolean isBanned = userRepository.findByPublicId(publicId)
-                    .map(com.zero1blog.backend.model.User::isBanned)
-                    .orElse(true);
-
-            if (isBanned) {
+            var userOpt = userRepository.findByPublicId(publicId);
+            if (userOpt.isEmpty()) {
+                log.warn("JWT Valid but User not found in database: {}", publicId);
                 filterChain.doFilter(request, response);
                 return;
             }
 
-            String role = jwtService.extractRole(token);
+            if (userOpt.get().isBanned()) {
+                log.warn("Banned user attempted access: {}", publicId);
+                filterChain.doFilter(request, response);
+                return;
+            }
+
+            String role = userOpt.get().getRole().name();
     
             User userDetails = new User(
                     publicId,
@@ -69,6 +73,8 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                             null,
                             userDetails.getAuthorities()
                     );
+            
+            log.debug("User {} authenticated with authorities: {}", publicId, userDetails.getAuthorities());
     
             SecurityContextHolder.getContext().setAuthentication(authentication);
         }
