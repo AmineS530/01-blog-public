@@ -1,8 +1,8 @@
 package com.zero1blog.backend.service;
 
 import com.zero1blog.backend.dto.AdminStatsResponse;
-import com.zero1blog.backend.dto.ProfileResponse;
 import com.zero1blog.backend.dto.ReportResponse;
+import com.zero1blog.backend.dto.UserAdminResponse;
 import com.zero1blog.backend.model.Report;
 import com.zero1blog.backend.model.User;
 import com.zero1blog.backend.repository.*;
@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.extern.slf4j.Slf4j;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -37,6 +38,7 @@ public class AdminService {
 
     @Transactional(readOnly = true)
     public AdminStatsResponse getStats() {
+        LocalDateTime todayStart = LocalDateTime.now().minusDays(1);
         return AdminStatsResponse.builder()
                 .totalUsers(userRepository.count())
                 .totalPosts(postRepository.count())
@@ -44,6 +46,9 @@ public class AdminService {
                 .totalReports(reportRepository.count())
                 .pendingReports(reportRepository.countByStatus("pending"))
                 .bannedUsers(userRepository.countByIsBanned(true))
+                .newUsersToday(userRepository.countByCreatedAtAfter(todayStart))
+                .newPostsToday(postRepository.countByCreatedAtAfter(todayStart))
+                .newCommentsToday(commentRepository.countByCreatedAtAfter(todayStart))
                 .build();
     }
 
@@ -53,6 +58,41 @@ public class AdminService {
         return reports.getContent().stream()
                 .map(reportService::toResponse)
                 .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public Page<UserAdminResponse> getUsers(String query, int page, int limit) {
+        Page<User> users;
+        if (query != null && !query.isEmpty()) {
+            users = userRepository.findByUsernameContainingIgnoreCaseOrEmailContainingIgnoreCase(query, query, PageRequest.of(page, limit));
+        } else {
+            users = userRepository.findAll(PageRequest.of(page, limit));
+        }
+        return users.map(this::toUserAdminResponse);
+    }
+
+    @Transactional
+    public void updateUserRole(String username, String roleName) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        log.info("Admin updating user role for {}: {}", username, roleName);
+        user.setRole(User.Role.valueOf(roleName.toUpperCase()));
+        userRepository.save(user);
+    }
+
+    @Transactional
+    public void toggleBan(String username, String adminPublicId) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        
+        if (user.getPublicId().equals(adminPublicId)) {
+            throw new RuntimeException("You cannot ban yourself.");
+        }
+
+        boolean newStatus = !user.isBanned();
+        log.warn("Admin toggling ban for {}: {}", username, newStatus);
+        user.setBanned(newStatus);
+        userRepository.save(user);
     }
 
     @Transactional
@@ -67,9 +107,14 @@ public class AdminService {
     }
 
     @Transactional
-    public void banUser(String username) {
+    public void banUser(String username, String adminPublicId) {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
+        
+        if (user.getPublicId().equals(adminPublicId)) {
+            throw new RuntimeException("You cannot ban yourself.");
+        }
+
         log.warn("Admin BANNING user: {}", username);
         user.setBanned(true);
         userRepository.save(user);
@@ -85,5 +130,17 @@ public class AdminService {
     public void deleteComment(Long commentId) {
         log.warn("Admin DELETING comment ID: {}", commentId);
         commentRepository.deleteById(commentId);
+    }
+
+    private UserAdminResponse toUserAdminResponse(User user) {
+        return UserAdminResponse.builder()
+                .id(user.getId())
+                .publicId(user.getPublicId())
+                .username(user.getUsername())
+                .email(user.getEmail())
+                .role(user.getRole().name())
+                .isBanned(user.isBanned())
+                .createdAt(user.getCreatedAt())
+                .build();
     }
 }

@@ -38,10 +38,13 @@ public class AuthService {
             throw new RuntimeException("Username already taken");
         }
 
+        User.Role role = userRepository.count() == 0 ? User.Role.ADMIN : User.Role.USER;
+        log.info("Assigning role {} to new user: {}", role, request.getUsername());
+
         User user = User.builder()
                 .username(request.getUsername())
                 .email(request.getEmail())
-                .role(User.Role.USER)
+                .role(role)
                 .build();
 
         userRepository.save(user);

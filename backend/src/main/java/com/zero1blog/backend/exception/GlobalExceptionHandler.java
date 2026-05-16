@@ -15,12 +15,27 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<Map<String, Object>> handleRuntimeException(RuntimeException ex) {
-        log.error("Unhandled Exception: ", ex);
+        log.error("Exception occurred: {}", ex.getMessage());
+        
+        HttpStatus status = HttpStatus.INTERNAL_SERVER_ERROR;
+        String message = ex.getMessage();
+
+        if (message != null) {
+            String lowerMsg = message.toLowerCase();
+            if (lowerMsg.contains("not found")) {
+                status = HttpStatus.NOT_FOUND;
+            } else if (lowerMsg.contains("invalid credentials") || lowerMsg.contains("banned") || lowerMsg.contains("unauthorized")) {
+                status = HttpStatus.UNAUTHORIZED;
+            } else if (lowerMsg.contains("already in use") || lowerMsg.contains("already taken")) {
+                status = HttpStatus.BAD_REQUEST;
+            }
+        }
+
         return ResponseEntity
-                .status(HttpStatus.UNAUTHORIZED)
+                .status(status)
                 .body(Map.of(
-                        "error", ex.getMessage(),
-                        "status", 401,
+                        "error", message != null ? message : "Internal Server Error",
+                        "status", status.value(),
                         "timestamp", LocalDateTime.now().toString()
                 ));
     }

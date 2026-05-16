@@ -22,14 +22,23 @@ public class BackendApplication {
 	@Bean
 	public CommandLineRunner setupAdmin(UserRepository userRepository) {
 		return args -> {
-			// TEMPORARY: Promotes the first user to ADMIN if they exist and are currently a USER.
-			userRepository.findAll().stream().findFirst().ifPresent(user -> {
-				if (user.getRole() == User.Role.USER) {
+			long userCount = userRepository.count();
+			logger.info("Startup: Total users in database: {}", userCount);
+
+			if (userCount > 0) {
+				var users = userRepository.findAll();
+				users.forEach(u -> logger.info("User: {}, Role: {}, PublicId: {}", u.getUsername(), u.getRole(), u.getPublicId()));
+
+				boolean hasAdmin = users.stream()
+						.anyMatch(u -> u.getRole() == User.Role.ADMIN);
+				
+				if (!hasAdmin) {
+					User user = users.get(0);
 					user.setRole(User.Role.ADMIN);
 					userRepository.save(user);
-					logger.info("Admin Setup: User '{}' has been promoted to ADMIN.", user.getUsername());
+					logger.info("Admin Safeguard: No ADMIN found. User '{}' has been promoted to ADMIN.", user.getUsername());
 				}
-			});
+			}
 		};
 	}
 
