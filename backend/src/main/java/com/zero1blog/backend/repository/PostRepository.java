@@ -7,4 +7,5 @@ import java.util.List;
 public interface PostRepository extends JpaRepository<Post, Long> {
     List<Post> findAllByOrderByCreatedAtDesc();
     List<Post> findByAuthorIdOrderByCreatedAtDesc(Long authorId);
+    long countByCreatedAtAfter(java.time.LocalDateTime date);
 }

@@ -2,7 +2,9 @@ package com.zero1blog.backend.controller;
 
 import com.zero1blog.backend.dto.AdminStatsResponse;
 import com.zero1blog.backend.dto.ReportResponse;
+import com.zero1blog.backend.dto.UserAdminResponse;
 import com.zero1blog.backend.service.AdminService;
+import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -24,6 +26,30 @@ public class AdminController {
         return ResponseEntity.ok(adminService.getStats());
     }
 
+    @GetMapping("/users")
+    public ResponseEntity<Page<UserAdminResponse>> getUsers(
+            @RequestParam(required = false) String query,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int limit) {
+        return ResponseEntity.ok(adminService.getUsers(query, page, limit));
+    }
+
+    @PostMapping("/users/{username}/role")
+    public ResponseEntity<Void> updateUserRole(
+            @PathVariable String username,
+            @RequestBody Map<String, String> body) {
+        adminService.updateUserRole(username, body.get("role"));
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/users/{username}/toggle-ban")
+    public ResponseEntity<Void> toggleBan(
+            @PathVariable String username,
+            @org.springframework.security.core.annotation.AuthenticationPrincipal org.springframework.security.core.userdetails.UserDetails userDetails) {
+        adminService.toggleBan(username, userDetails.getUsername());
+        return ResponseEntity.ok().build();
+    }
+
     @GetMapping("/reports")
     public ResponseEntity<List<ReportResponse>> getReports(
             @RequestParam(defaultValue = "pending") String status,
@@ -41,8 +67,10 @@ public class AdminController {
     }
 
     @PostMapping("/users/{username}/ban")
-    public ResponseEntity<Void> banUser(@PathVariable String username) {
-        adminService.banUser(username);
+    public ResponseEntity<Void> banUser(
+            @PathVariable String username,
+            @org.springframework.security.core.annotation.AuthenticationPrincipal org.springframework.security.core.userdetails.UserDetails userDetails) {
+        adminService.banUser(username, userDetails.getUsername());
         return ResponseEntity.ok().build();
     }
 

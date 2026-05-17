@@ -16,4 +16,8 @@ public class AdminStatsResponse {
     private long totalReports;
     private long pendingReports;
     private long bannedUsers;
+    
+    private long newUsersToday;
+    private long newPostsToday;
+    private long newCommentsToday;
 }

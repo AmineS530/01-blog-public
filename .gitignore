@@ -6,3 +6,4 @@ application-local.properties
 .env
 vscode
 lab
+logs

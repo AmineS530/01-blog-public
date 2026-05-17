@@ -1,6 +1,6 @@
-# 01-Blog: Full-Stack Spring Boot & Angular Material 3 Platform
+# Z1Spot: Full-Stack Spring Boot & Angular Material 3 Platform
 
-A high-performance, visually polished blog platform built with Spring Boot 3.3.x and Angular 18 (Material 3). This project strictly follows the Zero-One-Blog reference architecture.
+A high-performance, visually polished blog platform built with Spring Boot 3.3.x and Angular 18 (Material 3). This project strictly follows the Z1Spot reference architecture.
 
 ## 🚀 Key Features
 
@@ -47,4 +47,4 @@ make clean
 The project maintains a detailed history reflecting the development lifecycle from April 29 to May 13, 2026, documenting the evolution of every major feature.
 
 ---
-*Built with precision to match the Zero-One-Blog standard.*
+*Built with precision to match the Z1Spot standard.*

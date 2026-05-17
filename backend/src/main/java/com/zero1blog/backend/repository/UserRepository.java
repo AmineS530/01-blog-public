@@ -21,4 +21,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
     boolean existsByUsername(String username);
 
     long countByIsBanned(boolean isBanned);
-    }
+
+    org.springframework.data.domain.Page<User> findByUsernameContainingIgnoreCaseOrEmailContainingIgnoreCase(String username, String email, org.springframework.data.domain.Pageable pageable);
+
+    long countByCreatedAtAfter(java.time.LocalDateTime date);
+}
