@@ -1,63 +1,54 @@
-<mat-toolbar color="primary">
-  <button mat-icon-button (click)="cancel()" matTooltip="Back to feed">
-    <mat-icon>arrow_back</mat-icon>
-  </button>
-  <span>Create New Post</span>
-</mat-toolbar>
+<div class="create-post-wrapper">
+  <div class="header">
+    <button mat-icon-button (click)="cancel()" matTooltip="Back">
+      <mat-icon>arrow_back</mat-icon>
+    </button>
+    <h2>Create New Post</h2>
+  </div>
 
-<div class="container">
   <mat-card class="form-card">
-    <mat-card-header>
-      <mat-card-title>What's on your mind?</mat-card-title>
-    </mat-card-header>
     <mat-card-content>
       <form [formGroup]="postForm" (ngSubmit)="onSubmit()" class="form-layout">
         
-        <div *ngIf="error" class="error-msg">{{ error }}</div>
+        <div class="error-container" *ngIf="error">
+          <mat-icon color="warn">error</mat-icon>
+          <span>{{ error }}</span>
+        </div>
 
-        <mat-form-field appearance="outline" class="full-width">
+        <mat-form-field appearance="outline" class="full-width title-field">
           <mat-label>Title</mat-label>
           <input matInput formControlName="title" placeholder="Give your post a catchy title" />
-          <mat-error *ngIf="postForm.get('title')?.hasError('required')">
-            Title is required.
-          </mat-error>
-          <mat-error *ngIf="postForm.get('title')?.hasError('maxlength')">
-            Title cannot exceed 100 characters.
-          </mat-error>
+          <mat-error *ngIf="postForm.get('title')?.hasError('required')">Title is required.</mat-error>
         </mat-form-field>
 
-        <mat-form-field appearance="outline" class="full-width">
-          <mat-label>Content</mat-label>
-          <textarea matInput formControlName="content" rows="6" placeholder="Write your post content here..."></textarea>
-          <mat-error *ngIf="postForm.get('content')?.hasError('required')">
-            Content is required.
-          </mat-error>
-          <mat-error *ngIf="postForm.get('content')?.hasError('maxlength')">
-            Content cannot exceed 5000 characters.
-          </mat-error>
+        <mat-form-field appearance="outline" class="full-width content-field">
+          <mat-label>What's on your mind?</mat-label>
+          <textarea matInput formControlName="content" rows="10" placeholder="Write your post content here..."></textarea>
+          <mat-error *ngIf="postForm.get('content')?.hasError('required')">Content is required.</mat-error>
         </mat-form-field>
 
         <div class="media-upload-section">
           <input type="file" id="mediaUpload" (change)="onFileSelected($event)" accept="image/*,video/*" style="display: none" #fileInput>
-          <button mat-stroked-button type="button" (click)="fileInput.click()" [disabled]="uploadingMedia">
-            <mat-icon>attach_file</mat-icon>
-            {{ uploadingMedia ? 'Uploading...' : 'Attach Image or Video' }}
-          </button>
           
           <div class="media-preview" *ngIf="mediaUrl">
             <div class="media-preview-inner">
               <img *ngIf="mediaUrl.toLowerCase().match('\\.(jpg|jpeg|png|gif|webp)$')" [src]="'http://localhost:8080' + mediaUrl" alt="Preview" />
               <video *ngIf="mediaUrl.toLowerCase().match('\\.(mp4|webm|ogg)$')" [src]="'http://localhost:8080' + mediaUrl" controls></video>
-              <button mat-icon-button color="warn" type="button" class="remove-media-btn" (click)="removeMedia()">
+              <button mat-icon-button color="warn" type="button" class="remove-media-btn" (click)="removeMedia()" matTooltip="Remove media">
                 <mat-icon>close</mat-icon>
               </button>
             </div>
           </div>
+
+          <button mat-stroked-button type="button" (click)="fileInput.click()" [disabled]="uploadingMedia" class="attach-btn" *ngIf="!mediaUrl">
+            <mat-icon>image</mat-icon>
+            {{ uploadingMedia ? 'Uploading...' : 'Add Photos or Video' }}
+          </button>
         </div>
 
         <div class="actions">
           <button mat-button type="button" (click)="cancel()">Cancel</button>
-          <button mat-flat-button color="primary" type="submit" [disabled]="postForm.invalid || submitting || uploadingMedia">
+          <button mat-flat-button color="primary" type="submit" [disabled]="postForm.invalid || submitting || uploadingMedia" class="post-btn">
             {{ submitting ? 'Posting...' : 'Post' }}
           </button>
         </div>

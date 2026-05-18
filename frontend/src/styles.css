@@ -1,1 +1,79 @@
-/* You can add global styles to this file, and also import other style files */
+@use '@angular/material' as mat;
+
+html {
+  height: 100%;
+  @include mat.theme(
+    (
+      color: (
+        theme-type: light,
+        primary: mat.$azure-palette,
+        tertiary: mat.$blue-palette,
+      ),
+      typography: Roboto,
+      density: 0,
+    )
+  );
+
+  &.dark-theme {
+    @include mat.theme(
+      (
+        color: (
+          theme-type: dark,
+          primary: mat.$azure-palette,
+          tertiary: mat.$blue-palette,
+        ),
+      )
+    );
+  }
+}
+
+body {
+  background-color: var(--mat-sys-surface);
+  color: var(--mat-sys-on-surface);
+  font-family: 'Roboto', sans-serif;
+  margin: 0;
+  height: 100%;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  margin: 0;
+  color: var(--mat-sys-on-surface);
+}
+
+a {
+  color: var(--mat-sys-primary);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+.centered {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.muted {
+  color: var(--mat-sys-outline);
+}
+
+/* Material component overrides for M3 feel */
+.mat-mdc-card {
+  --mdc-elevated-card-container-shape: 24px;
+}
+
+.mat-mdc-button-base {
+  --mdc-filled-button-container-shape: 12px;
+  --mdc-outlined-button-container-shape: 12px;
+}
+
+.mat-mdc-form-field {
+  --mdc-filled-text-field-container-shape: 12px;
+}

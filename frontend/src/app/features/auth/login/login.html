@@ -1,30 +1,44 @@
-<div style="display: flex; justify-content: center; align-items: center; height: 100vh;">
-  <mat-card style="width: 400px; padding: 24px;">
-    <mat-card-title>Welcome back</mat-card-title>
+<div class="auth-wrapper">
+  <div class="auth-brand">
+    <h1>Z1Spot</h1>
+    <p>Join the conversation.</p>
+  </div>
+  
+  <mat-card class="auth-card">
+    <mat-card-header>
+      <mat-card-title>Welcome back</mat-card-title>
+    </mat-card-header>
+    
     <mat-card-content>
       <form [formGroup]="form" (ngSubmit)="submit()">
 
-        <mat-form-field appearance="outline" style="width: 100%; margin-top: 16px;">
+        <mat-form-field appearance="outline">
           <mat-label>Email or Username</mat-label>
-          <input matInput type="text" formControlName="usernameOrEmail" />
+          <input matInput type="text" formControlName="usernameOrEmail" placeholder="e.g. janesmith" />
+          <mat-icon matPrefix>person</mat-icon>
         </mat-form-field>
 
-        <mat-form-field appearance="outline" style="width: 100%;">
+        <mat-form-field appearance="outline">
           <mat-label>Password</mat-label>
           <input matInput type="password" formControlName="password" />
+          <mat-icon matPrefix>lock</mat-icon>
         </mat-form-field>
 
-        <p *ngIf="error" style="color: red;">{{ error }}</p>
+        <div class="error-container" *ngIf="error">
+          <mat-icon color="warn">error</mat-icon>
+          <span>{{ error }}</span>
+        </div>
 
-        <button mat-raised-button color="primary" type="submit"
-          [disabled]="form.invalid || loading" style="width: 100%;">
+        <button mat-flat-button color="primary" type="submit"
+          [disabled]="form.invalid || loading" class="submit-btn">
           {{ loading ? 'Logging in...' : 'Login' }}
         </button>
 
       </form>
     </mat-card-content>
-    <mat-card-actions>
-      <p>Don't have an account? <a routerLink="/register">Register</a></p>
-    </mat-card-actions>
+    
+    <mat-card-footer class="auth-footer">
+      <p>Don't have an account? <a routerLink="/register">Register now</a></p>
+    </mat-card-footer>
   </mat-card>
 </div>

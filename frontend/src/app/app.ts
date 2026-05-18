@@ -6,6 +6,8 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatBadgeModule } from '@angular/material/badge';
+import { MatMenuModule } from '@angular/material/menu';
+import { MatDividerModule } from '@angular/material/divider';
 import { AuthService } from './core/services/auth.service';
 import { NotificationService } from './core/services/notification.service';
 import { ThemeService } from './core/services/theme.service';
@@ -20,7 +22,9 @@ import { ThemeService } from './core/services/theme.service';
     MatButtonModule, 
     MatIconModule, 
     MatTooltipModule,
-    MatBadgeModule
+    MatBadgeModule,
+    MatMenuModule,
+    MatDividerModule
   ],
   templateUrl: './app.html',
   styleUrl: './app.css'
@@ -54,6 +58,10 @@ export class App implements OnInit {
 
   goToNotifications(): void {
     this.router.navigate(['/notifications']);
+  }
+
+  goToAdmin(): void {
+    this.router.navigate(["/admin"]);
   }
 
   goToMyProfile(): void {
