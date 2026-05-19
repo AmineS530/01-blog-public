@@ -46,7 +46,5 @@
 </mat-toolbar>
 
 <main [class.main-bg]="authService.isLoggedIn()" [class.dark-mode]="themeService.isDarkMode()">
-  <div class="container">
-    <router-outlet></router-outlet>
-  </div>
+  <router-outlet></router-outlet>
 </main>
