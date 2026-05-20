@@ -3,8 +3,7 @@
 .profile-container {
   max-width: 650px;
   margin: 0 auto;
-  padding-top: 24px;
-  padding-bottom: 64px;
+  padding: 24px 16px 64px 16px;
 }
 
 .centered {
@@ -165,7 +164,8 @@
 .post-card {
   border-radius: 16px;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+  will-change: transform, box-shadow;
   box-shadow: 0 4px 12px rgba(0,0,0,0.2);
   background-color: var(--mat-sys-surface-container-low);
   border: 1px solid var(--mat-sys-outline-variant);
@@ -251,4 +251,3 @@
 
 .post-media { margin-bottom: 12px; }
 .post-media img, .post-media video { max-width: 100%; border-radius: 12px; max-height: 500px; object-fit: contain; }
-
