@@ -1,0 +1,73 @@
+<div class="auth-page">
+  <div class="auth-container" [class.sign-up-mode]="!isLoginMode">
+    <div class="form-container sign-up-container">
+      <form [formGroup]="registerForm" (ngSubmit)="submitRegister()">
+        <div class="auth-brand">
+          <h2>Create Account</h2>
+        </div>
+        <mat-form-field appearance="outline" class="auth-field">
+          <mat-label>Username</mat-label>
+          <input matInput formControlName="username" />
+          <mat-icon matPrefix>person</mat-icon>
+        </mat-form-field>
+        <mat-form-field appearance="outline" class="auth-field">
+          <mat-label>Email</mat-label>
+          <input matInput type="email" formControlName="email" />
+          <mat-icon matPrefix>email</mat-icon>
+        </mat-form-field>
+        <mat-form-field appearance="outline" class="auth-field">
+          <mat-label>Password</mat-label>
+          <input matInput type="password" formControlName="password" />
+          <mat-icon matPrefix>lock</mat-icon>
+        </mat-form-field>
+        <div class="error-container" *ngIf="error && !isLoginMode">
+          <mat-icon color="warn">error</mat-icon>
+          <span>{{ error }}</span>
+        </div>
+        <button mat-flat-button color="primary" type="submit" [disabled]="registerForm.invalid || loading" class="submit-btn">
+          {{ loading ? 'Creating...' : 'Sign Up' }}
+        </button>
+      </form>
+    </div>
+    
+    <div class="form-container sign-in-container">
+      <form [formGroup]="loginForm" (ngSubmit)="submitLogin()">
+        <div class="auth-brand">
+          <h2>Sign in</h2>
+        </div>
+        <mat-form-field appearance="outline" class="auth-field">
+          <mat-label>Email or Username</mat-label>
+          <input matInput type="text" formControlName="usernameOrEmail" />
+          <mat-icon matPrefix>person</mat-icon>
+        </mat-form-field>
+        <mat-form-field appearance="outline" class="auth-field">
+          <mat-label>Password</mat-label>
+          <input matInput type="password" formControlName="password" />
+          <mat-icon matPrefix>lock</mat-icon>
+        </mat-form-field>
+        <div class="error-container" *ngIf="error && isLoginMode">
+          <mat-icon color="warn">error</mat-icon>
+          <span>{{ error }}</span>
+        </div>
+        <button mat-flat-button color="primary" type="submit" [disabled]="loginForm.invalid || loading" class="submit-btn">
+          {{ loading ? 'Logging in...' : 'Sign In' }}
+        </button>
+      </form>
+    </div>
+    
+    <div class="overlay-container">
+      <div class="overlay">
+        <div class="overlay-panel overlay-left">
+          <h1>Welcome Back!</h1>
+          <p>To keep connected with us please login with your personal info</p>
+          <button class="btn ghost" type="button" (click)="toggleMode()">Sign In</button>
+        </div>
+        <div class="overlay-panel overlay-right">
+          <h1>Hello, Friend!</h1>
+          <p>Enter your personal details and start your journey with us</p>
+          <button class="btn ghost" type="button" (click)="toggleMode()">Sign Up</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

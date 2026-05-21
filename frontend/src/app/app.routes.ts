@@ -14,12 +14,12 @@ export const routes: Routes = [
     path: 'register',
     canActivate: [noAuthGuard],
     loadComponent: () =>
-      import('./features/auth/register/register').then((m) => m.RegisterComponent),
+      import('./features/auth/auth.component').then((m) => m.AuthComponent),
   },
   {
     path: 'login',
     canActivate: [noAuthGuard],
-    loadComponent: () => import('./features/auth/login/login').then((m) => m.LoginComponent),
+    loadComponent: () => import('./features/auth/auth.component').then((m) => m.AuthComponent),
   },
   {
     path: 'feed',
@@ -56,4 +56,4 @@ export const routes: Routes = [
       import('./features/profile/profile').then(m => m.ProfileComponent)
   },
   { path: '**', redirectTo: 'login' }
-  ];
+];
