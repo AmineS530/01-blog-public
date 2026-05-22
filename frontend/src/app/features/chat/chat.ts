@@ -26,6 +26,14 @@ interface ChatPartner {
   unreadCount: number;
 }
 
+/**
+ * Reactive Chat Interface Controller.
+ * <p>
+ * This component coordinates the real-time direct messaging UI. It integrates historical message threads,
+ * active user inbox list parsing, recommended partner profiles, real-time message arrival via WebSockets,
+ * physical media file attachments, and programmatic DOM view-scrolling synchronization.
+ * </p>
+ */
 @Component({
   selector: 'app-chat',
   standalone: true,
@@ -43,29 +51,47 @@ interface ChatPartner {
   styleUrl: './chat.css',
 })
 export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
+  /** Reference to the chat scrollable area element in the DOM. */
   @ViewChild('scrollContainer') private scrollContainer?: ElementRef;
 
+  /** The public ID of the logged-in user. */
   currentUserId = '';
+  
+  /** The username of the logged-in user. */
   currentUsername = '';
+  
+  /** Sorted list of conversation threads (inbox partners). */
   inbox: ChatPartner[] = [];
+  
+  /** List of suggested profiles to start new conversations. */
   recommended: ProfileResponse[] = [];
+  
+  /** The currently selected partner thread. */
   activePartner: ChatPartner | null = null;
+  
+  /** Historical message list for the active conversation thread. */
   activeMessages: MessageResponse[] = [];
 
   loadingInbox = true;
   loadingThread = false;
   loadingRecommended = false;
 
-  // Search input
+  /** Search/Filter query string to filter inbox and recommendations. */
   searchQuery = '';
 
-  // Message composition
+  /** Outbound raw text message content. */
   messageContent = '';
+  
+  /** Uploaded file media URL attachment. */
   attachedMediaUrl: string | null = null;
+  
   uploadingMedia = false;
   sendingMessage = false;
 
+  /** Unsubscribe reference tracking WebSocket real-time messages to prevent leaks. */
   private messageSubscription?: Subscription;
+  
+  /** Internal dirty flag triggered to request programmatic scrolling on next view update. */
   private shouldScrollToBottom = false;
 
   constructor(
@@ -79,6 +105,13 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
     private router: Router
   ) {}
 
+  /**
+   * Initializes component state:
+   * 1. Resolves logged-in user credentials and redirects to login if unauthenticated.
+   * 2. Triggers parallel REST API retrievals for the inbox and recommendation lists.
+   * 3. Attaches real-time message subscription pipelines.
+   * 4. Parses route parameters to support starting a chat directly from a profile detail page link.
+   */
   ngOnInit(): void {
     this.currentUserId = this.authService.getPublicId() ?? '';
     this.currentUsername = this.authService.getUsername() ?? '';
@@ -111,6 +144,14 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
     });
   }
 
+  /**
+   * Core Angular lifecycle check hook.
+   * <p>
+   * Triggered after every change detection cycle. Programmatic scroll alignments are defer-executed here
+   * because only at this stage has Angular fully mapped newly appended messages into the DOM, giving us
+   * accurate scrollHeight values to snap the scrollbar to the absolute bottom.
+   * </p>
+   */
   ngAfterViewChecked(): void {
     if (this.shouldScrollToBottom) {
       this.scrollToBottom();
@@ -118,6 +159,9 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
     }
   }
 
+  /**
+   * Fetches the user's active direct message history inbox via the REST API.
+   */
   loadInbox(): void {
     this.loadingInbox = true;
     this.messageService.getInbox().subscribe({
@@ -132,6 +176,10 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
     });
   }
 
+  /**
+   * Fetches a list of recommended user profiles to encourage starting new message interactions.
+   * Filters out the current user's profile to prevent self-chat suggestions.
+   */
   loadRecommended(): void {
     this.loadingRecommended = true;
     this.profileService.getRecommendedProfiles().subscribe({
@@ -145,6 +193,17 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
     });
   }
 
+  /**
+   * Establishes a reactive listener binding to the real-time WebSocket incoming messages stream.
+   * <p>
+   * This is a core real-time sync handler. Upon receiving a message event:
+   * 1. It determines who the partner is (the other party in the conversation).
+   * 2. If the message belongs to the currently active opened thread, it appends it to the activeMessages list
+   *    and triggers a scroll request. It also triggers an immediate backpressure REST call to mark the thread as read.
+   * 3. It dynamically updates the inbox list, updating snippets and unread badges, and shifting the partner
+   *    to the top of the conversation list to simulate modern direct messaging flows.
+   * </p>
+   */
   setupRealtime(): void {
     this.messageSubscription = this.realtimeService.messages$.subscribe({
       next: (msg: MessageResponse) => {
