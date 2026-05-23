@@ -55,7 +55,7 @@ public class User {
     private UserCredentials credentials;
 
     public enum Role {
-        USER, ADMIN
+        USER, ADMIN, SUPER_ADMIN
     }
 
     @Column(nullable = false, columnDefinition = "boolean default false")

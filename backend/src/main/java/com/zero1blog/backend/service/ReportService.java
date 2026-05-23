@@ -86,16 +86,25 @@ public class ReportService {
     public ReportResponse toResponse(Report report) {
         String targetType = null;
         Long targetId = null;
+        String targetUsername = null;
+        Long targetPostId = null;
+        Long targetCommentId = null;
 
         if (report.getTargetUser() != null) {
             targetType = "USER";
             targetId = report.getTargetUser().getId();
+            targetUsername = report.getTargetUser().getUsername();
         } else if (report.getTargetPost() != null) {
             targetType = "POST";
             targetId = report.getTargetPost().getId();
+            targetUsername = report.getTargetPost().getAuthor().getUsername();
+            targetPostId = report.getTargetPost().getId();
         } else if (report.getTargetComment() != null) {
             targetType = "COMMENT";
             targetId = report.getTargetComment().getId();
+            targetUsername = report.getTargetComment().getAuthor().getUsername();
+            targetCommentId = report.getTargetComment().getId();
+            targetPostId = report.getTargetComment().getPost().getId();
         }
 
         return ReportResponse.builder()
@@ -103,9 +112,9 @@ public class ReportService {
                 .reason(report.getReason())
                 .status(report.getStatus())
                 .reporterUsername(report.getReporter().getUsername())
-                .targetUsername(report.getTargetUser() != null ? report.getTargetUser().getUsername() : null)
-                .targetPostId(report.getTargetPost() != null ? report.getTargetPost().getId() : null)
-                .targetCommentId(report.getTargetComment() != null ? report.getTargetComment().getId() : null)
+                .targetUsername(targetUsername)
+                .targetPostId(targetPostId)
+                .targetCommentId(targetCommentId)
                 .targetType(targetType)
                 .targetId(targetId)
                 .createdAt(report.getCreatedAt())

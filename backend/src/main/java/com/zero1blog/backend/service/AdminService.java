@@ -72,21 +72,41 @@ public class AdminService {
     }
 
     @Transactional
-    public void updateUserRole(String username, String roleName) {
-        User user = userRepository.findByUsername(username)
+    public void updateUserRole(String username, String roleName, String callerPublicId) {
+        User targetUser = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
-        log.info("Admin updating user role for {}: {}", username, roleName);
-        user.setRole(User.Role.valueOf(roleName.toUpperCase()));
-        userRepository.save(user);
+        User caller = userRepository.findByPublicId(callerPublicId)
+                .orElseThrow(() -> new RuntimeException("Caller not found"));
+
+        User.Role targetNewRole = User.Role.valueOf(roleName.toUpperCase());
+
+        if (targetUser.getRole() == User.Role.ADMIN || targetUser.getRole() == User.Role.SUPER_ADMIN ||
+            targetNewRole == User.Role.ADMIN || targetNewRole == User.Role.SUPER_ADMIN) {
+            if (caller.getRole() != User.Role.SUPER_ADMIN) {
+                throw new RuntimeException("Only SUPER_ADMIN can promote or demote administrators.");
+            }
+        }
+
+        log.info("Admin {} updating user role for {}: {}", caller.getUsername(), username, roleName);
+        targetUser.setRole(targetNewRole);
+        userRepository.save(targetUser);
     }
 
     @Transactional
     public void toggleBan(String username, String adminPublicId) {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
+        User caller = userRepository.findByPublicId(adminPublicId)
+                .orElseThrow(() -> new RuntimeException("Admin not found"));
         
         if (user.getPublicId().equals(adminPublicId)) {
             throw new RuntimeException("You cannot ban yourself.");
+        }
+
+        if (user.getRole() == User.Role.ADMIN || user.getRole() == User.Role.SUPER_ADMIN) {
+            if (caller.getRole() != User.Role.SUPER_ADMIN) {
+                throw new RuntimeException("Only SUPER_ADMIN can ban or unban administrators.");
+            }
         }
 
         boolean newStatus = !user.isBanned();
@@ -110,9 +130,17 @@ public class AdminService {
     public void banUser(String username, String adminPublicId) {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
+        User caller = userRepository.findByPublicId(adminPublicId)
+                .orElseThrow(() -> new RuntimeException("Admin not found"));
         
         if (user.getPublicId().equals(adminPublicId)) {
             throw new RuntimeException("You cannot ban yourself.");
+        }
+
+        if (user.getRole() == User.Role.ADMIN || user.getRole() == User.Role.SUPER_ADMIN) {
+            if (caller.getRole() != User.Role.SUPER_ADMIN) {
+                throw new RuntimeException("Only SUPER_ADMIN can ban administrators.");
+            }
         }
 
         log.warn("Admin BANNING user: {}", username);
@@ -123,7 +151,18 @@ public class AdminService {
     @Transactional
     public void deletePost(Long postId) {
         log.warn("Admin DELETING post ID: {}", postId);
-        postRepository.deleteById(postId);
+        postRepository.findById(postId).ifPresent(post -> {
+            if (post.getMediaUrl() != null && post.getMediaUrl().startsWith("/api/media/files/")) {
+                try {
+                    String fileName = post.getMediaUrl().substring("/api/media/files/".length());
+                    java.nio.file.Path filePath = java.nio.file.Paths.get("uploads").resolve(fileName);
+                    java.nio.file.Files.deleteIfExists(filePath);
+                } catch (Exception e) {
+                    log.error("Failed to delete media file for post " + postId, e);
+                }
+            }
+            postRepository.delete(post);
+        });
     }
 
     @Transactional

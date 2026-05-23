@@ -3,6 +3,7 @@ package com.zero1blog.backend.controller;
 import com.zero1blog.backend.dto.ProfileResponse;
 import com.zero1blog.backend.dto.ProfileUpdateRequest;
 import com.zero1blog.backend.service.ProfileService;
+import java.util.List;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -43,5 +44,24 @@ public class ProfileController {
                                             @AuthenticationPrincipal UserDetails userDetails) {
         profileService.toggleBlock(username, userDetails.getUsername());
         return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/recommended")
+    public ResponseEntity<List<ProfileResponse>> getRecommendedProfiles(@AuthenticationPrincipal UserDetails userDetails) {
+        return ResponseEntity.ok(profileService.getRecommendedProfiles(userDetails.getUsername()));
+    }
+
+    @GetMapping("/{username}/followers")
+    public ResponseEntity<List<ProfileResponse>> getFollowers(@PathVariable String username,
+                                                              @AuthenticationPrincipal UserDetails userDetails) {
+        String currentUserPublicId = userDetails != null ? userDetails.getUsername() : null;
+        return ResponseEntity.ok(profileService.getFollowers(username, currentUserPublicId));
+    }
+
+    @GetMapping("/{username}/following")
+    public ResponseEntity<List<ProfileResponse>> getFollowing(@PathVariable String username,
+                                                              @AuthenticationPrincipal UserDetails userDetails) {
+        String currentUserPublicId = userDetails != null ? userDetails.getUsername() : null;
+        return ResponseEntity.ok(profileService.getFollowing(username, currentUserPublicId));
     }
 }

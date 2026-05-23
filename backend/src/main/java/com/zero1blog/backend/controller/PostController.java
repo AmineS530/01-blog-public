@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.zero1blog.backend.dto.PostRequest;
@@ -36,13 +37,28 @@ public class PostController {
     }
 
     @GetMapping
-    public ResponseEntity<List<PostResponse>> getAllPosts(@AuthenticationPrincipal UserDetails userDetails) {
-        return ResponseEntity.ok(postService.getAllPosts(userDetails != null ? userDetails.getUsername() : null));
+    public ResponseEntity<List<PostResponse>> getAllPosts(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int limit,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        return ResponseEntity.ok(postService.getAllPosts(userDetails != null ? userDetails.getUsername() : null, page, limit));
+    }
+
+    @GetMapping("/following")
+    public ResponseEntity<List<PostResponse>> getFollowingFeed(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int limit,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        return ResponseEntity.ok(postService.getFollowingFeed(userDetails != null ? userDetails.getUsername() : null, page, limit));
     }
 
     @GetMapping("/user/{username}")
-    public ResponseEntity<List<PostResponse>> getPostsByUsername(@PathVariable String username, @AuthenticationPrincipal UserDetails userDetails) {
-        return ResponseEntity.ok(postService.getPostsByUsername(username, userDetails != null ? userDetails.getUsername() : null));
+    public ResponseEntity<List<PostResponse>> getPostsByUsername(
+            @PathVariable String username,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int limit,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        return ResponseEntity.ok(postService.getPostsByUsername(username, userDetails != null ? userDetails.getUsername() : null, page, limit));
     }
 
     @GetMapping("/{id}")

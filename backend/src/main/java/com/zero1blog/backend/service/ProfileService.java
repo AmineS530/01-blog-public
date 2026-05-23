@@ -12,7 +12,10 @@ import com.zero1blog.backend.repository.UserProfileRepository;
 import com.zero1blog.backend.repository.UserRepository;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 public class ProfileService {
@@ -57,6 +60,7 @@ public class ProfileService {
 
         return ProfileResponse.builder()
                 .id(targetUser.getId())
+                .publicId(targetUser.getPublicId())
                 .username(targetUser.getUsername())
                 .fullName(profile.getFullName())
                 .bio(profile.getBio())
@@ -143,5 +147,72 @@ public class ProfileService {
             subscriptionRepository.findByFollowerAndFollowed(currentUser, targetUser).ifPresent(subscriptionRepository::delete);
             subscriptionRepository.findByFollowerAndFollowed(targetUser, currentUser).ifPresent(subscriptionRepository::delete);
         }
+    }
+
+    public List<ProfileResponse> getRecommendedProfiles(String currentUserPublicId) {
+        User currentUser = userRepository.findByPublicId(currentUserPublicId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        Set<Long> followedIds = subscriptionRepository.findByFollower(currentUser)
+                .stream()
+                .map(sub -> sub.getFollowed().getId())
+                .collect(Collectors.toSet());
+
+        Set<Long> blockedIds = userBlockRepository.findByBlocker(currentUser)
+                .stream()
+                .map(ub -> ub.getBlocked().getId())
+                .collect(Collectors.toSet());
+
+        Set<Long> blockingMeIds = userBlockRepository.findByBlocked(currentUser)
+                .stream()
+                .map(ub -> ub.getBlocker().getId())
+                .collect(Collectors.toSet());
+
+        List<User> allUsers = userRepository.findAll();
+
+        return allUsers.stream()
+                .filter(u -> !u.getId().equals(currentUser.getId()))
+                .filter(u -> !followedIds.contains(u.getId()))
+                .filter(u -> !blockedIds.contains(u.getId()))
+                .filter(u -> !blockingMeIds.contains(u.getId()))
+                .limit(5)
+                .map(u -> getProfile(u.getUsername(), currentUserPublicId))
+                .collect(Collectors.toList());
+    }
+
+    public List<ProfileResponse> getFollowers(String username, String currentUserPublicId) {
+        User targetUser = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        if (currentUserPublicId != null) {
+            User currentUser = userRepository.findByPublicId(currentUserPublicId).orElse(null);
+            if (currentUser != null && (userBlockRepository.existsByBlockerAndBlocked(currentUser, targetUser) ||
+                    userBlockRepository.existsByBlockerAndBlocked(targetUser, currentUser))) {
+                return List.of();
+            }
+        }
+
+        List<Subscription> subs = subscriptionRepository.findByFollowed(targetUser);
+        return subs.stream()
+                .map(sub -> getProfile(sub.getFollower().getUsername(), currentUserPublicId))
+                .collect(Collectors.toList());
+    }
+
+    public List<ProfileResponse> getFollowing(String username, String currentUserPublicId) {
+        User targetUser = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        if (currentUserPublicId != null) {
+            User currentUser = userRepository.findByPublicId(currentUserPublicId).orElse(null);
+            if (currentUser != null && (userBlockRepository.existsByBlockerAndBlocked(currentUser, targetUser) ||
+                    userBlockRepository.existsByBlockerAndBlocked(targetUser, currentUser))) {
+                return List.of();
+            }
+        }
+
+        List<Subscription> subs = subscriptionRepository.findByFollower(targetUser);
+        return subs.stream()
+                .map(sub -> getProfile(sub.getFollowed().getUsername(), currentUserPublicId))
+                .collect(Collectors.toList());
     }
 }

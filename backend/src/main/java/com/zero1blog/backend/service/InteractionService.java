@@ -56,6 +56,7 @@ public class InteractionService {
 
         Comment comment = new Comment();
         comment.setContent(request.getContent());
+        comment.setMediaUrl(request.getMediaUrl());
         comment.setAuthor(user);
         comment.setPost(post);
 
@@ -69,7 +70,9 @@ public class InteractionService {
             post
         );
 
-        return toCommentResponse(saved, userPublicId);
+        CommentResponse response = toCommentResponse(saved, userPublicId);
+        com.zero1blog.backend.config.GlobalWebSocketHandler.broadcast("NEW_COMMENT", java.util.Map.of("postId", postId, "comment", response));
+        return response;
     }
 
     public List<CommentResponse> getCommentsForPost(Long postId, String userPublicId) {
@@ -143,6 +146,9 @@ public class InteractionService {
                 );
             }
         );
+
+        long likeCount = postLikeRepository.countByPostId(post.getId());
+        com.zero1blog.backend.config.GlobalWebSocketHandler.broadcast("POST_LIKE", java.util.Map.of("postId", postId, "likeCount", likeCount));
     }
 
     public void toggleCommentLike(Long commentId, String userPublicId) {
@@ -163,6 +169,9 @@ public class InteractionService {
                 commentLikeRepository.save(like);
             }
         );
+
+        long likeCount = commentLikeRepository.countByCommentId(comment.getId());
+        com.zero1blog.backend.config.GlobalWebSocketHandler.broadcast("COMMENT_LIKE", java.util.Map.of("commentId", commentId, "postId", comment.getPost().getId(), "likeCount", likeCount));
     }
 
     private CommentResponse toCommentResponse(Comment comment, String userPublicId) {

@@ -16,6 +16,8 @@ import com.zero1blog.backend.model.User;
 import com.zero1blog.backend.repository.CommentRepository;
 import com.zero1blog.backend.repository.PostLikeRepository;
 import com.zero1blog.backend.repository.PostRepository;
+import com.zero1blog.backend.model.Subscription;
+import com.zero1blog.backend.repository.SubscriptionRepository;
 import com.zero1blog.backend.repository.UserBlockRepository;
 import com.zero1blog.backend.repository.UserRepository;
 
@@ -27,15 +29,17 @@ public class PostService {
     private final CommentRepository commentRepository;
     private final PostLikeRepository postLikeRepository;
     private final UserBlockRepository userBlockRepository;
+    private final SubscriptionRepository subscriptionRepository;
 
     public PostService(PostRepository postRepository, UserRepository userRepository,
                        CommentRepository commentRepository, PostLikeRepository postLikeRepository,
-                       UserBlockRepository userBlockRepository) {
+                       UserBlockRepository userBlockRepository, SubscriptionRepository subscriptionRepository) {
         this.postRepository = postRepository;
         this.userRepository = userRepository;
         this.commentRepository = commentRepository;
         this.postLikeRepository = postLikeRepository;
         this.userBlockRepository = userBlockRepository;
+        this.subscriptionRepository = subscriptionRepository;
     }
 
     public PostResponse createPost(PostRequest request, String authorPublicId) {
@@ -49,14 +53,16 @@ public class PostService {
         post.setAuthor(author);
 
         Post saved = postRepository.save(post);
-        return toResponse(saved, authorPublicId);
+        PostResponse response = toResponse(saved, authorPublicId);
+        com.zero1blog.backend.config.GlobalWebSocketHandler.broadcast("NEW_POST", response);
+        return response;
     }
 
-    public List<PostResponse> getAllPosts(String currentUserPublicId) {
-        List<Post> allPosts = postRepository.findAllByOrderByCreatedAtDesc();
+    public List<PostResponse> getAllPosts(String currentUserPublicId, int page, int limit) {
+        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(page, limit, org.springframework.data.domain.Sort.by("createdAt").descending());
         
         if (currentUserPublicId == null) {
-            return allPosts.stream().map(post -> toResponse(post, null)).collect(Collectors.toList());
+            return postRepository.findAll(pageable).stream().map(post -> toResponse(post, null)).collect(Collectors.toList());
         }
 
         User currentUser = userRepository.findByPublicId(currentUserPublicId)
@@ -67,13 +73,61 @@ public class PostService {
         Set<Long> blockingIds = userBlockRepository.findByBlocked(currentUser).stream()
                 .map(ub -> ub.getBlocker().getId()).collect(Collectors.toSet());
 
-        return allPosts.stream()
-                .filter(post -> !blockedIds.contains(post.getAuthor().getId()) && !blockingIds.contains(post.getAuthor().getId()))
+        Set<Long> excludeAuthorIds = new java.util.HashSet<>();
+        excludeAuthorIds.addAll(blockedIds);
+        excludeAuthorIds.addAll(blockingIds);
+
+        org.springframework.data.domain.Page<Post> postsPage;
+        if (excludeAuthorIds.isEmpty()) {
+            postsPage = postRepository.findAll(pageable);
+        } else {
+            postsPage = postRepository.findByAuthorIdNotIn(new java.util.ArrayList<>(excludeAuthorIds), pageable);
+        }
+
+        return postsPage.stream()
                 .map(post -> toResponse(post, currentUserPublicId))
                 .collect(Collectors.toList());
     }
 
-    public List<PostResponse> getPostsByUsername(String username, String currentUserPublicId) {
+    public List<PostResponse> getFollowingFeed(String currentUserPublicId, int page, int limit) {
+        if (currentUserPublicId == null) {
+            return List.of();
+        }
+
+        User currentUser = userRepository.findByPublicId(currentUserPublicId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        List<User> followedUsers = subscriptionRepository.findByFollower(currentUser).stream()
+                .map(Subscription::getFollowed)
+                .collect(Collectors.toList());
+
+        if (followedUsers.isEmpty()) {
+            return List.of();
+        }
+
+        List<Long> followedIds = followedUsers.stream().map(User::getId).collect(Collectors.toList());
+
+        Set<Long> blockedIds = userBlockRepository.findByBlocker(currentUser).stream()
+                .map(ub -> ub.getBlocked().getId()).collect(Collectors.toSet());
+        Set<Long> blockingIds = userBlockRepository.findByBlocked(currentUser).stream()
+                .map(ub -> ub.getBlocker().getId()).collect(Collectors.toSet());
+
+        List<Long> allowedFollowedIds = followedIds.stream()
+                .filter(id -> !blockedIds.contains(id) && !blockingIds.contains(id))
+                .collect(Collectors.toList());
+
+        if (allowedFollowedIds.isEmpty()) {
+            return List.of();
+        }
+
+        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(page, limit, org.springframework.data.domain.Sort.by("createdAt").descending());
+
+        return postRepository.findByAuthorIdIn(allowedFollowedIds, pageable).stream()
+                .map(post -> toResponse(post, currentUserPublicId))
+                .collect(Collectors.toList());
+    }
+
+    public List<PostResponse> getPostsByUsername(String username, String currentUserPublicId, int page, int limit) {
         User author = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
@@ -87,7 +141,9 @@ public class PostService {
             }
         }
 
-        return postRepository.findByAuthorIdOrderByCreatedAtDesc(author.getId())
+        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(page, limit, org.springframework.data.domain.Sort.by("createdAt").descending());
+
+        return postRepository.findByAuthorId(author.getId(), pageable)
                 .stream()
                 .map(post -> toResponse(post, currentUserPublicId))
                 .collect(Collectors.toList());

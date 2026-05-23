@@ -37,8 +37,9 @@ public class AdminController {
     @PostMapping("/users/{username}/role")
     public ResponseEntity<Void> updateUserRole(
             @PathVariable String username,
-            @RequestBody Map<String, String> body) {
-        adminService.updateUserRole(username, body.get("role"));
+            @RequestBody Map<String, String> body,
+            @org.springframework.security.core.annotation.AuthenticationPrincipal org.springframework.security.core.userdetails.UserDetails userDetails) {
+        adminService.updateUserRole(username, body.get("role"), userDetails.getUsername());
         return ResponseEntity.ok().build();
     }
 
