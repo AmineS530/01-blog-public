@@ -57,6 +57,10 @@ export class AuthService {
     return this.getDecodedToken()?.username ?? null;
   }
 
+  getPublicId(): string | null {
+    return this.getDecodedToken()?.sub ?? null;
+  }
+
   getRole(): string | null {
     return this.getDecodedToken()?.role ?? null;
   }

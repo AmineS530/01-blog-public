@@ -13,6 +13,10 @@ export class ProfileService {
     return this.http.get<ProfileResponse>(`${this.api}/${username}`);
   }
 
+  getRecommendedProfiles(): Observable<ProfileResponse[]> {
+    return this.http.get<ProfileResponse[]>(`${this.api}/recommended`);
+  }
+
   updateProfile(request: ProfileUpdateRequest): Observable<ProfileResponse> {
     return this.http.put<ProfileResponse>(`${this.api}/me`, request);
   }
@@ -23,5 +27,13 @@ export class ProfileService {
 
   toggleBlock(username: string): Observable<void> {
     return this.http.post<void>(`${this.api}/${username}/block`, {});
+  }
+
+  getFollowers(username: string): Observable<ProfileResponse[]> {
+    return this.http.get<ProfileResponse[]>(`${this.api}/${username}/followers`);
+  }
+
+  getFollowing(username: string): Observable<ProfileResponse[]> {
+    return this.http.get<ProfileResponse[]>(`${this.api}/${username}/following`);
   }
 }

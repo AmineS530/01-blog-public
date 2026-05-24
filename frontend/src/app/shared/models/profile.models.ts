@@ -1,5 +1,6 @@
 export interface ProfileResponse {
   id: number;
+  publicId: string;
   username: string;
   fullName: string;
   bio: string;

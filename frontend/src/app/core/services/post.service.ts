@@ -10,16 +10,20 @@ export class PostService {
 
   constructor(private http: HttpClient) {}
 
-  getAll(): Observable<PostResponse[]> {
-    return this.http.get<PostResponse[]>(this.api);
+  getAll(page: number = 0, limit: number = 10): Observable<PostResponse[]> {
+    return this.http.get<PostResponse[]>(`${this.api}?page=${page}&limit=${limit}`);
+  }
+
+  getFollowingFeed(page: number = 0, limit: number = 10): Observable<PostResponse[]> {
+    return this.http.get<PostResponse[]>(`${this.api}/following?page=${page}&limit=${limit}`);
   }
 
   getById(id: number): Observable<PostResponse> {
     return this.http.get<PostResponse>(`${this.api}/${id}`);
   }
 
-  getByUsername(username: string): Observable<PostResponse[]> {
-    return this.http.get<PostResponse[]>(`${this.api}/user/${username}`);
+  getByUsername(username: string, page: number = 0, limit: number = 10): Observable<PostResponse[]> {
+    return this.http.get<PostResponse[]>(`${this.api}/user/${username}?page=${page}&limit=${limit}`);
   }
 
   create(post: PostRequest): Observable<PostResponse> {
