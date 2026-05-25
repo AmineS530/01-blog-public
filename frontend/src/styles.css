@@ -9,7 +9,7 @@ html {
         primary: mat.$azure-palette,
         tertiary: mat.$blue-palette,
       ),
-      typography: Roboto,
+      typography: Outfit,
       density: 0,
     )
   );
@@ -27,13 +27,34 @@ html {
   }
 }
 
+/* Premium Design Variables */
+:root {
+  --primary-glow: var(--mat-sys-primary);
+  --secondary-glow: var(--mat-sys-tertiary);
+  --glass-bg-light: var(--mat-sys-surface-container);
+  --glass-bg-dark: var(--mat-sys-surface-container);
+  --glass-border-light: var(--mat-sys-outline-variant);
+  --glass-border-dark: rgba(255, 255, 255, 0.08);
+  --glass-shadow: none;
+  --glass-blur: 0px;
+  
+  --font-display: 'Outfit', 'Plus Jakarta Sans', sans-serif;
+  --font-sans: 'Plus Jakarta Sans', 'Outfit', sans-serif;
+}
+
 body {
   background-color: var(--mat-sys-surface);
   color: var(--mat-sys-on-surface);
-  font-family: 'Roboto', sans-serif;
+  font-family: var(--font-sans);
   margin: 0;
   height: 100%;
-  transition: background-color 0.3s ease, color 0.3s ease;
+  transition: background-color 0.4s cubic-bezier(0.4, 0, 0.2, 1), color 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  background-image: none;
+}
+
+body.dark-theme {
+  background-image: none;
+  background-color: #09090b;
 }
 
 * {
@@ -43,15 +64,19 @@ body {
 h1, h2, h3, h4, h5, h6 {
   margin: 0;
   color: var(--mat-sys-on-surface);
+  font-family: var(--font-display);
+  font-weight: 700;
 }
 
 a {
   color: var(--mat-sys-primary);
   text-decoration: none;
+  transition: color 0.2s ease;
 }
 
 a:hover {
-  text-decoration: underline;
+  color: var(--mat-sys-primary-container);
+  text-decoration: none;
 }
 
 .centered {
@@ -62,18 +87,63 @@ a:hover {
 
 .muted {
   color: var(--mat-sys-outline);
+  opacity: 0.7;
 }
 
-/* Material component overrides for M3 feel */
+/* Glassmorphic elements for premium UI */
+.glass-panel {
+  background: var(--mat-sys-surface-container);
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-radius: 8px;
+}
+
+.dark-theme .glass-panel {
+  background: var(--mat-sys-surface-container);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--mat-sys-outline-variant);
+  border-radius: 99px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--mat-sys-outline);
+}
+
+/* Material component overrides for premium feel */
 .mat-mdc-card {
-  --mdc-elevated-card-container-shape: 24px;
+  --mdc-elevated-card-container-shape: 8px;
+  border-radius: 8px !important;
+  box-shadow: none !important;
+  border: 1px solid var(--mat-sys-outline-variant) !important;
+  transition: all 0.2s ease !important;
+}
+
+.dark-theme .mat-mdc-card {
+  box-shadow: none !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
 }
 
 .mat-mdc-button-base {
-  --mdc-filled-button-container-shape: 12px;
-  --mdc-outlined-button-container-shape: 12px;
+  --mdc-filled-button-container-shape: 8px;
+  --mdc-outlined-button-container-shape: 8px;
+  font-family: var(--font-display) !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.2px;
 }
 
 .mat-mdc-form-field {
-  --mdc-filled-text-field-container-shape: 12px;
+  --mdc-filled-text-field-container-shape: 8px;
+  font-family: var(--font-sans) !important;
 }

@@ -20,17 +20,15 @@
 
 .brand {
   font-weight: 900;
-  font-size: 26px;
+  font-size: 24px;
   cursor: pointer;
-  letter-spacing: -1px;
-  background: linear-gradient(45deg, var(--mat-sys-primary), var(--mat-sys-tertiary));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  transition: transform 0.2s;
+  letter-spacing: -1.5px;
+  color: var(--mat-sys-on-surface);
+  transition: opacity 0.2s;
 }
 
 .brand:hover {
-  transform: scale(1.05);
+  opacity: 0.85;
 }
 
 .spacer {
@@ -45,7 +43,7 @@
 
 .profile-btn {
   margin-left: 8px;
-  border-radius: 16px;
+  border-radius: 8px;
   font-weight: 700;
   padding: 0 8px 0 16px;
 }
@@ -68,7 +66,7 @@
 
 /* User Dropdown Styling */
 ::ng-deep .user-dropdown-menu {
-  border-radius: 16px;
+  border-radius: 8px;
   margin-top: 8px;
   border: 1px solid var(--mat-sys-outline-variant);
   min-width: 200px;
@@ -78,4 +76,252 @@
   .nav-username {
     display: none;
   }
+}
+
+/* Custom Toast Notifications styling */
+.toast-container {
+  position: fixed;
+  top: 80px;
+  right: 24px;
+  z-index: 10000;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  pointer-events: none;
+  max-width: 380px;
+  width: calc(100vw - 48px);
+}
+
+.toast-item {
+  pointer-events: auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  border-radius: 8px;
+  box-shadow: none;
+  gap: 12px;
+  border: 1px solid var(--mat-sys-outline-variant);
+  background: var(--mat-sys-surface-container-high);
+  transition: all 0.2s ease;
+}
+
+.glass-toast {
+  background: var(--mat-sys-surface-container-high);
+  border: 1px solid var(--mat-sys-outline-variant);
+}
+
+.toast-content-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.toast-icon {
+  font-size: 22px;
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+}
+
+.toast-message {
+  font-weight: 650;
+  font-size: 14px;
+  line-height: 1.4;
+  color: var(--mat-sys-on-surface);
+}
+
+.toast-close-btn {
+  background: transparent;
+  border: none;
+  color: var(--mat-sys-outline);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.toast-close-btn:hover {
+  background: rgba(var(--mat-sys-on-surface-rgb, 0, 0, 0), 0.08);
+  color: var(--mat-sys-on-surface);
+}
+
+/* Toast statuses colors */
+.toast-item.success {
+  border-left: 5px solid #10b981;
+}
+.toast-item.success .toast-icon {
+  color: #10b981;
+}
+
+.toast-item.error {
+  border-left: 5px solid #ef4444;
+}
+.toast-item.error .toast-icon {
+  color: #ef4444;
+}
+
+.toast-item.info {
+  border-left: 5px solid var(--mat-sys-primary);
+}
+.toast-item.info .toast-icon {
+  color: var(--mat-sys-primary);
+}
+
+/* Slide in animation */
+.animate-toast {
+  animation: slideInRight 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(120%) scale(0.9);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0) scale(1);
+    opacity: 1;
+  }
+}
+
+/* Custom Confirmation Modal Overlay */
+.confirm-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 99999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  animation: fadeInModal 0.25s ease-out;
+}
+
+.confirm-modal-card {
+  width: 100%;
+  max-width: 400px;
+  border-radius: 8px;
+  box-shadow: none;
+  overflow: hidden;
+  animation: fadeInModal 0.2s ease-out;
+  border: 1px solid var(--mat-sys-outline-variant);
+  will-change: transform, opacity;
+}
+
+.glass-modal {
+  background: var(--mat-sys-surface-container-high);
+}
+
+.confirm-modal-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 28px 28px 16px 28px;
+}
+
+.confirm-warning-icon {
+  font-size: 32px;
+  width: 32px;
+  height: 32px;
+  color: #f59e0b;
+}
+
+.confirm-modal-header h2 {
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  color: var(--mat-sys-on-surface);
+  margin: 0;
+}
+
+.confirm-modal-body {
+  padding: 0 28px 24px 28px;
+}
+
+.confirm-modal-body p {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--mat-sys-on-surface);
+  opacity: 0.9;
+}
+
+.confirm-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 20px 28px 28px 28px;
+  background: rgba(0, 0, 0, 0.15);
+  border-top: 1px solid rgba(var(--mat-sys-outline-variant-rgb, 224, 224, 224), 0.08);
+}
+
+.modal-cancel-btn {
+  border-radius: 12px !important;
+  font-weight: 700 !important;
+  padding: 8px 20px !important;
+  color: var(--mat-sys-on-surface) !important;
+}
+
+.modal-confirm-btn {
+  border-radius: 12px !important;
+  font-weight: 700 !important;
+  padding: 8px 24px !important;
+  background: linear-gradient(135deg, #ef4444, #dc2626) !important;
+  color: white !important;
+}
+
+@keyframes fadeInModal {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes scaleUpModal {
+  from {
+    transform: scale(0.9) translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1) translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Custom Premium Notifications Overlay */
+.notifications-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(9, 9, 11, 0.4); /* Dimmed Swiss-Minimalist background */
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  animation: fadeInModal 0.25s ease-out;
+  will-change: opacity;
+}
+
+.notifications-overlay app-notifications {
+  width: 100%;
+  max-width: 600px;
+  animation: scaleUpModal 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform, opacity;
+}
+
+.notifications-overlay .notifications-container {
+  margin: 0 !important;
+  width: 100%;
 }

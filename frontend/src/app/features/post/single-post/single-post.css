@@ -15,20 +15,21 @@
 }
 
 .back-btn {
-  background: var(--mat-sys-surface-container);
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  background: transparent;
+  box-shadow: none;
+  border: 1px solid var(--mat-sys-outline-variant);
 }
 
 .post-card {
-  border-radius: 12px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+  border-radius: 8px;
+  box-shadow: none;
   border: 1px solid var(--mat-sys-outline-variant);
   padding: 8px 0;
-  background-color: var(--mat-sys-surface-container-low);
+  background-color: var(--mat-sys-surface-container);
 }
 
 .main-post-card {
-  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  box-shadow: none;
 }
 
 .post-header {
@@ -38,16 +39,17 @@
 }
 
 .author-avatar {
-  width: 48px;
-  height: 48px;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
-  background-color: var(--mat-sys-primary);
-  color: var(--mat-sys-on-primary);
+  background-color: var(--mat-sys-surface-container-high);
+  color: var(--mat-sys-primary);
+  border: 1px solid var(--mat-sys-outline-variant);
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 700;
-  font-size: 20px;
+  font-size: 18px;
   margin-right: 12px;
   cursor: pointer;
 }
@@ -154,9 +156,9 @@
 
 .comment-card {
   margin-bottom: 16px;
-  border-radius: 12px;
+  border-radius: 8px;
   box-shadow: none;
-  background: var(--mat-sys-surface-container-low);
+  background: var(--mat-sys-surface-container);
   border: 1px solid var(--mat-sys-outline-variant);
 }
 
@@ -193,10 +195,10 @@
   display: flex;
   gap: 12px;
   margin-top: 32px;
-  padding: 24px;
-  background: var(--mat-sys-surface-container-low);
-  border-radius: 12px;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.15);
+  padding: 20px;
+  background: var(--mat-sys-surface-container);
+  border-radius: 8px;
+  box-shadow: none;
   border: 1px solid var(--mat-sys-outline-variant);
 }
 
@@ -224,7 +226,7 @@
   margin-bottom: 16px;
 }
 .post-media { margin-bottom: 16px; padding: 0 16px; }
-.post-media img, .post-media video { max-width: 100%; border-radius: 12px; max-height: 600px; object-fit: contain; }
+.post-media img, .post-media video { max-width: 100%; border-radius: 8px; max-height: 600px; object-fit: contain; }
 
 
 .comment-media { margin-bottom: 8px; }

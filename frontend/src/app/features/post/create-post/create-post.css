@@ -18,9 +18,9 @@
 }
 
 .form-card {
-  border-radius: 24px;
+  border-radius: 8px;
   border: 1px solid var(--mat-sys-outline-variant);
-  background: var(--mat-sys-surface-container-low);
+  background: var(--mat-sys-surface-container);
   padding: 8px;
 }
 
@@ -47,7 +47,8 @@
   padding: 12px;
   margin-bottom: 16px;
   background: var(--mat-sys-error-container);
-  border-radius: 12px;
+  border-radius: 8px;
+  border: 1px solid var(--mat-sys-error);
 }
 
 .media-upload-section {
@@ -55,8 +56,8 @@
 }
 
 .attach-btn {
-  height: 48px;
-  border-radius: 12px;
+  height: 44px;
+  border-radius: 8px;
   font-weight: 600;
   width: 100%;
 }
@@ -65,8 +66,9 @@
   position: relative;
   width: 100%;
   background: #000;
-  border-radius: 16px;
+  border-radius: 8px;
   overflow: hidden;
+  border: 1px solid var(--mat-sys-outline-variant);
 }
 
 .media-preview-inner img, .media-preview-inner video {
@@ -91,9 +93,9 @@
 }
 
 .post-btn {
-  height: 48px;
-  padding: 0 32px;
-  border-radius: 12px;
+  height: 40px;
+  padding: 0 24px;
+  border-radius: 8px;
   font-weight: 700;
-  font-size: 16px;
+  font-size: 14px;
 }
