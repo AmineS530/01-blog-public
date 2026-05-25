@@ -20,6 +20,14 @@ import com.zero1blog.backend.repository.PostRepository;
 import com.zero1blog.backend.repository.UserRepository;
 import com.zero1blog.backend.repository.UserBlockRepository;
 
+/**
+ * Service facilitating user engagement activities such as commenting and liking.
+ * <p>
+ * This component acts as the backend engine for community interactions. It manages post/comment
+ * validations, ensures that commenters/likers are not blocked by the content author (and vice-versa),
+ * dispatches notifications, and triggers system-wide real-time WebSocket broadcasts on likes and comments.
+ * </p>
+ */
 @Service
 public class InteractionService {
 
@@ -32,10 +40,10 @@ public class InteractionService {
     private final NotificationService notificationService;
 
     public InteractionService(CommentRepository commentRepository, PostRepository postRepository,
-                              UserRepository userRepository, PostLikeRepository postLikeRepository,
-                              CommentLikeRepository commentLikeRepository,
-                              UserBlockRepository userBlockRepository,
-                              NotificationService notificationService) {
+                               UserRepository userRepository, PostLikeRepository postLikeRepository,
+                               CommentLikeRepository commentLikeRepository,
+                               UserBlockRepository userBlockRepository,
+                               NotificationService notificationService) {
         this.commentRepository = commentRepository;
         this.postRepository = postRepository;
         this.userRepository = userRepository;
@@ -45,6 +53,23 @@ public class InteractionService {
         this.notificationService = notificationService;
     }
 
+    /**
+     * Publishes a new comment under a blog post.
+     * <p>
+     * Validation checks:
+     * 1. Confirms the commenter and the target post exist in the system.
+     * 2. Asserts that no active block boundary exists between the commenter and the post author.
+     * Actions:
+     * 1. Saves the new comment in the database.
+     * 2. Dispatches an automated push notification to the post author.
+     * 3. Broadcasts a `NEW_COMMENT` real-time event frame to sync all open client web browsers.
+     * </p>
+     *
+     * @param postId       the ID of the target blog post.
+     * @param request      the content of the comment.
+     * @param userPublicId the public ID of the authoring commenter.
+     * @return structured CommentResponse mapping the published comment.
+     */
     public CommentResponse addComment(Long postId, CommentRequest request, String userPublicId) {
         User user = userRepository.findByPublicId(userPublicId).orElseThrow(() -> new RuntimeException("User not found"));
         Post post = postRepository.findById(postId).orElseThrow(() -> new RuntimeException("Post not found"));
@@ -75,6 +100,19 @@ public class InteractionService {
         return response;
     }
 
+    /**
+     * Compiles a list of comments published under a post.
+     * <p>
+     * Implements strict mutual-blocking boundaries:
+     * If a caller is authenticated, the returned list is filtered to completely exclude comments
+     * written by users who blocked the caller, or whom the caller has blocked, maintaining clean
+     * privacy barriers.
+     * </p>
+     *
+     * @param postId       the target blog post ID.
+     * @param userPublicId the public ID of the requesting user (can be null for anonymous guests).
+     * @return a list of active comment response structures.
+     */
     public List<CommentResponse> getCommentsForPost(Long postId, String userPublicId) {
         List<Comment> allComments = commentRepository.findByPostIdOrderByCreatedAtAsc(postId);
         
@@ -85,6 +123,7 @@ public class InteractionService {
         User currentUser = userRepository.findByPublicId(userPublicId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
+        // Compile block sets for the current user to enforce privacy boundaries
         Set<Long> blockedIds = userBlockRepository.findByBlocker(currentUser).stream()
                 .map(ub -> ub.getBlocked().getId()).collect(Collectors.toSet());
         Set<Long> blockingIds = userBlockRepository.findByBlocked(currentUser).stream()
@@ -96,6 +135,10 @@ public class InteractionService {
                 .collect(Collectors.toList());
     }
 
+    /**
+     * Updates comment contents.
+     * Enforces strict authorization ensuring that only the original author can edit the comment.
+     */
     public CommentResponse updateComment(Long commentId, CommentRequest request, String userPublicId) {
         Comment comment = commentRepository.findById(commentId).orElseThrow(() -> new RuntimeException("Comment not found"));
         User user = userRepository.findByPublicId(userPublicId).orElseThrow(() -> new RuntimeException("User not found"));
@@ -109,6 +152,10 @@ public class InteractionService {
         return toCommentResponse(saved, userPublicId);
     }
 
+    /**
+     * Deletes comment.
+     * Enforces strict authorization ensuring that only the original author can delete the comment.
+     */
     public void deleteComment(Long commentId, String userPublicId) {
         Comment comment = commentRepository.findById(commentId).orElseThrow(() -> new RuntimeException("Comment not found"));
         User user = userRepository.findByPublicId(userPublicId).orElseThrow(() -> new RuntimeException("User not found"));
@@ -120,6 +167,17 @@ public class InteractionService {
         commentRepository.delete(comment);
     }
 
+    /**
+     * Toggles a user's 'Like' status on a blog post.
+     * <p>
+     * Performs mutual block checks before allowing a like. If a like is added, an automated push
+     * notification is triggered for the post author.
+     * In either case, the updated aggregate post likes count is broadcasted to all active browsers.
+     * </p>
+     *
+     * @param postId       the target blog post ID.
+     * @param userPublicId the public ID of the toggling user.
+     */
     public void togglePostLike(Long postId, String userPublicId) {
         User user = userRepository.findByPublicId(userPublicId).orElseThrow(() -> new RuntimeException("User not found"));
         Post post = postRepository.findById(postId).orElseThrow(() -> new RuntimeException("Post not found"));
@@ -151,6 +209,16 @@ public class InteractionService {
         com.zero1blog.backend.config.GlobalWebSocketHandler.broadcast("POST_LIKE", java.util.Map.of("postId", postId, "likeCount", likeCount));
     }
 
+    /**
+     * Toggles a user's 'Like' status on a specific comment.
+     * <p>
+     * Performs mutual block checks before allowing a like. Updates the database and broadcasts the
+     * comment's new like count via WebSockets.
+     * </p>
+     *
+     * @param commentId    the target comment ID.
+     * @param userPublicId the public ID of the toggling user.
+     */
     public void toggleCommentLike(Long commentId, String userPublicId) {
         User user = userRepository.findByPublicId(userPublicId).orElseThrow(() -> new RuntimeException("User not found"));
         Comment comment = commentRepository.findById(commentId).orElseThrow(() -> new RuntimeException("Comment not found"));
@@ -174,6 +242,10 @@ public class InteractionService {
         com.zero1blog.backend.config.GlobalWebSocketHandler.broadcast("COMMENT_LIKE", java.util.Map.of("commentId", commentId, "postId", comment.getPost().getId(), "likeCount", likeCount));
     }
 
+    /**
+     * Maps an internal Comment model to its clean structural DTO.
+     * Determines whether the current authenticated user has liked this comment.
+     */
     private CommentResponse toCommentResponse(Comment comment, String userPublicId) {
         long likeCount = commentLikeRepository.countByCommentId(comment.getId());
         boolean isLiked = false;
