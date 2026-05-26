@@ -9,6 +9,10 @@
         <mat-icon [matBadge]="unreadCount" matBadgeColor="warn" [matBadgeHidden]="unreadCount === 0">notifications</mat-icon>
       </button>
 
+      <button mat-icon-button (click)="goToChat()" matTooltip="Messages">
+        <mat-icon [matBadge]="unreadMessagesCount" matBadgeColor="accent" [matBadgeHidden]="unreadMessagesCount === 0">forum</mat-icon>
+      </button>
+
       <button mat-icon-button (click)="goToCreate()" matTooltip="Write a Post">
         <mat-icon>add_box</mat-icon>
       </button>
@@ -24,7 +28,7 @@
           <span>My Profile</span>
         </button>
 
-        <button mat-menu-item *ngIf="authService.getRole() === 'ADMIN'" (click)="goToAdmin()">
+        <button mat-menu-item *ngIf="authService.getRole() === 'ADMIN' || authService.getRole() === 'SUPER_ADMIN'" (click)="goToAdmin()">
           <mat-icon>admin_panel_settings</mat-icon>
           <span>Admin Panel</span>
         </button>
@@ -48,3 +52,44 @@
 <main [class.main-bg]="authService.isLoggedIn()" [class.dark-mode]="themeService.isDarkMode()">
   <router-outlet></router-outlet>
 </main>
+
+<!-- Custom Glassmorphic Toast Notifications -->
+<div class="toast-container">
+  <div *ngFor="let toast of feedbackService.toasts" class="toast-item glass-toast animate-toast" [ngClass]="toast.type">
+    <div class="toast-content-wrapper">
+      <mat-icon class="toast-icon">
+        {{ toast.type === 'success' ? 'check_circle' : toast.type === 'error' ? 'error' : 'info' }}
+      </mat-icon>
+      <span class="toast-message">{{ toast.message }}</span>
+    </div>
+    <button class="toast-close-btn" (click)="feedbackService.removeToast(toast.id)">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+</div>
+
+<!-- Custom Premium Glassmorphic Confirmation Modal -->
+<div class="confirm-modal-overlay" *ngIf="feedbackService.confirmState.isOpen" (click)="feedbackService.closeConfirmation()">
+  <div class="confirm-modal-card glass-modal" (click)="$event.stopPropagation()">
+    <div class="confirm-modal-header">
+      <mat-icon class="confirm-warning-icon">help_outline</mat-icon>
+      <h2>{{ feedbackService.confirmState.title }}</h2>
+    </div>
+    <div class="confirm-modal-body">
+      <p>{{ feedbackService.confirmState.message }}</p>
+    </div>
+    <div class="confirm-modal-footer">
+      <button mat-button class="modal-cancel-btn" (click)="feedbackService.closeConfirmation()">
+        {{ feedbackService.confirmState.cancelText }}
+      </button>
+      <button mat-flat-button class="modal-confirm-btn" (click)="feedbackService.confirmState.onConfirm?.()">
+        {{ feedbackService.confirmState.confirmText }}
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Custom Premium Notifications Overlay -->
+<div class="notifications-overlay" *ngIf="showNotificationsOverlay" (click)="showNotificationsOverlay = false; fetchUnreadCount()">
+  <app-notifications (close)="showNotificationsOverlay = false; fetchUnreadCount()" (click)="$event.stopPropagation()"></app-notifications>
+</div>

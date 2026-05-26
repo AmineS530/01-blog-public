@@ -44,16 +44,17 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./features/post/edit-post/edit-post').then((m) => m.EditPostComponent),
   },
-  {
-    path: 'notifications',
-    canActivate: [authGuard],
-    loadComponent: () => import('./features/notifications/notifications').then((m) => m.NotificationsComponent),
-  },
+
   {
     path: 'profile/:username',
     canActivate: [authGuard],
     loadComponent: () =>
       import('./features/profile/profile').then(m => m.ProfileComponent)
+  },
+  {
+    path: 'chat',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/chat/chat').then((m) => m.ChatComponent),
   },
   { path: '**', redirectTo: 'login' }
 ];
