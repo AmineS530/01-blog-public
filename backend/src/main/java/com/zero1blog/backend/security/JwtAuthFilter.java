@@ -20,6 +20,15 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+/**
+ * Custom JWT Security Interceptor.
+ * <p>
+ * Implements {@link OncePerRequestFilter} to intercept every inbound HTTP request.
+ * It attempts to extract a JSON Web Token from the standard {@code Authorization} request header,
+ * validates the signature, performs security checks (e.g., verifying user ban status), 
+ * and binds the resolved user role authorities into Spring Security's context holder.
+ * </p>
+ */
 @Component
 @RequiredArgsConstructor
 @Slf4j
@@ -28,6 +37,20 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     private final JwtService jwtService;
     private final UserRepository userRepository;
 
+    /**
+     * Intercepts HTTP requests to resolve JWT identity structures.
+     * <p>
+     * Filtering lifecycle:
+     * 1. Evaluates presence and structure of the {@code Authorization} header. If missing or not prefixed
+     *    with "Bearer ", it passes control down the filter chain without authenticating.
+     * 2. Extracts and validates the token signature using {@link JwtService}.
+     * 3. Retrieves the active user record. If the user does not exist or has been flagged as banned, 
+     *    access is blocked, preventing illegal operations from banned accounts.
+     * 4. Converts the resolved role string into a Spring standard {@link SimpleGrantedAuthority} prefixed with "ROLE_".
+     * 5. Instantiates a {@link UsernamePasswordAuthenticationToken} and stores it in the active
+     *    {@link SecurityContextHolder} to grant system-wide execution permissions for this thread context.
+     * </p>
+     */
     @Override
     protected void doFilterInternal(HttpServletRequest request,
             HttpServletResponse response,
@@ -36,6 +59,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
         String authHeader = request.getHeader("Authorization");
 
+        // Validate presence of Bearer Authorization header
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             filterChain.doFilter(request, response);
             return;
@@ -53,6 +77,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                 return;
             }
 
+            // Security constraint: Abort authenticated session mapping if the user has been banned
             if (userOpt.get().isBanned()) {
                 log.warn("Banned user attempted access: {}", publicId);
                 filterChain.doFilter(request, response);
@@ -61,6 +86,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
             String role = userOpt.get().getRole().name();
     
+            // Map the resolved role to Spring Security's expected authority string format
             User userDetails = new User(
                     publicId,
                     "",
@@ -76,6 +102,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             
             log.debug("User {} authenticated with authorities: {}", publicId, userDetails.getAuthorities());
     
+            // Inject authentication token into current Spring security context
             SecurityContextHolder.getContext().setAuthentication(authentication);
         }
 
