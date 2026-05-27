@@ -1,0 +1,366 @@
+<div class="admin-container">
+  <div class="admin-header-panel">
+    <div class="header-text-group">
+      <span class="badge-tag">ADMIN PORTAL</span>
+      <h1>Control Center</h1>
+      <p class="muted">Monitor community activity, moderate posts, and manage user accounts.</p>
+    </div>
+    <button
+      mat-flat-button
+      class="refresh-btn"
+      (click)="refreshAll()"
+      matTooltip="Sync all data"
+    >
+      <mat-icon>sync</mat-icon>
+      Sync Data
+    </button>
+  </div>
+
+  <!-- Stats Grid -->
+  <div class="stats-grid">
+    <div *ngFor="let stat of statCards" class="stat-card" [ngClass]="stat.class">
+      <div class="stat-glass-layer">
+        <div class="stat-content">
+          <span class="stat-label">{{ stat.label }}</span>
+          <span class="stat-value">{{ stat.value }}</span>
+          <span class="stat-sub" *ngIf="stat.sub">{{ stat.sub }}</span>
+        </div>
+        <div class="stat-icon-wrapper">
+          <mat-icon>{{ stat.icon }}</mat-icon>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <mat-card class="table-card glass-panel">
+    <mat-tab-group class="admin-tabs" dynamicHeight>
+      <!-- Users Tab -->
+      <mat-tab>
+        <ng-template mat-tab-label>
+          <mat-icon class="tab-icon">people</mat-icon>
+          <span>Users</span>
+        </ng-template>
+        <div class="tab-content">
+          <div class="table-actions">
+            <mat-form-field appearance="outline" class="search-field">
+              <mat-label>Search users</mat-label>
+              <input
+                matInput
+                [(ngModel)]="userSearchQuery"
+                (keyup.enter)="fetchUsers()"
+                placeholder="Username or email..."
+              />
+              <mat-icon matPrefix>search</mat-icon>
+            </mat-form-field>
+          </div>
+
+          <div class="responsive-table-wrapper">
+            <table mat-table [dataSource]="users" class="w-full clean-table">
+              <ng-container matColumnDef="username">
+                <th mat-header-cell *matHeaderCellDef>User</th>
+                <td mat-cell *matCellDef="let u">
+                  <div class="user-cell">
+                    <div class="user-avatar-mini" (click)="viewProfile(u.username)">
+                      {{ u.username.charAt(0).toUpperCase() }}
+                    </div>
+                    <div class="user-info">
+                      <span class="username-link" (click)="viewProfile(u.username)">{{
+                        u.username
+                      }}</span>
+                      <span class="email muted">{{ u.email }}</span>
+                    </div>
+                  </div>
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="role">
+                <th mat-header-cell *matHeaderCellDef>Role</th>
+                <td mat-cell *matCellDef="let u">
+                  <mat-chip-set>
+                    <mat-chip class="role-chip" [ngClass]="u.role.toLowerCase()">{{
+                      u.role
+                    }}</mat-chip>
+                  </mat-chip-set>
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="status">
+                <th mat-header-cell *matHeaderCellDef>Status</th>
+                <td mat-cell *matCellDef="let u">
+                  <span class="status-badge" [class.banned]="u.isBanned">
+                    {{ u.isBanned ? 'Banned' : 'Active' }}
+                  </span>
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="actions">
+                <th mat-header-cell *matHeaderCellDef>Actions</th>
+                <td mat-cell *matCellDef="let u">
+                  <div class="action-buttons">
+                    <button
+                      mat-icon-button
+                      (click)="toggleBan(u)"
+                      *ngIf="canBan(u)"
+                      [matTooltip]="u.isBanned ? 'Unban User' : 'Ban User'"
+                      [color]="u.isBanned ? 'primary' : 'warn'"
+                      class="btn-hover-glow"
+                    >
+                      <mat-icon>{{ u.isBanned ? 'person_add' : 'person_off' }}</mat-icon>
+                    </button>
+                    <button
+                      mat-icon-button
+                      (click)="promoteUser(u)"
+                      *ngIf="getCurrentUserRole() === 'SUPER_ADMIN' && u.role === 'USER'"
+                      matTooltip="Promote to Admin"
+                      class="btn-hover-glow text-accent"
+                    >
+                      <mat-icon>admin_panel_settings</mat-icon>
+                    </button>
+                    <button
+                      mat-icon-button
+                      (click)="demoteUser(u)"
+                      *ngIf="getCurrentUserRole() === 'SUPER_ADMIN' && u.role === 'ADMIN'"
+                      matTooltip="Demote to User"
+                      class="btn-hover-glow text-warn"
+                    >
+                      <mat-icon>remove_moderator</mat-icon>
+                    </button>
+                  </div>
+                </td>
+              </ng-container>
+
+              <tr
+                mat-header-row
+                *matHeaderRowDef="['username', 'role', 'status', 'actions']"
+              ></tr>
+              <tr
+                mat-row
+                *matRowDef="let row; columns: ['username', 'role', 'status', 'actions']"
+              ></tr>
+            </table>
+          </div>
+
+          <mat-paginator
+            [length]="totalUsers"
+            [pageSize]="pageSize"
+            [pageSizeOptions]="[5, 10, 20]"
+            (page)="onUserPageChange($event)"
+          ></mat-paginator>
+        </div>
+      </mat-tab>
+
+      <!-- Posts Tab -->
+      <mat-tab>
+        <ng-template mat-tab-label>
+          <mat-icon class="tab-icon">article</mat-icon>
+          <span>Posts</span>
+        </ng-template>
+        <div class="tab-content">
+          <div class="table-actions">
+            <mat-form-field appearance="outline" class="search-field">
+              <mat-label>Filter posts</mat-label>
+              <input
+                matInput
+                [(ngModel)]="postSearchQuery"
+                (input)="filterPostsLocal()"
+                placeholder="Search title or content..."
+              />
+              <mat-icon matPrefix>filter_list</mat-icon>
+            </mat-form-field>
+          </div>
+
+          <div class="responsive-table-wrapper">
+            <table mat-table [dataSource]="filteredPosts" class="w-full clean-table">
+              <ng-container matColumnDef="title">
+                <th mat-header-cell *matHeaderCellDef>Title</th>
+                <td mat-cell *matCellDef="let p">
+                  <div class="post-cell">
+                    <span class="post-title-link" (click)="viewPost(p.id)">{{ p.title }}</span>
+                    <span class="post-content-preview muted"
+                      >{{ p.content | slice: 0 : 80 }}{{ p.content.length > 80 ? '...' : '' }}</span
+                    >
+                  </div>
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="author">
+                <th mat-header-cell *matHeaderCellDef>Author</th>
+                <td mat-cell *matCellDef="let p">
+                  <span class="username-link" (click)="viewProfile(p.authorUsername)">{{
+                    p.authorUsername
+                  }}</span>
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="date">
+                <th mat-header-cell *matHeaderCellDef>Created</th>
+                <td mat-cell *matCellDef="let p">
+                  <span class="post-date-cell">{{
+                    p.createdAt | date: 'MMM d, y, h:mm a'
+                  }}</span>
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="actions">
+                <th mat-header-cell *matHeaderCellDef>Actions</th>
+                <td mat-cell *matCellDef="let p">
+                  <div class="action-buttons">
+                    <button
+                      mat-icon-button
+                      color="primary"
+                      (click)="viewPost(p.id)"
+                      matTooltip="View Post"
+                      class="btn-hover-glow"
+                    >
+                      <mat-icon>visibility</mat-icon>
+                    </button>
+                    <button
+                      mat-icon-button
+                      color="warn"
+                      (click)="deletePostDirect(p)"
+                      matTooltip="Delete Post"
+                      class="btn-hover-glow"
+                    >
+                      <mat-icon>delete</mat-icon>
+                    </button>
+                  </div>
+                </td>
+              </ng-container>
+
+              <tr mat-header-row *matHeaderRowDef="['title', 'author', 'date', 'actions']"></tr>
+              <tr
+                mat-row
+                *matRowDef="let row; columns: ['title', 'author', 'date', 'actions']"
+              ></tr>
+            </table>
+          </div>
+        </div>
+      </mat-tab>
+
+      <!-- Reports Tab -->
+      <mat-tab>
+        <ng-template mat-tab-label>
+          <mat-icon class="tab-icon">flag</mat-icon>
+          <span>Reports</span>
+        </ng-template>
+        <div class="tab-content">
+          <div class="responsive-table-wrapper">
+            <table mat-table [dataSource]="reports" class="w-full clean-table">
+              <ng-container matColumnDef="reason">
+                <th mat-header-cell *matHeaderCellDef>Reason</th>
+                <td mat-cell *matCellDef="let r" class="reason-cell">
+                  <div class="reason-wrapper">
+                    <span class="reason-text">{{ r.reason }}</span>
+                    <span class="reporter muted">By: {{ r.reporterUsername }}</span>
+                  </div>
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="target">
+                <th mat-header-cell *matHeaderCellDef>Target</th>
+                <td mat-cell *matCellDef="let r">
+                  <div class="target-info">
+                    <span class="target-type" [ngClass]="r.targetType.toLowerCase()">{{
+                      r.targetType
+                    }}</span>
+                    <span
+                      class="target-name username-link"
+                      *ngIf="r.targetUsername"
+                      (click)="viewProfile(r.targetUsername)"
+                      >{{ r.targetUsername }}</span
+                    >
+                  </div>
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="status">
+                <th mat-header-cell *matHeaderCellDef>Status</th>
+                <td mat-cell *matCellDef="let r">
+                  <mat-chip-set>
+                    <mat-chip class="status-chip" [ngClass]="r.status">{{ r.status }}</mat-chip>
+                  </mat-chip-set>
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="actions">
+                <th mat-header-cell *matHeaderCellDef>Actions</th>
+                <td mat-cell *matCellDef="let r">
+                  <div class="action-buttons-vertical">
+                    <div class="row-actions">
+                      <button
+                        mat-button
+                        class="btn-outline-primary btn-sm"
+                        *ngIf="r.status === 'pending'"
+                        (click)="resolve(r, 'resolve')"
+                      >
+                        Resolve
+                      </button>
+                      <button
+                        mat-button
+                        class="btn-outline-warn btn-sm"
+                        *ngIf="r.status === 'pending'"
+                        (click)="resolve(r, 'dismiss')"
+                      >
+                        Dismiss
+                      </button>
+                    </div>
+                    <div class="item-actions">
+                      <button
+                        mat-stroked-button
+                        class="action-link-btn"
+                        *ngIf="r.targetPostId"
+                        (click)="viewPost(r.targetPostId)"
+                      >
+                        <mat-icon>visibility</mat-icon>
+                        View Post
+                      </button>
+                      <button
+                        mat-stroked-button
+                        class="action-delete-btn"
+                        color="warn"
+                        *ngIf="r.targetType === 'POST' && r.status === 'pending'"
+                        (click)="deleteReportedPost(r)"
+                      >
+                        <mat-icon>delete_forever</mat-icon>
+                        Delete Post
+                      </button>
+                      <button
+                        mat-stroked-button
+                        class="action-delete-btn"
+                        color="warn"
+                        *ngIf="r.targetType === 'COMMENT' && r.status === 'pending'"
+                        (click)="deleteReportedComment(r)"
+                      >
+                        <mat-icon>delete_forever</mat-icon>
+                        Delete Comment
+                      </button>
+                      <button
+                        mat-stroked-button
+                        class="action-ban-btn"
+                        color="warn"
+                        *ngIf="r.targetType === 'USER' && r.status === 'pending'"
+                        (click)="banReportedUser(r)"
+                      >
+                        <mat-icon>block</mat-icon>
+                        Ban User
+                      </button>
+                    </div>
+                  </div>
+                </td>
+              </ng-container>
+
+              <tr
+                mat-header-row
+                *matHeaderRowDef="['reason', 'target', 'status', 'actions']"
+              ></tr>
+              <tr
+                mat-row
+                *matRowDef="let row; columns: ['reason', 'target', 'status', 'actions']"
+              ></tr>
+            </table>
+          </div>
+        </div>
+      </mat-tab>
+    </mat-tab-group>
+  </mat-card>
+</div>

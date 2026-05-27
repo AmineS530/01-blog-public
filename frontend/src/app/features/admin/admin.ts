@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
 import { MatTableModule } from '@angular/material/table';
 import { MatButtonModule } from '@angular/material/button';
@@ -12,7 +13,15 @@ import { MatInputModule } from '@angular/material/input';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { FeedbackService } from '../../core/services/feedback.service';
+import { AuthService } from '../../core/services/auth.service';
 
+/**
+ * Controller class managing the administrative Control Center.
+ * Handles community metrics telemetry, user account bans/promotions,
+ * post moderation, and content report resolutions.
+ */
 @Component({
   selector: 'app-admin',
   standalone: true,
@@ -28,310 +37,512 @@ import { MatTooltipModule } from '@angular/material/tooltip';
     MatInputModule,
     MatPaginatorModule,
     MatChipsModule,
-    MatTooltipModule
+    MatTooltipModule,
+    MatProgressSpinnerModule,
   ],
-  template: `
-    <div class="admin-container">
-      <div class="admin-header">
-        <h1>Admin Dashboard</h1>
-        <p class="muted">Monitor and manage your community.</p>
-      </div>
-
-      <div class="stats-grid">
-        <mat-card *ngFor="let stat of statCards" class="stat-card">
-          <mat-card-content>
-            <div class="stat-value">{{ stat.value }}</div>
-            <div class="stat-label">{{ stat.label }}</div>
-            <div class="stat-sub" *ngIf="stat.sub">{{ stat.sub }}</div>
-          </mat-card-content>
-        </mat-card>
-      </div>
-
-      <mat-card class="table-card">
-        <mat-tab-group class="admin-tabs">
-          <!-- Users Tab -->
-          <mat-tab label="Users">
-            <div class="tab-content">
-              <div class="table-actions">
-                <mat-form-field appearance="outline" class="search-field">
-                  <mat-label>Search users</mat-label>
-                  <input matInput [(ngModel)]="userSearchQuery" (keyup.enter)="fetchUsers()" placeholder="Username or email...">
-                  <mat-icon matPrefix>search</mat-icon>
-                </mat-form-field>
-              </div>
-
-              <table mat-table [dataSource]="users" class="w-full">
-                <ng-container matColumnDef="username">
-                  <th mat-header-cell *matHeaderCellDef> User </th>
-                  <td mat-cell *matCellDef="let u"> 
-                    <div class="user-cell">
-                      <div class="user-info">
-                        <span class="username">{{u.username}}</span>
-                        <span class="email muted">{{u.email}}</span>
-                      </div>
-                    </div>
-                  </td>
-                </ng-container>
-
-                <ng-container matColumnDef="role">
-                  <th mat-header-cell *matHeaderCellDef> Role </th>
-                  <td mat-cell *matCellDef="let u"> 
-                    <mat-chip [class]="u.role.toLowerCase()">{{u.role}}</mat-chip>
-                  </td>
-                </ng-container>
-
-                <ng-container matColumnDef="status">
-                  <th mat-header-cell *matHeaderCellDef> Status </th>
-                  <td mat-cell *matCellDef="let u"> 
-                    <span class="status-badge" [class.banned]="u.isBanned">
-                      {{u.isBanned ? 'Banned' : 'Active'}}
-                    </span>
-                  </td>
-                </ng-container>
-
-                <ng-container matColumnDef="actions">
-                  <th mat-header-cell *matHeaderCellDef> Actions </th>
-                  <td mat-cell *matCellDef="let u">
-                    <div class="action-buttons">
-                      <button mat-icon-button (click)="toggleBan(u)" [matTooltip]="u.isBanned ? 'Unban User' : 'Ban User'" [color]="u.isBanned ? 'primary' : 'warn'">
-                        <mat-icon>{{u.isBanned ? 'person_add' : 'person_off'}}</mat-icon>
-                      </button>
-                      <button mat-icon-button (click)="promoteUser(u)" *ngIf="u.role === 'USER'" matTooltip="Promote to Admin">
-                        <mat-icon>admin_panel_settings</mat-icon>
-                      </button>
-                    </div>
-                  </td>
-                </ng-container>
-
-                <tr mat-header-row *matHeaderRowDef="['username', 'role', 'status', 'actions']"></tr>
-                <tr mat-row *matRowDef="let row; columns: ['username', 'role', 'status', 'actions'];"></tr>
-              </table>
-
-              <mat-paginator [length]="totalUsers" [pageSize]="pageSize" [pageSizeOptions]="[5, 10, 20]" (page)="onUserPageChange($event)"></mat-paginator>
-            </div>
-          </mat-tab>
-
-          <!-- Reports Tab -->
-          <mat-tab label="Reports">
-            <div class="tab-content">
-              <table mat-table [dataSource]="reports" class="w-full">
-                <ng-container matColumnDef="reason">
-                  <th mat-header-cell *matHeaderCellDef> Reason </th>
-                  <td mat-cell *matCellDef="let r" class="reason-cell"> {{r.reason}} </td>
-                </ng-container>
-                <ng-container matColumnDef="target">
-                  <th mat-header-cell *matHeaderCellDef> Target </th>
-                  <td mat-cell *matCellDef="let r"> 
-                    <div class="target-info">
-                      <span class="target-type">{{r.targetType}}</span>
-                      <span class="target-name">{{r.targetUsername}}</span>
-                    </div>
-                  </td>
-                </ng-container>
-                <ng-container matColumnDef="status">
-                  <th mat-header-cell *matHeaderCellDef> Status </th>
-                  <td mat-cell *matCellDef="let r"> 
-                    <mat-chip [class]="r.status">{{r.status}}</mat-chip>
-                  </td>
-                </ng-container>
-                <ng-container matColumnDef="actions">
-                  <th mat-header-cell *matHeaderCellDef> Actions </th>
-                  <td mat-cell *matCellDef="let r">
-                    <div class="action-buttons">
-                      <button mat-button color="primary" *ngIf="r.status === 'pending'" (click)="resolve(r, 'resolve')">Resolve</button>
-                      <button mat-button color="warn" *ngIf="r.status === 'pending'" (click)="resolve(r, 'dismiss')">Dismiss</button>
-                    </div>
-                  </td>
-                </ng-container>
-
-                <tr mat-header-row *matHeaderRowDef="['reason', 'target', 'status', 'actions']"></tr>
-                <tr mat-row *matRowDef="let row; columns: ['reason', 'target', 'status', 'actions'];"></tr>
-              </table>
-            </div>
-          </mat-tab>
-        </mat-tab-group>
-      </mat-card>
-    </div>
-  `,
-  styles: [`
-    .admin-container {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 24px 0;
-    }
-    .admin-header {
-      margin-bottom: 32px;
-    }
-    .admin-header h1 {
-      font-size: 36px;
-      font-weight: 800;
-    }
-    .stats-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-      gap: 20px;
-      margin-bottom: 32px;
-    }
-    .stat-card {
-      border-radius: 20px;
-      border: 1px solid var(--mat-sys-outline-variant);
-      background: var(--mat-sys-surface-container-low);
-    }
-    .stat-value {
-      font-size: 32px;
-      font-weight: 800;
-      color: var(--mat-sys-primary);
-    }
-    .stat-label {
-      font-weight: 600;
-      color: var(--mat-sys-on-surface);
-    }
-    .stat-sub {
-      font-size: 12px;
-      color: var(--mat-sys-tertiary);
-      margin-top: 4px;
-    }
-    .table-card {
-      border-radius: 24px;
-      overflow: hidden;
-      border: 1px solid var(--mat-sys-outline-variant);
-    }
-    .tab-content {
-      padding: 16px;
-    }
-    .table-actions {
-      display: flex;
-      justify-content: space-between;
-      margin-bottom: 16px;
-    }
-    .search-field {
-      width: 100%;
-      max-width: 400px;
-    }
-    .w-full {
-      width: 100%;
-    }
-    .user-cell {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-    .username {
-      font-weight: 700;
-      display: block;
-    }
-    .email {
-      font-size: 12px;
-    }
-    .status-badge {
-      padding: 4px 12px;
-      border-radius: 12px;
-      font-size: 12px;
-      font-weight: 700;
-      background: var(--mat-sys-primary-container);
-      color: var(--mat-sys-on-primary-container);
-    }
-    .status-badge.banned {
-      background: var(--mat-sys-error-container);
-      color: var(--mat-sys-on-error-container);
-    }
-    mat-chip.admin {
-      background-color: var(--mat-sys-tertiary-container);
-      color: var(--mat-sys-on-tertiary-container);
-    }
-    .target-info {
-      display: flex;
-      flex-direction: column;
-    }
-    .target-type {
-      font-size: 10px;
-      font-weight: 800;
-      text-transform: uppercase;
-      color: var(--mat-sys-outline);
-    }
-    .reason-cell {
-      max-width: 300px;
-    }
-    .action-buttons {
-      display: flex;
-      gap: 4px;
-    }
-  `]
+  templateUrl: './admin.html',
+  styleUrl: './admin.css'
 })
 export class AdminComponent implements OnInit {
+  // ==========================================
+  // Component State Properties
+  // ==========================================
+
+  /** Telemetry object containing database statistics. */
   stats: any = {};
+
+  /** Array of users fetched for the current paginated view. */
   users: any[] = [];
+
+  /** Total cached list of community posts. */
+  posts: any[] = [];
+
+  /** Subset of community posts filtered locally by postSearchQuery. */
+  filteredPosts: any[] = [];
+
+  /** Cache of reported items submitted by users. */
   reports: any[] = [];
+
+  /** Formatted telemetry cards displayed at the top of the portal. */
   statCards: any[] = [];
-  
+
+  // ==========================================
+  // Telemetry Pagination & Query States
+  // ==========================================
+
+  /** Total count of all user accounts across the platform. */
   totalUsers = 0;
+
+  /** Standard limit of rows per page in the users table. */
   pageSize = 10;
+
+  /** Current zero-indexed active page for users pagination. */
   pageIndex = 0;
+
+  /** String query utilized to filter user lists by username or email. */
   userSearchQuery = '';
 
-  constructor(private http: HttpClient) {}
+  /** String query utilized to filter posts locally by title, author or content. */
+  postSearchQuery = '';
 
+  constructor(
+    private http: HttpClient,
+    private router: Router,
+    private feedback: FeedbackService,
+    private authService: AuthService,
+  ) {}
+
+  // ==========================================
+  // Lifecycle & Synchronization Methods
+  // ==========================================
+
+  /**
+   * Initializes the administrator component.
+   * Automatically executes global data synchronization.
+   */
   ngOnInit(): void {
+    this.refreshAll();
+  }
+
+  /**
+   * Orchestrates a complete reload of all dashboard sub-data.
+   * Refreshes stats, user arrays, content tables, and active reports.
+   */
+  refreshAll(): void {
     this.fetchStats();
     this.fetchUsers();
     this.fetchReports();
+    this.fetchPosts();
   }
 
+  // ==========================================
+  // API Fetching Operations
+  // ==========================================
+
+  /**
+   * Telemeters global community statistics from the backend service.
+   * Builds statCards with icons, labels, totals, and daily increments.
+   */
   fetchStats(): void {
-    this.http.get('http://localhost:8080/api/admin/stats').subscribe((res: any) => {
-      this.stats = res;
-      this.statCards = [
-        { label: 'Total Users', value: res.totalUsers, sub: `+${res.newUsersToday} today` },
-        { label: 'Total Posts', value: res.totalPosts, sub: `+${res.newPostsToday} today` },
-        { label: 'Pending Reports', value: res.pendingReports },
-        { label: 'Banned Users', value: res.bannedUsers }
-      ];
+    this.http.get('http://localhost:8080/api/admin/stats').subscribe({
+      next: (res: any) => {
+        this.stats = res;
+        this.statCards = [
+          {
+            label: 'Total Users',
+            value: res.totalUsers,
+            sub: `+${res.newUsersToday} today`,
+            icon: 'people',
+            class: 'users-card',
+          },
+          {
+            label: 'Total Posts',
+            value: res.totalPosts,
+            sub: `+${res.newPostsToday} today`,
+            icon: 'article',
+            class: 'posts-card',
+          },
+          {
+            label: 'Pending Reports',
+            value: res.pendingReports,
+            icon: 'warning',
+            class: 'reports-card',
+          },
+          { 
+            label: 'Banned Users', 
+            value: res.bannedUsers, 
+            icon: 'block', 
+            class: 'banned-card' 
+          },
+        ];
+      },
+      error: (err) => console.error('Failed to fetch stats', err),
     });
   }
 
+  /**
+   * Telemeters a paginated slice of registered users.
+   * Integrates search filters if userSearchQuery is defined.
+   */
   fetchUsers(): void {
     let url = `http://localhost:8080/api/admin/users?page=${this.pageIndex}&limit=${this.pageSize}`;
     if (this.userSearchQuery) {
       url += `&query=${this.userSearchQuery}`;
     }
-    this.http.get(url).subscribe((res: any) => {
-      this.users = res.content;
-      this.totalUsers = res.totalElements;
+    this.http.get(url).subscribe({
+      next: (res: any) => {
+        this.users = res.content;
+        this.totalUsers = res.totalElements;
+      },
+      error: (err) => console.error('Failed to fetch users', err),
     });
   }
 
+  /**
+   * Telemeters all pending and resolved moderation reports.
+   */
   fetchReports(): void {
-    this.http.get('http://localhost:8080/api/admin/reports').subscribe((res: any) => {
-      this.reports = res;
+    this.http.get('http://localhost:8080/api/admin/reports').subscribe({
+      next: (res: any) => {
+        this.reports = res;
+      },
+      error: (err) => console.error('Failed to fetch reports', err),
     });
   }
 
+  /**
+   * Telemeters all community posts and applies local search filters.
+   */
+  fetchPosts(): void {
+    this.http.get('http://localhost:8080/api/posts').subscribe({
+      next: (res: any) => {
+        this.posts = res;
+        this.filterPostsLocal();
+      },
+      error: (err) => console.error('Failed to fetch posts', err),
+    });
+  }
+
+  // ==========================================
+  // Local Filtering & Pagination Helpers
+  // ==========================================
+
+  /**
+   * Filters the total cached posts list locally.
+   * Matches post title, author username, or content strings against search queries.
+   */
+  filterPostsLocal(): void {
+    if (!this.postSearchQuery) {
+      this.filteredPosts = this.posts;
+    } else {
+      const q = this.postSearchQuery.toLowerCase();
+      this.filteredPosts = this.posts.filter(
+        (p) =>
+          p.title?.toLowerCase().includes(q) ||
+          p.content?.toLowerCase().includes(q) ||
+          p.authorUsername?.toLowerCase().includes(q),
+      );
+    }
+  }
+
+  /**
+   * Handles paginator clicks in the users table.
+   * Updates state coordinates and triggers active API re-fetching.
+   * 
+   * @param event Emitted paginator event carrying index and size.
+   */
   onUserPageChange(event: PageEvent): void {
     this.pageIndex = event.pageIndex;
     this.pageSize = event.pageSize;
     this.fetchUsers();
   }
 
+  // ==========================================
+  // User Moderation Actions
+  // ==========================================
+
+  /**
+   * Toggles the ban status of a specified user account.
+   * Requires confirmation; handles error alerts if attempting to self-ban.
+   * 
+   * @param user Target user object containing username and status.
+   */
   toggleBan(user: any): void {
-    this.http.post(`http://localhost:8080/api/admin/users/${user.username}/toggle-ban`, {}).subscribe(() => {
-      user.isBanned = !user.isBanned;
-      this.fetchStats();
+    const action = user.isBanned ? 'unban' : 'ban';
+    this.feedback.askConfirmation({
+      title: `${action.toUpperCase()} USER`,
+      message: `Are you sure you want to ${action} user "${user.username}"?`,
+      confirmText: action.toUpperCase(),
+      onConfirm: () => {
+        this.http
+          .post(`http://localhost:8080/api/admin/users/${user.username}/toggle-ban`, {})
+          .subscribe({
+            next: () => {
+              user.isBanned = !user.isBanned;
+              this.feedback.showToast(
+                `User ${user.username} has been ${action}ned successfully!`,
+                'success',
+              );
+              this.fetchStats();
+            },
+            error: (err) => {
+              this.feedback.showToast(
+                'Failed to update ban status. Note: You cannot ban yourself.',
+                'error',
+              );
+              console.error(err);
+            },
+          });
+      },
     });
   }
 
+  /**
+   * Promotes a regular USER account to the ADMIN role.
+   * Requires confirmation; elevates permissions globally.
+   * 
+   * @param user Target user account.
+   */
   promoteUser(user: any): void {
-    if (confirm(`Promote ${user.username} to ADMIN?`)) {
-      this.http.post(`http://localhost:8080/api/admin/users/${user.username}/role`, { role: 'ADMIN' }).subscribe(() => {
-        user.role = 'ADMIN';
-      });
-    }
+    this.feedback.askConfirmation({
+      title: 'PROMOTE TO ADMIN',
+      message: `Are you sure you want to promote ${user.username} to ADMIN? This will grant full system permissions.`,
+      confirmText: 'Promote',
+      onConfirm: () => {
+        this.http
+          .post(`http://localhost:8080/api/admin/users/${user.username}/role`, { role: 'ADMIN' })
+          .subscribe({
+            next: () => {
+              user.role = 'ADMIN';
+              this.feedback.showToast(
+                `User ${user.username} has been promoted to ADMIN!`,
+                'success',
+              );
+              this.fetchStats();
+            },
+            error: (err) => {
+              this.feedback.showToast('Failed to promote user.', 'error');
+              console.error('Failed to promote user', err);
+            },
+          });
+      },
+    });
   }
 
+  /**
+   * Demotes an ADMIN account back to the basic USER role.
+   * Requires confirmation; revokes all administrative privileges.
+   * 
+   * @param user Target admin account.
+   */
+  demoteUser(user: any): void {
+    this.feedback.askConfirmation({
+      title: 'DEMOTE TO USER',
+      message: `Are you sure you want to demote ${user.username} to USER? This will revoke all administrative permissions.`,
+      confirmText: 'Demote',
+      onConfirm: () => {
+        this.http
+          .post(`http://localhost:8080/api/admin/users/${user.username}/role`, { role: 'USER' })
+          .subscribe({
+            next: () => {
+              user.role = 'USER';
+              this.feedback.showToast(`User ${user.username} has been demoted to USER!`, 'success');
+              this.fetchStats();
+            },
+            error: (err) => {
+              this.feedback.showToast('Failed to demote user.', 'error');
+              console.error('Failed to demote user', err);
+            },
+          });
+      },
+    });
+  }
+
+  /** Retrieves the active user's system role name. */
+  getCurrentUserRole(): string {
+    return this.authService.getRole() ?? '';
+  }
+
+  /**
+   * Checks if the active administrator possesses sufficient hierarchy to ban a user.
+   * Admins cannot be banned by other admins; only SUPER_ADMIN holds that permission.
+   * 
+   * @param user Target user row being checked.
+   */
+  canBan(user: any): boolean {
+    if (user.role === 'SUPER_ADMIN') return false;
+    if (user.role === 'ADMIN') {
+      return this.getCurrentUserRole() === 'SUPER_ADMIN';
+    }
+    return true;
+  }
+
+  // ==========================================
+  // Moderation Report Handlers
+  // ==========================================
+
+  /**
+   * Resolves or dismisses an active user report.
+   * 
+   * @param report Active report payload.
+   * @param action Chosen resolution path: 'resolve' or 'dismiss'.
+   */
   resolve(report: any, action: string): void {
-    this.http.post(`http://localhost:8080/api/admin/reports/${report.id}/resolve`, { action, note: 'Processed by admin' })
-      .subscribe(() => {
-        report.status = action === 'resolve' ? 'resolved' : 'dismissed';
-        this.fetchStats();
-      });
+    const actionText = action === 'resolve' ? 'resolve' : 'dismiss';
+    this.feedback.askConfirmation({
+      title: `${actionText.toUpperCase()} REPORT`,
+      message: `Are you sure you want to ${actionText} report #${report.id}?`,
+      confirmText: actionText.toUpperCase(),
+      onConfirm: () => {
+        this.http
+          .post(`http://localhost:8080/api/admin/reports/${report.id}/resolve`, {
+            action,
+            note: 'Processed by admin',
+          })
+          .subscribe({
+            next: () => {
+              report.status = action === 'resolve' ? 'resolved' : 'dismissed';
+              this.feedback.showToast(`Report #${report.id} marked as ${actionText}ed!`, 'success');
+              this.fetchStats();
+            },
+            error: (err) => {
+              this.feedback.showToast('Failed to resolve report.', 'error');
+              console.error('Failed to resolve report', err);
+            },
+          });
+      },
+    });
+  }
+
+  /**
+   * Deletes a post directly from the dashboard view without an open report context.
+   * Removes all content and physically purges associated media from storage disk.
+   * 
+   * @param post Target post instance.
+   */
+  deletePostDirect(post: any): void {
+    this.feedback.askConfirmation({
+      title: 'DELETE POST',
+      message: `Are you sure you want to delete post "${post.title}" by ${post.authorUsername}? This is permanent and removes associated media files from physical disk.`,
+      confirmText: 'Delete',
+      onConfirm: () => {
+        this.http.delete(`http://localhost:8080/api/admin/posts/${post.id}`).subscribe({
+          next: () => {
+            this.posts = this.posts.filter((p) => p.id !== post.id);
+            this.filterPostsLocal();
+            this.feedback.showToast(
+              'Post deleted and disk media cleaned up successfully!',
+              'success',
+            );
+            this.fetchStats();
+          },
+          error: (err) => this.feedback.showToast('Failed to delete post.', 'error'),
+        });
+      },
+    });
+  }
+
+  /**
+   * Moderates and deletes a post flagged by a user report.
+   * Automatically resolves the reporting ticket upon successful backend deletion.
+   * 
+   * @param report Target user report context.
+   */
+  deleteReportedPost(report: any): void {
+    this.feedback.askConfirmation({
+      title: 'DELETE REPORTED POST',
+      message: `Are you sure you want to delete the reported post (ID: ${report.targetPostId}) by ${report.targetUsername}? This action is permanent and will resolve the report.`,
+      confirmText: 'Delete Post',
+      onConfirm: () => {
+        this.http.delete(`http://localhost:8080/api/admin/posts/${report.targetPostId}`).subscribe({
+          next: () => {
+            this.http
+              .post(`http://localhost:8080/api/admin/reports/${report.id}/resolve`, {
+                action: 'resolve',
+                note: 'Post deleted by admin',
+              })
+              .subscribe(() => {
+                report.status = 'resolved';
+                this.feedback.showToast(
+                  'Reported post deleted and report resolved successfully!',
+                  'success',
+                );
+                this.refreshAll();
+              });
+          },
+          error: (err) => this.feedback.showToast('Failed to delete reported post.', 'error'),
+        });
+      },
+    });
+  }
+
+  /**
+   * Moderates and deletes a comment flagged by a user report.
+   * Automatically resolves the reporting ticket upon successful backend deletion.
+   * 
+   * @param report Target user report context.
+   */
+  deleteReportedComment(report: any): void {
+    this.feedback.askConfirmation({
+      title: 'DELETE REPORTED COMMENT',
+      message: `Are you sure you want to delete the reported comment (ID: ${report.targetCommentId})? This action is permanent and will resolve the report.`,
+      confirmText: 'Delete Comment',
+      onConfirm: () => {
+        this.http
+          .delete(`http://localhost:8080/api/admin/comments/${report.targetCommentId}`)
+          .subscribe({
+            next: () => {
+              this.http
+                .post(`http://localhost:8080/api/admin/reports/${report.id}/resolve`, {
+                  action: 'resolve',
+                  note: 'Comment deleted by admin',
+                })
+                .subscribe(() => {
+                  report.status = 'resolved';
+                  this.feedback.showToast(
+                    'Reported comment deleted and report resolved successfully!',
+                    'success',
+                  );
+                  this.refreshAll();
+                });
+            },
+            error: (err) => this.feedback.showToast('Failed to delete reported comment.', 'error'),
+          });
+      },
+    });
+  }
+
+  /**
+   * Moderates and bans a user flagged by a user report.
+   * Automatically resolves the reporting ticket upon successful backend execution.
+   * 
+   * @param report Target user report context.
+   */
+  banReportedUser(report: any): void {
+    this.feedback.askConfirmation({
+      title: 'BAN REPORTED USER',
+      message: `Are you sure you want to ban reported user ${report.targetUsername}? This will resolve the report.`,
+      confirmText: 'Ban User',
+      onConfirm: () => {
+        this.http
+          .post(`http://localhost:8080/api/admin/users/${report.targetUsername}/toggle-ban`, {})
+          .subscribe({
+            next: () => {
+              this.http
+                .post(`http://localhost:8080/api/admin/reports/${report.id}/resolve`, {
+                  action: 'resolve',
+                  note: 'User banned by admin',
+                })
+                .subscribe(() => {
+                  report.status = 'resolved';
+                  this.feedback.showToast(
+                    `User ${report.targetUsername} banned and report resolved!`,
+                    'success',
+                  );
+                  this.refreshAll();
+                });
+            },
+            error: (err) =>
+              this.feedback.showToast(
+                'Failed to ban reported user. Note: You cannot ban yourself.',
+                'error',
+              ),
+          });
+      },
+    });
+  }
+
+  // ==========================================
+  // Router Handlers
+  // ==========================================
+
+  /** Navigates to a single post display view. */
+  viewPost(postId: number): void {
+    this.router.navigate(['/posts', postId]);
+  }
+
+  /** Navigates to a user's personal profile view. */
+  viewProfile(username: string): void {
+    this.router.navigate(['/profile', username]);
   }
 }

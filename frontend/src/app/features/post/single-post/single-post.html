@@ -101,6 +101,10 @@
         </ng-container>
 
         <p class="comment-content" *ngIf="editingCommentId !== comment.id" [innerHTML]="comment.content | markdown"></p>
+        <div class="comment-media" *ngIf="comment.mediaUrl && editingCommentId !== comment.id">
+          <img *ngIf="comment.mediaUrl.toLowerCase().match('\\.(jpg|jpeg|png|gif|webp)$')" [src]="'http://localhost:8080' + comment.mediaUrl" alt="Comment Media" />
+          <video *ngIf="comment.mediaUrl.toLowerCase().match('\\.(mp4|webm|ogg)$')" [src]="'http://localhost:8080' + comment.mediaUrl" controls></video>
+        </div>
       </mat-card-content>
 
       <mat-card-actions class="comment-actions" *ngIf="editingCommentId !== comment.id">

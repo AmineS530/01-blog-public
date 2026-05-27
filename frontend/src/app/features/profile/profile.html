@@ -41,8 +41,12 @@
           <p class="profile-bio empty-bio" *ngIf="!profile.bio && currentUsername === targetUsername">No bio yet.</p>
           
           <div class="profile-stats">
-            <span class="stat"><strong>{{ profile.followingCount }}</strong> Following</span>
-            <span class="stat"><strong>{{ profile.followerCount }}</strong> Followers</span>
+            <span class="stat clickable" (click)="setActiveTab('following')">
+              <strong>{{ profile.followingCount }}</strong> Following
+            </span>
+            <span class="stat clickable" (click)="setActiveTab('followers')">
+              <strong>{{ profile.followerCount }}</strong> Followers
+            </span>
           </div>
         </div>
       </div>
@@ -65,49 +69,165 @@
     </div>
 
     <div class="posts-section" *ngIf="!profile.isBlocked && !profile.isBlockingMe">
-      <h3 class="section-title">Posts</h3>
       
-      <div *ngIf="posts.length === 0" class="centered muted">
-        <div class="empty-state">
-          <mat-icon>article</mat-icon>
-          <p>No posts yet.</p>
-        </div>
+      <!-- Minimalist Custom Tabs -->
+      <div class="profile-tabs-bar">
+        <button class="profile-tab-btn" [class.active]="activeTab === 'posts'" (click)="setActiveTab('posts')">
+          Posts
+        </button>
+        <button class="profile-tab-btn" [class.active]="activeTab === 'followers'" (click)="setActiveTab('followers')">
+          Followers <span class="tab-count">({{ profile.followerCount }})</span>
+        </button>
+        <button class="profile-tab-btn" [class.active]="activeTab === 'following'" (click)="setActiveTab('following')">
+          Following <span class="tab-count">({{ profile.followingCount }})</span>
+        </button>
       </div>
-      
-      <mat-card *ngFor="let post of posts" class="post-card" (click)="goToPost(post.id)">
-        <div class="post-header">
-          <div class="author-avatar">
-            {{ post.authorUsername.charAt(0).toUpperCase() }}
-          </div>
-          <div class="header-text">
-            <span class="author-name">{{ post.authorUsername }}</span>
-            <span class="post-date">{{ post.createdAt | date:'MMM d, y, h:mm a' }}</span>
+
+      <!-- POSTS TAB VIEW -->
+      <ng-container *ngIf="activeTab === 'posts'">
+        <div *ngIf="posts.length === 0" class="centered muted">
+          <div class="empty-state">
+            <mat-icon>article</mat-icon>
+            <p>No posts yet.</p>
           </div>
         </div>
-        <mat-card-content>
-          <div class="post-media" *ngIf="post.mediaUrl">
-            <img *ngIf="post.mediaUrl.toLowerCase().match('\\.(jpg|jpeg|png|gif|webp)$')" [src]="'http://localhost:8080' + post.mediaUrl" alt="Media" />
-            <video *ngIf="post.mediaUrl.toLowerCase().match('\\.(mp4|webm|ogg)$')" [src]="'http://localhost:8080' + post.mediaUrl" controls></video>
+        
+        <mat-card *ngFor="let post of posts" class="post-card" (click)="goToPost(post.id)">
+          <div class="post-header">
+            <div class="author-avatar">
+              {{ post.authorUsername.charAt(0).toUpperCase() }}
+            </div>
+            <div class="header-text">
+              <span class="author-name">{{ post.authorUsername }}</span>
+              <span class="post-date">{{ post.createdAt | date:'MMM d, y, h:mm a' }}</span>
+            </div>
           </div>
-          <p class="preview" [innerHTML]="(post.content | slice:0:200) + (post.content.length > 200 ? '...' : '') | markdown"></p>
-        </mat-card-content>
-        <mat-card-actions class="post-actions">
-          <div class="actions-left">
-            <button mat-icon-button (click)="togglePostLike($event, post)" [color]="post.isLikedByCurrentUser ? 'warn' : ''">
-              <mat-icon>{{ post.isLikedByCurrentUser ? 'favorite' : 'favorite_border' }}</mat-icon>
+          <mat-card-content>
+            <div class="post-media" *ngIf="post.mediaUrl">
+              <img *ngIf="post.mediaUrl.toLowerCase().match('\\.(jpg|jpeg|png|gif|webp)$')" [src]="'http://localhost:8080' + post.mediaUrl" alt="Media" />
+              <video *ngIf="post.mediaUrl.toLowerCase().match('\\.(mp4|webm|ogg)$')" [src]="'http://localhost:8080' + post.mediaUrl" controls></video>
+            </div>
+            <p class="preview" [innerHTML]="(post.content | slice:0:200) + (post.content.length > 200 ? '...' : '') | markdown"></p>
+          </mat-card-content>
+          <mat-card-actions class="post-actions">
+            <div class="actions-left">
+              <button mat-icon-button (click)="togglePostLike($event, post)" [color]="post.isLikedByCurrentUser ? 'warn' : ''">
+                <mat-icon>{{ post.isLikedByCurrentUser ? 'favorite' : 'favorite_border' }}</mat-icon>
+              </button>
+              <span class="action-count" [class.liked]="post.isLikedByCurrentUser">{{ post.likeCount }}</span>
+              <button mat-icon-button disabled>
+                <mat-icon>chat_bubble_outline</mat-icon>
+              </button>
+              <span class="action-count">{{ post.commentCount }}</span>
+            </div>
+            <span class="spacer"></span>
+            <button mat-icon-button (click)="reportPost($event, post)" matTooltip="Report Post">
+              <mat-icon>flag</mat-icon>
             </button>
-            <span class="action-count" [class.liked]="post.isLikedByCurrentUser">{{ post.likeCount }}</span>
-            <button mat-icon-button disabled>
-              <mat-icon>chat_bubble_outline</mat-icon>
-            </button>
-            <span class="action-count">{{ post.commentCount }}</span>
-          </div>
-          <span class="spacer"></span>
-          <button mat-icon-button (click)="reportPost($event, post)" matTooltip="Report Post">
-            <mat-icon>flag</mat-icon>
+          </mat-card-actions>
+        </mat-card>
+
+        <!-- Load More / Pagination Section -->
+        <div class="pagination-container" *ngIf="hasMorePosts">
+          <button 
+            mat-flat-button 
+            color="primary" 
+            class="load-more-btn glass-panel" 
+            [disabled]="loadingMore"
+            (click)="loadNextPage()"
+          >
+            <span class="btn-content" *ngIf="!loadingMore">
+              <mat-icon>expand_more</mat-icon>
+              <span>Show More Stories</span>
+            </span>
+            <span class="btn-spinner" *ngIf="loadingMore">
+              <mat-spinner diameter="24"></mat-spinner>
+              <span>Loading...</span>
+            </span>
           </button>
-        </mat-card-actions>
-      </mat-card>
+        </div>
+
+        <!-- No More Posts Footer -->
+        <div class="no-more-posts" *ngIf="!hasMorePosts && posts.length > 0">
+          <mat-icon>check_circle_outline</mat-icon>
+          <p>You've caught up with all posts!</p>
+        </div>
+      </ng-container>
+
+      <!-- FOLLOWERS TAB VIEW -->
+      <ng-container *ngIf="activeTab === 'followers'">
+        <div *ngIf="loadingFollowers" class="centered list-loading">
+          <mat-spinner diameter="32"></mat-spinner>
+        </div>
+
+        <div *ngIf="!loadingFollowers && followers.length === 0" class="centered muted">
+          <div class="empty-state">
+            <mat-icon>people_outline</mat-icon>
+            <p>No followers yet.</p>
+          </div>
+        </div>
+
+        <div *ngIf="!loadingFollowers && followers.length > 0" class="minimal-list-container">
+          <div *ngFor="let user of followers" class="minimal-list-row" (click)="navigateToProfile(user.username)">
+            <div class="row-left">
+              <div class="row-avatar">
+                {{ user.username.charAt(0).toUpperCase() }}
+              </div>
+              <div class="row-info">
+                <div class="row-name">{{ user.fullName || user.username }}</div>
+                <div class="row-handle">@{{ user.username }}</div>
+              </div>
+            </div>
+            <div class="row-right" *ngIf="currentUsername !== user.username">
+              <button 
+                class="minimal-action-btn"
+                [class.following]="user.isFollowing"
+                (click)="toggleFollowUser(user, $event)"
+              >
+                {{ user.isFollowing ? 'Following' : 'Follow' }}
+              </button>
+            </div>
+          </div>
+        </div>
+      </ng-container>
+
+      <!-- FOLLOWING TAB VIEW -->
+      <ng-container *ngIf="activeTab === 'following'">
+        <div *ngIf="loadingFollowing" class="centered list-loading">
+          <mat-spinner diameter="32"></mat-spinner>
+        </div>
+
+        <div *ngIf="!loadingFollowing && followingList.length === 0" class="centered muted">
+          <div class="empty-state">
+            <mat-icon>person_add_alt</mat-icon>
+            <p>Not following anyone yet.</p>
+          </div>
+        </div>
+
+        <div *ngIf="!loadingFollowing && followingList.length > 0" class="minimal-list-container">
+          <div *ngFor="let user of followingList" class="minimal-list-row" (click)="navigateToProfile(user.username)">
+            <div class="row-left">
+              <div class="row-avatar">
+                {{ user.username.charAt(0).toUpperCase() }}
+              </div>
+              <div class="row-info">
+                <div class="row-name">{{ user.fullName || user.username }}</div>
+                <div class="row-handle">@{{ user.username }}</div>
+              </div>
+            </div>
+            <div class="row-right" *ngIf="currentUsername !== user.username">
+              <button 
+                class="minimal-action-btn"
+                [class.following]="user.isFollowing"
+                (click)="toggleFollowUser(user, $event)"
+              >
+                {{ user.isFollowing ? 'Following' : 'Follow' }}
+              </button>
+            </div>
+          </div>
+        </div>
+      </ng-container>
+
     </div>
   </ng-container>
 

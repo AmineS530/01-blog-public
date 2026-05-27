@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -14,8 +14,11 @@ import { PostService } from '../../../core/services/post.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { MediaService } from '../../../core/services/media.service';
 import { ReportService } from '../../../core/services/report.service';
+import { FeedbackService } from '../../../core/services/feedback.service';
+import { RealtimeService } from '../../../core/services/realtime.service';
 import { PostResponse, CommentResponse } from '../../../shared/models/post.models';
 import { MarkdownPipe } from '../../../shared/pipes/markdown.pipe';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-single-post',
@@ -36,7 +39,7 @@ import { MarkdownPipe } from '../../../shared/pipes/markdown.pipe';
   templateUrl: './single-post.html',
   styleUrl: './single-post.css'
 })
-export class SinglePostComponent implements OnInit {
+export class SinglePostComponent implements OnInit, OnDestroy {
   post: PostResponse | null = null;
   loading = true;
   error = '';
@@ -52,6 +55,9 @@ export class SinglePostComponent implements OnInit {
   commentMediaUrl: string | null = null;
   uploadingCommentMedia = false;
 
+  private commentsSubscription?: Subscription;
+  private likesSubscription?: Subscription;
+
   constructor(
     private route: ActivatedRoute,
     private router: Router,
@@ -59,7 +65,9 @@ export class SinglePostComponent implements OnInit {
     private authService: AuthService,
     private mediaService: MediaService,
     private reportService: ReportService,
-    private fb: FormBuilder
+    private fb: FormBuilder,
+    private feedback: FeedbackService,
+    private realtimeService: RealtimeService
   ) {
     this.commentForm = this.fb.group({
       content: ['', [Validators.required, Validators.maxLength(1000)]]
@@ -83,10 +91,46 @@ export class SinglePostComponent implements OnInit {
         this.isAuthor = this.currentUsername === post.authorUsername;
         this.loadComments(id);
         this.loading = false;
+        this.setupRealtime(id);
       },
       error: () => {
         this.error = 'Post not found.';
         this.loading = false;
+      }
+    });
+  }
+
+  private setupRealtime(postId: number): void {
+    // 1. Subscribe to new comments for this post
+    this.commentsSubscription = this.realtimeService.comments$.subscribe({
+      next: (payload) => {
+        if (payload.postId === postId) {
+          const newComment = payload.comment;
+          if (newComment.authorUsername !== this.currentUsername) {
+            if (!this.comments.some(c => c.id === newComment.id)) {
+              this.comments.push(newComment);
+              if (this.post) {
+                this.post.commentCount++;
+              }
+            }
+          }
+        }
+      }
+    });
+
+    // 2. Subscribe to like count updates
+    this.likesSubscription = this.realtimeService.likes$.subscribe({
+      next: (event) => {
+        if (event.type === 'POST_LIKE' && event.postId === postId) {
+          if (this.post) {
+            this.post.likeCount = event.likeCount;
+          }
+        } else if (event.type === 'COMMENT_LIKE' && event.postId === postId) {
+          const targetComment = this.comments.find(c => c.id === event.commentId);
+          if (targetComment) {
+            targetComment.likeCount = event.likeCount;
+          }
+        }
       }
     });
   }
@@ -106,9 +150,10 @@ export class SinglePostComponent implements OnInit {
       next: (res) => {
         this.commentMediaUrl = res.url;
         this.uploadingCommentMedia = false;
+        this.feedback.showToast('Comment media uploaded!', 'success');
       },
       error: () => {
-        alert('Failed to upload comment media');
+        this.feedback.showToast('Failed to upload comment media', 'error');
         this.uploadingCommentMedia = false;
       }
     });
@@ -116,6 +161,7 @@ export class SinglePostComponent implements OnInit {
 
   removeCommentMedia(): void {
     this.commentMediaUrl = null;
+    this.feedback.showToast('Comment media removed.', 'info');
   }
 
   submitComment(): void {
@@ -132,6 +178,7 @@ export class SinglePostComponent implements OnInit {
         this.post!.commentCount++;
         this.commentForm.reset();
         this.commentMediaUrl = null;
+        this.feedback.showToast('Comment posted!', 'success');
       }
     });
   }
@@ -156,20 +203,27 @@ export class SinglePostComponent implements OnInit {
           this.comments[index] = updatedComment;
         }
         this.cancelEditComment();
+        this.feedback.showToast('Comment updated!', 'success');
       },
-      error: () => alert('Failed to update comment')
+      error: () => this.feedback.showToast('Failed to update comment', 'error')
     });
   }
 
   deleteComment(commentId: number): void {
-    if (!confirm('Delete this comment?')) return;
-
-    this.postService.deleteComment(commentId).subscribe({
-      next: () => {
-        this.comments = this.comments.filter(c => c.id !== commentId);
-        if (this.post) this.post.commentCount--;
-      },
-      error: () => alert('Failed to delete comment')
+    this.feedback.askConfirmation({
+      title: 'DELETE COMMENT',
+      message: 'Are you sure you want to delete this comment?',
+      confirmText: 'Delete',
+      onConfirm: () => {
+        this.postService.deleteComment(commentId).subscribe({
+          next: () => {
+            this.comments = this.comments.filter(c => c.id !== commentId);
+            if (this.post) this.post.commentCount--;
+            this.feedback.showToast('Comment deleted successfully!', 'success');
+          },
+          error: () => this.feedback.showToast('Failed to delete comment', 'error')
+        });
+      }
     });
   }
 
@@ -181,6 +235,7 @@ export class SinglePostComponent implements OnInit {
       error: () => {
         this.post!.isLikedByCurrentUser = !this.post!.isLikedByCurrentUser;
         this.post!.likeCount += this.post!.isLikedByCurrentUser ? 1 : -1;
+        this.feedback.showToast('Failed to update post like status.', 'error');
       }
     });
   }
@@ -192,6 +247,7 @@ export class SinglePostComponent implements OnInit {
       error: () => {
         comment.isLikedByCurrentUser = !comment.isLikedByCurrentUser;
         comment.likeCount += comment.isLikedByCurrentUser ? 1 : -1;
+        this.feedback.showToast('Failed to update comment like status.', 'error');
       }
     });
   }
@@ -201,8 +257,8 @@ export class SinglePostComponent implements OnInit {
     const reason = prompt(`Why are you reporting this post by ${this.post.authorUsername}?`);
     if (reason) {
       this.reportService.reportPost(this.post.id, reason).subscribe({
-        next: () => alert('Post reported successfully.'),
-        error: () => alert('Failed to report post.')
+        next: () => this.feedback.showToast('Post reported successfully.', 'success'),
+        error: () => this.feedback.showToast('Failed to report post.', 'error')
       });
     }
   }
@@ -211,8 +267,8 @@ export class SinglePostComponent implements OnInit {
     const reason = prompt(`Why are you reporting this comment by ${comment.authorUsername}?`);
     if (reason) {
       this.reportService.reportComment(comment.id, reason).subscribe({
-        next: () => alert('Comment reported successfully.'),
-        error: () => alert('Failed to report comment.')
+        next: () => this.feedback.showToast('Comment reported successfully.', 'success'),
+        error: () => this.feedback.showToast('Failed to report comment.', 'error')
       });
     }
   }
@@ -226,15 +282,31 @@ export class SinglePostComponent implements OnInit {
   }
 
   delete(): void {
-    if (!confirm('Delete this post? This cannot be undone.')) return;
-
-    this.postService.delete(this.post!.id).subscribe({
-      next: () => this.router.navigate(['/feed']),
-      error: () => this.error = 'Failed to delete post. Please try again.'
+    this.feedback.askConfirmation({
+      title: 'DELETE POST',
+      message: 'Delete this post? This action cannot be undone and will permanently remove associated media files.',
+      confirmText: 'Delete',
+      onConfirm: () => {
+        this.postService.delete(this.post!.id).subscribe({
+          next: () => {
+            this.feedback.showToast('Post deleted successfully!', 'success');
+            this.router.navigate(['/feed']);
+          },
+          error: () => {
+            this.feedback.showToast('Failed to delete post.', 'error');
+            this.error = 'Failed to delete post. Please try again.';
+          }
+        });
+      }
     });
   }
 
   back(): void {
     this.router.navigate(['/feed']);
+  }
+
+  ngOnDestroy(): void {
+    this.commentsSubscription?.unsubscribe();
+    this.likesSubscription?.unsubscribe();
   }
 }

@@ -11,6 +11,7 @@ import { ProfileService } from '../../core/services/profile.service';
 import { PostService } from '../../core/services/post.service';
 import { AuthService } from '../../core/services/auth.service';
 import { ReportService } from '../../core/services/report.service';
+import { FeedbackService } from '../../core/services/feedback.service';
 import { ProfileResponse } from '../../shared/models/profile.models';
 import { PostResponse } from '../../shared/models/post.models';
 import { MarkdownPipe } from '../../shared/pipes/markdown.pipe';
@@ -41,13 +42,25 @@ export class ProfileComponent implements OnInit {
   currentUsername = '';
   targetUsername = '';
 
+  currentPage = 0;
+  pageSize = 10;
+  hasMorePosts = true;
+  loadingMore = false;
+
+  activeTab: 'posts' | 'followers' | 'following' = 'posts';
+  followers: ProfileResponse[] = [];
+  followingList: ProfileResponse[] = [];
+  loadingFollowers = false;
+  loadingFollowing = false;
+
   constructor(
     private route: ActivatedRoute,
     private router: Router,
     private profileService: ProfileService,
     private postService: PostService,
     private authService: AuthService,
-    private reportService: ReportService
+    private reportService: ReportService,
+    private feedback: FeedbackService
   ) {}
 
   ngOnInit(): void {
@@ -66,6 +79,11 @@ export class ProfileComponent implements OnInit {
   loadProfile(): void {
     this.loading = true;
     this.error = '';
+    this.currentPage = 0;
+    this.hasMorePosts = true;
+    this.activeTab = 'posts';
+    this.followers = [];
+    this.followingList = [];
 
     this.profileService.getProfile(this.targetUsername).subscribe({
       next: (profile) => {
@@ -80,13 +98,38 @@ export class ProfileComponent implements OnInit {
   }
 
   loadPosts(): void {
-    this.postService.getByUsername(this.targetUsername).subscribe({
+    this.postService.getByUsername(this.targetUsername, this.currentPage, this.pageSize).subscribe({
       next: (posts) => {
         this.posts = posts;
+        this.hasMorePosts = posts.length >= this.pageSize;
         this.loading = false;
       },
       error: () => {
         this.loading = false;
+      }
+    });
+  }
+
+  loadNextPage(): void {
+    if (this.loadingMore || !this.hasMorePosts) return;
+    this.loadingMore = true;
+    const nextPage = this.currentPage + 1;
+
+    this.postService.getByUsername(this.targetUsername, nextPage, this.pageSize).subscribe({
+      next: (posts) => {
+        if (posts.length > 0) {
+          const newPosts = posts.filter(p => !this.posts.some(existing => existing.id === p.id));
+          this.posts = [...this.posts, ...newPosts];
+          this.currentPage = nextPage;
+          this.hasMorePosts = posts.length >= this.pageSize;
+        } else {
+          this.hasMorePosts = false;
+        }
+        this.loadingMore = false;
+      },
+      error: () => {
+        this.feedback.showToast('Failed to load more posts.', 'error');
+        this.loadingMore = false;
       }
     });
   }
@@ -145,8 +188,8 @@ export class ProfileComponent implements OnInit {
     const reason = prompt(`Why are you reporting user ${this.profile.username}?`);
     if (reason) {
       this.reportService.reportUser(this.profile.id, reason).subscribe({
-        next: () => alert('User reported successfully.'),
-        error: () => alert('Failed to report user.')
+        next: () => this.feedback.showToast('User reported successfully.', 'success'),
+        error: () => this.feedback.showToast('Failed to report user.', 'error')
       });
     }
   }
@@ -156,8 +199,8 @@ export class ProfileComponent implements OnInit {
     const reason = prompt(`Why are you reporting this post by ${post.authorUsername}?`);
     if (reason) {
       this.reportService.reportPost(post.id, reason).subscribe({
-        next: () => alert('Post reported successfully.'),
-        error: () => alert('Failed to report post.')
+        next: () => this.feedback.showToast('Post reported successfully.', 'success'),
+        error: () => this.feedback.showToast('Failed to report post.', 'error')
       });
     }
   }
@@ -168,5 +211,70 @@ export class ProfileComponent implements OnInit {
 
   back(): void {
     this.router.navigate(['/feed']);
+  }
+
+  navigateToProfile(username: string): void {
+    this.router.navigate(['/profile', username]);
+  }
+
+  setActiveTab(tab: 'posts' | 'followers' | 'following'): void {
+    this.activeTab = tab;
+    if (tab === 'followers') {
+      this.loadFollowers();
+    } else if (tab === 'following') {
+      this.loadFollowing();
+    }
+  }
+
+  loadFollowers(): void {
+    if (!this.targetUsername) return;
+    this.loadingFollowers = true;
+    this.profileService.getFollowers(this.targetUsername).subscribe({
+      next: (list) => {
+        this.followers = list;
+        this.loadingFollowers = false;
+      },
+      error: () => {
+        this.feedback.showToast('Failed to load followers.', 'error');
+        this.loadingFollowers = false;
+      }
+    });
+  }
+
+  loadFollowing(): void {
+    if (!this.targetUsername) return;
+    this.loadingFollowing = true;
+    this.profileService.getFollowing(this.targetUsername).subscribe({
+      next: (list) => {
+        this.followingList = list;
+        this.loadingFollowing = false;
+      },
+      error: () => {
+        this.feedback.showToast('Failed to load following.', 'error');
+        this.loadingFollowing = false;
+      }
+    });
+  }
+
+  toggleFollowUser(user: ProfileResponse, event: MouseEvent): void {
+    event.stopPropagation();
+    const wasFollowing = user.isFollowing;
+    user.isFollowing = !wasFollowing;
+    user.followerCount += user.isFollowing ? 1 : -1;
+
+    // Reactively update current profile stats if we are on our own profile page
+    if (this.currentUsername === this.targetUsername && this.profile) {
+      this.profile.followingCount += user.isFollowing ? 1 : -1;
+    }
+
+    this.profileService.toggleFollow(user.username).subscribe({
+      error: () => {
+        user.isFollowing = wasFollowing;
+        user.followerCount += wasFollowing ? 1 : -1;
+        if (this.currentUsername === this.targetUsername && this.profile) {
+          this.profile.followingCount += wasFollowing ? 1 : -1;
+        }
+      }
+    });
   }
 }

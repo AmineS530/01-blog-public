@@ -1,62 +1,239 @@
-<div class="feed-container">
-  
-  <div class="feed-header">
-    <h2>Your Feed</h2>
-  </div>
-
-  <div *ngIf="loading" class="centered">
-    <mat-spinner diameter="48"></mat-spinner>
-  </div>
-
-  <div *ngIf="error" class="centered error">{{ error }}</div>
-
-  <div *ngIf="!loading && !error && posts.length === 0" class="centered muted">
-    <div class="empty-state">
-      <mat-icon>article</mat-icon>
-      <p>No posts yet. Be the first to write something!</p>
-    </div>
-  </div>
-
-  <mat-card *ngFor="let post of posts" class="post-card" (click)="goToPost(post.id)">
-    <div class="post-header">
-      <div class="author-avatar" (click)="goToProfile($event, post.authorUsername)">
-        <img *ngIf="post.authorAvatarUrl" [src]="'http://localhost:8080' + post.authorAvatarUrl" alt="Avatar" />
-        <span *ngIf="!post.authorAvatarUrl">{{ post.authorUsername.charAt(0).toUpperCase() }}</span>
-      </div>
-      <div class="header-text">
-        <a class="author-name" href="javascript:void(0)" (click)="goToProfile($event, post.authorUsername)">
-          {{ post.authorUsername }}
-        </a>
-        <span class="post-date">· {{ post.createdAt | date:'MMM d, y, h:mm a' }}</span>
-      </div>
-    </div>
+<div class="feed-layout feed-container">
+  <!-- Main Feed Stream -->
+  <div class="feed-main">
     
-    <mat-card-content>
-      <div class="post-media" *ngIf="post.mediaUrl">
-        <img *ngIf="post.mediaUrl.toLowerCase().match('\\.(jpg|jpeg|png|gif|webp)$')" [src]="'http://localhost:8080' + post.mediaUrl" alt="Media" />
-        <video *ngIf="post.mediaUrl.toLowerCase().match('\\.(mp4|webm|ogg)$')" [src]="'http://localhost:8080' + post.mediaUrl" controls></video>
-      </div>
-      <h3 class="post-title">{{ post.title }}</h3>
-      <p class="preview" [innerHTML]="(post.content | slice:0:300) + (post.content.length > 300 ? '...' : '') | markdown"></p>
-    </mat-card-content>
-    
-    <mat-card-actions class="post-actions">
-      <div class="actions-left">
-        <button mat-icon-button (click)="toggleLike($event, post)" [color]="post.isLikedByCurrentUser ? 'warn' : ''" matTooltip="Like">
-          <mat-icon>{{ post.isLikedByCurrentUser ? 'favorite' : 'favorite_border' }}</mat-icon>
-        </button>
-        <span class="action-count" [class.liked]="post.isLikedByCurrentUser">{{ post.likeCount }}</span>
-        
-        <button mat-icon-button disabled matTooltip="Comments">
-          <mat-icon>chat_bubble_outline</mat-icon>
-        </button>
-        <span class="action-count">{{ post.commentCount }}</span>
-      </div>
-      <span class="spacer"></span>
-      <button mat-icon-button (click)="reportPost($event, post)" matTooltip="Report Post">
-        <mat-icon>flag</mat-icon>
+    <!-- Feed Tabs (Global vs Following) -->
+    <div class="feed-tabs-container glass-panel">
+      <button class="feed-tab" [class.active]="activeTab === 'global'" (click)="switchTab('global')">
+        <mat-icon>public</mat-icon>
+        <span>Global Feed</span>
       </button>
-    </mat-card-actions>
-  </mat-card>
+      <button class="feed-tab" [class.active]="activeTab === 'following'" (click)="switchTab('following')">
+        <mat-icon>auto_awesome</mat-icon>
+        <span>Following Feed</span>
+      </button>
+      <div class="tab-indicator" [class.slide-right]="activeTab === 'following'"></div>
+    </div>
 
+    <!-- Quick Post Box -->
+    <div class="quick-post-card glass-panel">
+      <div class="quick-post-header">
+        <div class="user-avatar-small">
+          <span>{{ currentUsername.charAt(0).toUpperCase() }}</span>
+        </div>
+        <h3>Share something today</h3>
+      </div>
+      
+      <div class="quick-post-body">
+        <input 
+          type="text" 
+          placeholder="Post Title..." 
+          class="quick-title-input" 
+          [(ngModel)]="quickPostTitle" 
+          maxlength="100" 
+        />
+        <textarea 
+          placeholder="What's on your mind? (Markdown supported...)" 
+          class="quick-content-input"
+          [(ngModel)]="quickPostContent"
+          maxlength="5000"
+        ></textarea>
+
+        <!-- Media Upload Preview -->
+        <div class="quick-post-preview" *ngIf="quickPostMediaUrl">
+          <button class="remove-media-btn" (click)="removeMedia()" matTooltip="Remove media">
+            <mat-icon>close</mat-icon>
+          </button>
+          <img *ngIf="quickPostMediaUrl.toLowerCase().match('\\.(jpg|jpeg|png|gif|webp)$')" [src]="'http://localhost:8080' + quickPostMediaUrl" alt="Preview" />
+          <video *ngIf="quickPostMediaUrl.toLowerCase().match('\\.(mp4|webm|ogg)$')" [src]="'http://localhost:8080' + quickPostMediaUrl" controls></video>
+        </div>
+      </div>
+
+      <div class="quick-post-footer">
+        <div class="footer-left">
+          <input 
+            type="file" 
+            id="quick-media-input" 
+            accept="image/*,video/*" 
+            style="display: none;" 
+            (change)="onFileSelected($event)" 
+          />
+          <label for="quick-media-input" class="media-upload-btn" matTooltip="Attach Image or Video">
+            <mat-icon>image</mat-icon>
+            <span>Photo/Video</span>
+          </label>
+          <span class="uploading-text" *ngIf="uploadingMedia">Uploading...</span>
+        </div>
+        
+        <button 
+          mat-flat-button 
+          color="primary" 
+          class="publish-btn"
+          [disabled]="!quickPostTitle.trim() || !quickPostContent.trim() || uploadingMedia || submittingPost"
+          (click)="publishPost()"
+        >
+          <mat-icon *ngIf="!submittingPost">send</mat-icon>
+          <span>{{ submittingPost ? 'Publishing...' : 'Publish' }}</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Floating 'New Posts' indicator pill -->
+    <div 
+      class="new-posts-pill" 
+      *ngIf="newIncomingPosts.length > 0" 
+      (click)="applyNewPosts()"
+    >
+      <mat-icon>cached</mat-icon>
+      <span>{{ newIncomingPosts.length }} new post{{ newIncomingPosts.length > 1 ? 's' : '' }} available. Click to view!</span>
+    </div>
+
+    <!-- Feed Content -->
+    <div *ngIf="loading" class="centered loading-state">
+      <mat-spinner diameter="48"></mat-spinner>
+      <p class="muted">Fetching amazing stories...</p>
+    </div>
+
+    <div *ngIf="error" class="centered error-state">
+      <mat-icon color="warn">error_outline</mat-icon>
+      <p>{{ error }}</p>
+      <button mat-stroked-button (click)="loadPosts()">Retry</button>
+    </div>
+
+    <!-- Empty Feed States -->
+    <div *ngIf="!loading && !error && posts.length === 0" class="centered empty-state-container glass-panel">
+      <div class="empty-state">
+        <mat-icon class="empty-icon">{{ activeTab === 'global' ? 'article' : 'people_outline' }}</mat-icon>
+        <h3>{{ activeTab === 'global' ? 'No posts yet' : 'Your Feed is Quiet' }}</h3>
+        <p class="muted">
+          {{ activeTab === 'global' ? 'Be the first to publish a high-quality post on Z1Spot!' : 'Follow creators from the sidebar on the right to see their updates here.' }}
+        </p>
+        <button mat-flat-button color="primary" *ngIf="activeTab === 'global'" (click)="goToCreate()">
+          <mat-icon>edit</mat-icon> Write a Post
+        </button>
+      </div>
+    </div>
+
+    <!-- Posts Listing -->
+    <div *ngIf="!loading && !error && posts.length > 0" class="posts-feed-list">
+      <mat-card *ngFor="let post of posts" class="post-card" (click)="goToPost(post.id)">
+        <div class="post-header">
+          <div class="author-avatar" (click)="goToProfile($event, post.authorUsername)">
+            <img *ngIf="post.authorAvatarUrl" [src]="'http://localhost:8080' + post.authorAvatarUrl" alt="Avatar" />
+            <span *ngIf="!post.authorAvatarUrl">{{ post.authorUsername.charAt(0).toUpperCase() }}</span>
+          </div>
+          <div class="header-text">
+            <a class="author-name" href="javascript:void(0)" (click)="goToProfile($event, post.authorUsername)">
+              {{ post.authorUsername }}
+            </a>
+            <span class="post-date">{{ post.createdAt | date:'MMM d, y, h:mm a' }}</span>
+          </div>
+        </div>
+        
+        <mat-card-content class="post-card-body">
+          <div class="post-media-container" *ngIf="post.mediaUrl" (click)="$event.stopPropagation()">
+            <img *ngIf="post.mediaUrl.toLowerCase().match('\\.(jpg|jpeg|png|gif|webp)$')" [src]="'http://localhost:8080' + post.mediaUrl" alt="Media" />
+            <video *ngIf="post.mediaUrl.toLowerCase().match('\\.(mp4|webm|ogg)$')" [src]="'http://localhost:8080' + post.mediaUrl" controls></video>
+          </div>
+          <h3 class="post-title">{{ post.title }}</h3>
+          <p class="preview-text" [innerHTML]="(post.content | slice:0:280) + (post.content.length > 280 ? '...' : '') | markdown"></p>
+        </mat-card-content>
+        
+        <mat-card-actions class="post-actions" (click)="$event.stopPropagation()">
+          <div class="actions-left">
+            <button mat-icon-button (click)="toggleLike($event, post)" class="action-btn-like" [class.active-like]="post.isLikedByCurrentUser" matTooltip="Like">
+              <mat-icon class="heart-icon">{{ post.isLikedByCurrentUser ? 'favorite' : 'favorite_border' }}</mat-icon>
+            </button>
+            <span class="action-count" [class.liked]="post.isLikedByCurrentUser">{{ post.likeCount }}</span>
+            
+            <button mat-icon-button (click)="goToPost(post.id)" class="action-btn-comment" matTooltip="Join Discussion">
+              <mat-icon>chat_bubble_outline</mat-icon>
+            </button>
+            <span class="action-count">{{ post.commentCount }}</span>
+          </div>
+          
+          <button mat-icon-button (click)="reportPost($event, post)" class="action-btn-flag" matTooltip="Flag post as inappropriate">
+            <mat-icon>flag</mat-icon>
+          </button>
+        </mat-card-actions>
+      </mat-card>
+
+      <!-- Load More / Pagination Section -->
+      <div class="pagination-container" *ngIf="hasMorePosts">
+        <button 
+          mat-flat-button 
+          color="primary" 
+          class="load-more-btn glass-panel" 
+          [disabled]="loadingMore"
+          (click)="loadNextPage()"
+        >
+          <span class="btn-content" *ngIf="!loadingMore">
+            <mat-icon>expand_more</mat-icon>
+            <span>Show More Stories</span>
+          </span>
+          <span class="btn-spinner" *ngIf="loadingMore">
+            <mat-spinner diameter="24"></mat-spinner>
+            <span>Loading...</span>
+          </span>
+        </button>
+      </div>
+
+      <!-- No More Posts Footer -->
+      <div class="no-more-posts" *ngIf="!hasMorePosts && posts.length > 0">
+        <mat-icon>check_circle_outline</mat-icon>
+        <p>You've caught up with everything!</p>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Sticky Sidebar Panel -->
+  <div class="feed-sidebar">
+    <div class="sidebar-card glass-panel">
+      <div class="sidebar-header">
+        <mat-icon class="sparkle-icon">auto_awesome</mat-icon>
+        <h3>Who to Follow</h3>
+      </div>
+      
+      <div class="sidebar-content">
+        <div *ngIf="loadingRecommended" class="sidebar-loading">
+          <mat-spinner diameter="32"></mat-spinner>
+        </div>
+        
+        <div *ngIf="!loadingRecommended && recommendedUsers.length === 0" class="sidebar-empty">
+          <p class="muted">You are fully connected! No new creators to recommend right now.</p>
+        </div>
+        
+        <div *ngIf="!loadingRecommended && recommendedUsers.length > 0" class="recommended-list">
+          <div class="recommended-user-item" *ngFor="let user of recommendedUsers">
+            <div class="user-info-group" (click)="goToProfile($event, user.username)">
+              <div class="user-avatar-mid">
+                <img *ngIf="user.avatarUrl" [src]="'http://localhost:8080' + user.avatarUrl" alt="Avatar" />
+                <span *ngIf="!user.avatarUrl">{{ user.username.charAt(0).toUpperCase() }}</span>
+              </div>
+              <div class="user-meta-info">
+                <span class="username-title">{{ user.username }}</span>
+                <span class="followers-subtext">{{ user.followerCount }} followers</span>
+              </div>
+            </div>
+            
+            <button 
+              mat-flat-button 
+              [color]="user.isFollowing ? 'basic' : 'primary'" 
+              class="follow-toggle-btn"
+              [class.following]="user.isFollowing"
+              (click)="toggleFollow($event, user)"
+            >
+              <span>{{ user.isFollowing ? 'Following' : 'Follow' }}</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Premium Footer Credits -->
+    <div class="sidebar-footer-credits">
+      <p>© 2026 Z1Spot Inc. Powered by Supabase & Angular</p>
+    </div>
+  </div>
 </div>
