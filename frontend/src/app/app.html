@@ -18,7 +18,11 @@
       </button>
       
       <button mat-button class="profile-btn" [matMenuTriggerFor]="userMenu">
-        <span class="nav-username">{{ authService.getUsername() }}</span>
+        <div class="nav-avatar-container">
+          <img *ngIf="currentUserAvatarUrl" [src]="currentUserAvatarUrl" alt="Avatar" class="nav-avatar" />
+          <span *ngIf="!currentUserAvatarUrl" class="nav-avatar-fallback">{{ (currentUserDisplayName || authService.getUsername() || '').charAt(0).toUpperCase() }}</span>
+        </div>
+        <span class="nav-username">{{ currentUserDisplayName || authService.getUsername() }}</span>
         <mat-icon iconPositionEnd>arrow_drop_down</mat-icon>
       </button>
 

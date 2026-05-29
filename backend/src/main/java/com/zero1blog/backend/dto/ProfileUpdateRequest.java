@@ -4,7 +4,7 @@ import lombok.Data;
 
 @Data
 public class ProfileUpdateRequest {
-    private String fullName;
+    private String displayName;
     private String bio;
     private String avatarUrl;
 }

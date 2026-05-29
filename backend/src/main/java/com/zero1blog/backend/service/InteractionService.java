@@ -260,6 +260,7 @@ public class InteractionService {
                 comment.getContent(),
                 comment.getMediaUrl(),
                 comment.getAuthor().getUsername(),
+                comment.getAuthor().getDisplayName(),
                 comment.getAuthor().getProfile() != null ? comment.getAuthor().getProfile().getAvatarUrl() : null,
                 comment.getCreatedAt(),
                 comment.getUpdatedAt(),

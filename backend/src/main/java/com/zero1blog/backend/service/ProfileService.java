@@ -62,7 +62,7 @@ public class ProfileService {
                 .id(targetUser.getId())
                 .publicId(targetUser.getPublicId())
                 .username(targetUser.getUsername())
-                .fullName(profile.getFullName())
+                .displayName(profile.getDisplayName())
                 .bio(profile.getBio())
                 .avatarUrl(profile.getAvatarUrl())
                 .followerCount(followerCount)
@@ -80,13 +80,38 @@ public class ProfileService {
         UserProfile profile = userProfileRepository.findByUser(currentUser)
                 .orElse(UserProfile.builder().user(currentUser).build());
 
-        profile.setFullName(request.getFullName());
+        profile.setDisplayName(request.getDisplayName());
         profile.setBio(request.getBio());
         profile.setAvatarUrl(request.getAvatarUrl());
 
         userProfileRepository.save(profile);
 
         return getProfile(currentUser.getUsername(), currentUserPublicId);
+    }
+
+    public ProfileResponse updateProfileByUsername(String targetUsername, ProfileUpdateRequest request, String callerPublicId) {
+        User caller = userRepository.findByPublicId(callerPublicId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        User targetUser = userRepository.findByUsername(targetUsername)
+                .orElseThrow(() -> new RuntimeException("Target user not found"));
+
+        boolean isSelf = targetUser.getPublicId().equals(callerPublicId);
+        boolean isAdmin = caller.getRole() == User.Role.ADMIN || caller.getRole() == User.Role.SUPER_ADMIN;
+
+        if (!isSelf && !isAdmin) {
+            throw new RuntimeException("Not authorized to update this profile");
+        }
+
+        UserProfile profile = userProfileRepository.findByUser(targetUser)
+                .orElse(UserProfile.builder().user(targetUser).build());
+
+        profile.setDisplayName(request.getDisplayName());
+        profile.setBio(request.getBio());
+        profile.setAvatarUrl(request.getAvatarUrl());
+
+        userProfileRepository.save(profile);
+
+        return getProfile(targetUser.getUsername(), callerPublicId);
     }
 
     public void toggleFollow(String targetUsername, String currentUserPublicId) {

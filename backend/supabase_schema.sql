@@ -115,7 +115,7 @@
         user_id bigint not null unique,
         avatar_url varchar(255),
         bio varchar(255),
-        full_name varchar(255),
+        display_name varchar(255),
         primary key (id)
     );
 

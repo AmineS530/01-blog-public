@@ -14,6 +14,7 @@ import { ThemeService } from './core/services/theme.service';
 import { FeedbackService } from './core/services/feedback.service';
 import { MessageService } from './core/services/message.service';
 import { RealtimeService } from './core/services/realtime.service';
+import { ProfileService } from './core/services/profile.service';
 import { NotificationsComponent } from './features/notifications/notifications';
 
 @Component({
@@ -48,6 +49,9 @@ export class App implements OnInit {
   /** Controls the visibility of the modal notifications overlay. */
   showNotificationsOverlay: boolean = false;
 
+  currentUserAvatarUrl: string | null = null;
+  currentUserDisplayName = '';
+
   constructor(
     public authService: AuthService, 
     private notificationService: NotificationService,
@@ -55,7 +59,8 @@ export class App implements OnInit {
     public feedbackService: FeedbackService,
     private messageService: MessageService,
     private realtimeService: RealtimeService,
-    private router: Router
+    private router: Router,
+    private profileService: ProfileService
   ) {}
 
   // ==========================================
@@ -67,6 +72,20 @@ export class App implements OnInit {
       this.fetchUnreadCount();
       this.fetchUnreadMessagesCount();
       this.setupRealtimeMessages();
+      this.fetchUserProfile();
+    }
+  }
+
+  fetchUserProfile(): void {
+    const username = this.authService.getUsername();
+    if (username) {
+      this.profileService.getProfile(username).subscribe({
+        next: (profile) => {
+          this.currentUserAvatarUrl = profile.avatarUrl;
+          this.currentUserDisplayName = profile.displayName || profile.username;
+        },
+        error: (err) => console.error('Failed to load profile for navbar avatar', err)
+      });
     }
   }
 

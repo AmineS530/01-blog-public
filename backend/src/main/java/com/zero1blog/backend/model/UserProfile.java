@@ -22,7 +22,8 @@ public class UserProfile {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    private String fullName;
+    @Column(name = "display_name")
+    private String displayName;
 
     private String bio;
 

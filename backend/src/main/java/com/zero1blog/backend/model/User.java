@@ -58,6 +58,13 @@ public class User {
         USER, ADMIN, SUPER_ADMIN
     }
 
+    public String getDisplayName() {
+        if (profile != null && profile.getDisplayName() != null && !profile.getDisplayName().trim().isEmpty()) {
+            return profile.getDisplayName();
+        }
+        return username;
+    }
+
     @Column(nullable = false, columnDefinition = "boolean default false")
     @Builder.Default
     private boolean isBanned = false;

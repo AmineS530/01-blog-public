@@ -21,6 +21,10 @@ export class ProfileService {
     return this.http.put<ProfileResponse>(`${this.api}/me`, request);
   }
 
+  updateProfileByUsername(username: string, request: ProfileUpdateRequest): Observable<ProfileResponse> {
+    return this.http.put<ProfileResponse>(`${this.api}/${username}`, request);
+  }
+
   toggleFollow(username: string): Observable<void> {
     return this.http.post<void>(`${this.api}/${username}/follow`, {});
   }

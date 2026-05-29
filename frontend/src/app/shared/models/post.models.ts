@@ -10,6 +10,7 @@ export interface PostResponse {
   content: string;
   mediaUrl?: string;
   authorUsername: string;
+  authorDisplayName?: string;
   authorAvatarUrl?: string;
   createdAt: string;
   updatedAt: string;
@@ -29,6 +30,7 @@ export interface CommentResponse {
   content: string;
   mediaUrl?: string;
   authorUsername: string;
+  authorDisplayName?: string;
   authorAvatarUrl?: string;
   createdAt: string;
   updatedAt: string;

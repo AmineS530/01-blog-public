@@ -5,6 +5,7 @@ import com.zero1blog.backend.dto.ReportResponse;
 import com.zero1blog.backend.dto.UserAdminResponse;
 import com.zero1blog.backend.model.Report;
 import com.zero1blog.backend.model.User;
+import com.zero1blog.backend.model.UserProfile;
 import com.zero1blog.backend.repository.*;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -25,15 +26,17 @@ public class AdminService {
     private final CommentRepository commentRepository;
     private final ReportRepository reportRepository;
     private final ReportService reportService;
+    private final UserProfileRepository userProfileRepository;
 
     public AdminService(UserRepository userRepository, PostRepository postRepository,
                         CommentRepository commentRepository, ReportRepository reportRepository,
-                        ReportService reportService) {
+                        ReportService reportService, UserProfileRepository userProfileRepository) {
         this.userRepository = userRepository;
         this.postRepository = postRepository;
         this.commentRepository = commentRepository;
         this.reportRepository = reportRepository;
         this.reportService = reportService;
+        this.userProfileRepository = userProfileRepository;
     }
 
     @Transactional(readOnly = true)
@@ -179,7 +182,20 @@ public class AdminService {
                 .email(user.getEmail())
                 .role(user.getRole().name())
                 .isBanned(user.isBanned())
+                .avatarUrl(user.getProfile() != null ? user.getProfile().getAvatarUrl() : null)
+                .displayName(user.getDisplayName())
                 .createdAt(user.getCreatedAt())
                 .build();
+    }
+
+    @Transactional
+    public void updateDisplayName(String username, String displayName, String callerUsername) {
+        log.info("Admin {} updating display name for user {}: {}", callerUsername, username, displayName);
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        UserProfile profile = userProfileRepository.findByUser(user)
+                .orElse(UserProfile.builder().user(user).build());
+        profile.setDisplayName(displayName);
+        userProfileRepository.save(profile);
     }
 }

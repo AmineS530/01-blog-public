@@ -34,21 +34,33 @@
           
           <input type="file" #fileInput style="display: none;" (change)="onAvatarSelected($event)" accept="image/*" />
           
-          <div class="profile-actions" *ngIf="currentUsername !== targetUsername">
-            <button mat-stroked-button color="warn" (click)="toggleBlock()" class="block-btn" matTooltip="Block User">
-              <mat-icon>{{ profile.isBlocked ? 'block' : 'not_interested' }}</mat-icon>
-                            {{ profile.isBlocked ? 'Unblock' : 'Block' }}
-            </button>
-            <button mat-flat-button [color]="profile.isFollowing ? '' : 'primary'" 
-                    *ngIf="!profile.isBlocked && !profile.isBlockingMe"
-                    (click)="toggleFollow()" class="follow-btn">
-              {{ profile.isFollowing ? 'Following' : 'Follow' }}
-            </button>
+          <div class="profile-actions">
+            <!-- If viewing another profile: show Block / Follow buttons -->
+            <ng-container *ngIf="currentUsername !== targetUsername">
+              <button mat-stroked-button color="warn" (click)="toggleBlock()" class="block-btn" matTooltip="Block User">
+                <mat-icon>{{ profile.isBlocked ? 'block' : 'not_interested' }}</mat-icon>
+                {{ profile.isBlocked ? 'Unblock' : 'Block' }}
+              </button>
+              <button mat-flat-button [color]="profile.isFollowing ? '' : 'primary'" 
+                      *ngIf="!profile.isBlocked && !profile.isBlockingMe"
+                      (click)="toggleFollow()" class="follow-btn">
+                {{ profile.isFollowing ? 'Following' : 'Follow' }}
+              </button>
+            </ng-container>
+            
+            <!-- If viewing own profile OR logged in user is admin: show Edit Profile button -->
+            <ng-container *ngIf="currentUsername === targetUsername || isCallerAdminOrSuperAdmin">
+              <button mat-stroked-button (click)="openEditBioModal()" class="edit-profile-btn" *ngIf="!isEditingProfile">
+                <mat-icon>edit</mat-icon>
+                <span>Edit Profile</span>
+              </button>
+            </ng-container>
           </div>
         </div>
 
-        <div class="profile-info">
-          <h1 class="profile-name">{{ profile.fullName || profile.username }}</h1>
+        <!-- DISPLAY MODE -->
+        <div class="profile-info" *ngIf="!isEditingProfile">
+          <h1 class="profile-name">{{ profile.displayName || profile.username }}</h1>
           <h2 class="profile-handle">@{{ profile.username }}</h2>
           
           <p class="profile-bio" *ngIf="profile.bio">{{ profile.bio }}</p>
@@ -61,6 +73,26 @@
             <span class="stat clickable" (click)="setActiveTab('followers')">
               <strong>{{ profile.followerCount }}</strong> Followers
             </span>
+          </div>
+        </div>
+
+        <!-- EDIT MODE -->
+        <div class="profile-info-edit" *ngIf="isEditingProfile">
+          <mat-form-field appearance="outline" class="w-full">
+            <mat-label>Display Name</mat-label>
+            <input matInput [(ngModel)]="editDisplayName" placeholder="Your Display Name" maxlength="50" />
+          </mat-form-field>
+          
+          <mat-form-field appearance="outline" class="w-full">
+            <mat-label>Bio</mat-label>
+            <textarea matInput [(ngModel)]="editBio" placeholder="Tell us about yourself..." maxlength="160" rows="3"></textarea>
+          </mat-form-field>
+          
+          <div class="edit-actions">
+            <button mat-button (click)="cancelEditProfile()">Cancel</button>
+            <button mat-flat-button color="primary" [disabled]="savingProfile" (click)="saveProfileChanges()">
+              {{ savingProfile ? 'Saving...' : 'Save Changes' }}
+            </button>
           </div>
         </div>
       </div>
@@ -110,10 +142,10 @@
           <div class="post-header">
             <div class="author-avatar">
               <img *ngIf="post.authorAvatarUrl" [src]="post.authorAvatarUrl" alt="Avatar" class="avatar-img" />
-              <span *ngIf="!post.authorAvatarUrl">{{ post.authorUsername.charAt(0).toUpperCase() }}</span>
+              <span *ngIf="!post.authorAvatarUrl">{{ (post.authorDisplayName || post.authorUsername).charAt(0).toUpperCase() }}</span>
             </div>
             <div class="header-text">
-              <span class="author-name">{{ post.authorUsername }}</span>
+              <span class="author-name">{{ post.authorDisplayName || post.authorUsername }}</span>
               <span class="post-date">{{ post.createdAt | date:'MMM d, y, h:mm a' }}</span>
             </div>
           </div>
@@ -190,7 +222,7 @@
                 <span *ngIf="!user.avatarUrl">{{ user.username.charAt(0).toUpperCase() }}</span>
               </div>
               <div class="row-info">
-                <div class="row-name">{{ user.fullName || user.username }}</div>
+                <div class="row-name">{{ user.displayName || user.username }}</div>
                 <div class="row-handle">@{{ user.username }}</div>
               </div>
             </div>
@@ -228,7 +260,7 @@
                 <span *ngIf="!user.avatarUrl">{{ user.username.charAt(0).toUpperCase() }}</span>
               </div>
               <div class="row-info">
-                <div class="row-name">{{ user.fullName || user.username }}</div>
+                <div class="row-name">{{ user.displayName || user.username }}</div>
                 <div class="row-handle">@{{ user.username }}</div>
               </div>
             </div>

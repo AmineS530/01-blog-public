@@ -86,4 +86,13 @@ public class AdminController {
         adminService.deleteComment(id);
         return ResponseEntity.ok().build();
     }
+
+    @PostMapping("/users/{username}/display-name")
+    public ResponseEntity<Void> updateDisplayName(
+            @PathVariable String username,
+            @RequestBody Map<String, String> body,
+            @org.springframework.security.core.annotation.AuthenticationPrincipal org.springframework.security.core.userdetails.UserDetails userDetails) {
+        adminService.updateDisplayName(username, body.get("displayName"), userDetails.getUsername());
+        return ResponseEntity.ok().build();
+    }
 }

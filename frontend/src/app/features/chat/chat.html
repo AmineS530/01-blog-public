@@ -37,13 +37,13 @@
         >
           <div class="partner-avatar">
             <img *ngIf="partner.avatarUrl" [src]="partner.avatarUrl" alt="Avatar" />
-            <span *ngIf="!partner.avatarUrl">{{ partner.username.charAt(0).toUpperCase() }}</span>
+            <span *ngIf="!partner.avatarUrl">{{ (partner.displayName || partner.username).charAt(0).toUpperCase() }}</span>
             <div class="status-indicator" [class.online]="onlineUsers.has(partner.publicId)"></div>
           </div>
           
           <div class="conversation-meta">
             <div class="meta-row">
-              <span class="partner-name">{{ partner.username }}</span>
+              <span class="partner-name">{{ partner.displayName || partner.username }}</span>
               <span class="message-time">{{ partner.lastMessageTime | date:'h:mm a' }}</span>
             </div>
             <div class="meta-row">
@@ -71,6 +71,7 @@
             (click)="startConversationWith({
               publicId: creator.publicId,
               username: creator.username,
+              displayName: creator.displayName || creator.username,
               avatarUrl: creator.avatarUrl,
               lastMessageSnippet: '',
               lastMessageTime: '',
@@ -79,9 +80,9 @@
           >
             <div class="recommendation-avatar">
               <img *ngIf="creator.avatarUrl" [src]="creator.avatarUrl" alt="Avatar" />
-              <span *ngIf="!creator.avatarUrl">{{ creator.username.charAt(0).toUpperCase() }}</span>
+              <span *ngIf="!creator.avatarUrl">{{ (creator.displayName || creator.username).charAt(0).toUpperCase() }}</span>
             </div>
-            <span class="recommendation-name">{{ creator.username }}</span>
+            <span class="recommendation-name">{{ creator.displayName || creator.username }}</span>
             <button mat-icon-button class="chat-btn-action" matTooltip="Message creator">
               <mat-icon>chat</mat-icon>
             </button>
@@ -108,11 +109,11 @@
         <div class="room-header-left" (click)="goToProfile(activePartner.username)">
           <div class="room-partner-avatar">
             <img *ngIf="activePartner.avatarUrl" [src]="activePartner.avatarUrl" alt="Avatar" />
-            <span *ngIf="!activePartner.avatarUrl">{{ activePartner.username.charAt(0).toUpperCase() }}</span>
+            <span *ngIf="!activePartner.avatarUrl">{{ (activePartner.displayName || activePartner.username).charAt(0).toUpperCase() }}</span>
             <div class="status-indicator-header" [class.online]="onlineUsers.has(activePartner.publicId)"></div>
           </div>
           <div class="room-partner-meta">
-            <h3>{{ activePartner.username }}</h3>
+            <h3>{{ activePartner.displayName || activePartner.username }}</h3>
             <span class="status-text">{{ onlineUsers.has(activePartner.publicId) ? 'Active Now' : 'Offline' }}</span>
           </div>
         </div>
@@ -133,7 +134,7 @@
 
         <div *ngIf="!loadingThread && activeMessages.length === 0" class="empty-thread-placeholder">
           <mat-icon>waving_hand</mat-icon>
-          <h3>Say hello to {{ activePartner.username }}!</h3>
+          <h3>Say hello to {{ activePartner.displayName || activePartner.username }}!</h3>
           <p class="muted">Send a message to start this private conversation. Direct messages are secure and private.</p>
         </div>
 

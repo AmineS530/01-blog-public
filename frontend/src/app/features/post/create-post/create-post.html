@@ -8,6 +8,17 @@
 
   <mat-card class="form-card">
     <mat-card-content>
+      <div class="creator-header" *ngIf="currentUserDisplayName">
+        <div class="creator-avatar">
+          <img *ngIf="currentUserAvatarUrl" [src]="currentUserAvatarUrl" alt="Avatar" />
+          <span *ngIf="!currentUserAvatarUrl">{{ currentUserDisplayName.charAt(0).toUpperCase() }}</span>
+        </div>
+        <div class="creator-info">
+          <span class="creator-name">{{ currentUserDisplayName }}</span>
+          <span class="creator-subtitle">Publishing to Feed</span>
+        </div>
+      </div>
+
       <form [formGroup]="postForm" (ngSubmit)="onSubmit()" class="form-layout">
         
         <div class="error-container" *ngIf="error">

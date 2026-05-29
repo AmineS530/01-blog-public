@@ -14,7 +14,7 @@ public class ProfileResponse {
     private Long id;
     private String publicId;
     private String username;
-    private String fullName;
+    private String displayName;
     private String bio;
     private String avatarUrl;
     private long followerCount;

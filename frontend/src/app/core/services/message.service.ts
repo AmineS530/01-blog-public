@@ -12,9 +12,11 @@ export interface MessageResponse {
   id: number;
   senderPublicId: string;
   senderUsername: string;
+  senderDisplayName?: string | null;
   senderAvatarUrl?: string | null;
   recipientPublicId: string;
   recipientUsername: string;
+  recipientDisplayName?: string | null;
   recipientAvatarUrl?: string | null;
   content: string;
   mediaUrl?: string | null;

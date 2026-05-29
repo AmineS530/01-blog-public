@@ -61,7 +61,8 @@
                 <td mat-cell *matCellDef="let u">
                   <div class="user-cell">
                     <div class="user-avatar-mini" (click)="viewProfile(u.username)">
-                      {{ u.username.charAt(0).toUpperCase() }}
+                      <img *ngIf="u.avatarUrl" [src]="u.avatarUrl" alt="Avatar" />
+                      <span *ngIf="!u.avatarUrl">{{ u.username.charAt(0).toUpperCase() }}</span>
                     </div>
                     <div class="user-info">
                       <span class="username-link" (click)="viewProfile(u.username)">{{
@@ -69,6 +70,23 @@
                       }}</span>
                       <span class="email muted">{{ u.email }}</span>
                     </div>
+                  </div>
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="displayName">
+                <th mat-header-cell *matHeaderCellDef>Display Name</th>
+                <td mat-cell *matCellDef="let u">
+                  <div class="display-name-cell">
+                    <span>{{ u.displayName || u.username }}</span>
+                    <button
+                      mat-icon-button
+                      (click)="editDisplayName(u)"
+                      matTooltip="Edit Display Name"
+                      class="btn-hover-glow text-accent"
+                    >
+                      <mat-icon class="edit-icon-small">edit</mat-icon>
+                    </button>
                   </div>
                 </td>
               </ng-container>
@@ -131,11 +149,11 @@
 
               <tr
                 mat-header-row
-                *matHeaderRowDef="['username', 'role', 'status', 'actions']"
+                *matHeaderRowDef="['username', 'displayName', 'role', 'status', 'actions']"
               ></tr>
               <tr
                 mat-row
-                *matRowDef="let row; columns: ['username', 'role', 'status', 'actions']"
+                *matRowDef="let row; columns: ['username', 'displayName', 'role', 'status', 'actions']"
               ></tr>
             </table>
           </div>

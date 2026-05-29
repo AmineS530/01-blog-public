@@ -532,6 +532,27 @@ export class AdminComponent implements OnInit {
     });
   }
 
+  /**
+   * Prompts the administrator to edit a user's display name, updates it on the backend, and updates the local user object.
+   */
+  editDisplayName(user: any): void {
+    const newName = prompt(`Edit display name for ${user.username}:`, user.displayName || user.username);
+    if (newName === null) return; // Cancelled by user
+    
+    this.http
+      .post(`http://localhost:8080/api/admin/users/${user.username}/display-name`, { displayName: newName })
+      .subscribe({
+        next: () => {
+          user.displayName = newName;
+          this.feedback.showToast(`Display name updated successfully!`, 'success');
+        },
+        error: (err) => {
+          this.feedback.showToast('Failed to update display name.', 'error');
+          console.error('Failed to update display name', err);
+        },
+      });
+  }
+
   // ==========================================
   // Router Handlers
   // ==========================================

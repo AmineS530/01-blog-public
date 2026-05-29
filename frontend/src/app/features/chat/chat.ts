@@ -20,6 +20,7 @@ import { Subscription } from 'rxjs';
 interface ChatPartner {
   publicId: string;
   username: string;
+  displayName?: string;
   avatarUrl: string | null;
   lastMessageSnippet: string;
   lastMessageTime: string;
@@ -229,6 +230,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
         // Determine the partner in this message
         const messagePartnerId = msg.senderPublicId === this.currentUserId ? msg.recipientPublicId : msg.senderPublicId;
         const messagePartnerUsername = msg.senderPublicId === this.currentUserId ? msg.recipientUsername : msg.senderUsername;
+        const messagePartnerDisplayName = msg.senderPublicId === this.currentUserId ? (msg.recipientDisplayName || msg.recipientUsername) : (msg.senderDisplayName || msg.senderUsername);
         const messagePartnerAvatar = msg.senderPublicId === this.currentUserId ? msg.recipientAvatarUrl : msg.senderAvatarUrl;
 
         // If it belongs to our active conversation
@@ -250,6 +252,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
           const partner = this.inbox[existingIdx];
           partner.lastMessageSnippet = snippet;
           partner.lastMessageTime = msg.createdAt;
+          partner.displayName = messagePartnerDisplayName || partner.displayName;
           if (msg.recipientPublicId === this.currentUserId && (!this.activePartner || this.activePartner.publicId !== messagePartnerId)) {
             partner.unreadCount++;
           }
@@ -261,6 +264,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
           const partner: ChatPartner = {
             publicId: messagePartnerId,
             username: messagePartnerUsername,
+            displayName: messagePartnerDisplayName || messagePartnerUsername,
             avatarUrl: messagePartnerAvatar || null,
             lastMessageSnippet: snippet,
             lastMessageTime: msg.createdAt,
@@ -288,6 +292,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
     for (const m of messages) {
       const partnerId = m.senderPublicId === this.currentUserId ? m.recipientPublicId : m.senderPublicId;
       const partnerUsername = m.senderPublicId === this.currentUserId ? m.recipientUsername : m.senderUsername;
+      const partnerDisplayName = m.senderPublicId === this.currentUserId ? (m.recipientDisplayName || m.recipientUsername) : (m.senderDisplayName || m.senderUsername);
       const partnerAvatar = m.senderPublicId === this.currentUserId ? m.recipientAvatarUrl : m.senderAvatarUrl;
 
       const snippet = m.mediaUrl ? '📷 Image/Video' : m.content;
@@ -296,6 +301,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
         partnersMap.set(partnerId, {
           publicId: partnerId,
           username: partnerUsername,
+          displayName: partnerDisplayName || partnerUsername,
           avatarUrl: partnerAvatar || null,
           lastMessageSnippet: snippet,
           lastMessageTime: m.createdAt,

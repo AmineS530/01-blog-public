@@ -1,643 +1,261 @@
 ❯ Building...
 ✔ Building...
-Application bundle generation failed. [4.322 seconds] - 2026-05-29T14:36:55.219Z
+Initial chunk files | Names          |  Raw size
+main.js             | main           |  59.90 kB | 
+styles.css          | styles         |  14.20 kB | 
+chunk-GKTZE3MI.js   | -              |   6.53 kB | 
+chunk-WKPAAEET.js   | -              |   2.66 kB | 
+chunk-ZOFH5NT5.js   | -              |   2.12 kB | 
+chunk-P6C3JLQQ.js   | -              |   1.68 kB | 
+chunk-CZJLB7T5.js   | -              |   1.08 kB | 
+polyfills.js        | polyfills      |  95 bytes | 
 
-[31m✘ [41;31m[[41;97mERROR[41;31m][0m [1mNG5002: Parser Error: Lexer Error: Unterminated quote at column 18 in expression ['partner.avatarUrl] at the end of the expression ['partner.avatarUrl] in /home/amines/Desktop/01-blog/frontend/src/app/features/chat/chat.html@38:50[0m [1m[35m[plugin angular-compiler][0m
+                    | Initial total  |  88.27 kB
 
-    src/app/features/chat/chat.html:39:50:
-[37m      39 │ ...gIf="partner.avatarUrl" [src]="[32m'partner.avatarUrl[37m" alt="Avatar" />
-         ╵                                   [32m~~~~~~~~~~~~~~~~~~[0m
+Lazy chunk files    | Names          |  Raw size
+chunk-B3KPZUPW.js   | profile        | 100.82 kB | 
+chunk-3RIICFML.js   | admin          |  97.83 kB | 
+chunk-4J7URTO2.js   | feed           |  89.00 kB | 
+chunk-TY3PGTBC.js   | chat           |  88.13 kB | 
+chunk-ACPI7MJ2.js   | single-post    |  60.77 kB | 
+chunk-7LL2MH4T.js   | auth-component |  30.47 kB | 
+chunk-2RXJIDV3.js   | edit-post      |  23.33 kB | 
+chunk-RSH745CR.js   | create-post    |  22.63 kB | 
+chunk-UOS43KOQ.js   | -              |   2.64 kB | 
+chunk-JPPUBCFN.js   | -              |   2.47 kB | 
+chunk-V3BYQ4DX.js   | -              |   1.87 kB | 
+chunk-WI5B7KBO.js   | -              |   1.78 kB | 
 
-  Error occurs in the template of component ChatComponent.
-
-    src/app/features/chat/chat.ts:50:15:
-[37m      50 │   templateUrl: [32m'./chat.html'[37m,
-         ╵                [32m~~~~~~~~~~~~~[0m
-
-
-[31m✘ [41;31m[[41;97mERROR[41;31m][0m [1mNG5002: Parser Error: Unexpected token Lexer Error: Unterminated quote at column 18 in expression ['partner.avatarUrl] at column 19 in ['partner.avatarUrl] in /home/amines/Desktop/01-blog/frontend/src/app/features/chat/chat.html@38:50[0m [1m[35m[plugin angular-compiler][0m
-
-    src/app/features/chat/chat.html:39:50:
-[37m      39 │ ...gIf="partner.avatarUrl" [src]="[32m'partner.avatarUrl[37m" alt="Avatar" />
-         ╵                                   [32m~~~~~~~~~~~~~~~~~~[0m
-
-  Error occurs in the template of component ChatComponent.
-
-    src/app/features/chat/chat.ts:50:15:
-[37m      50 │   templateUrl: [32m'./chat.html'[37m,
-         ╵                [32m~~~~~~~~~~~~~[0m
-
-
-[31m✘ [41;31m[[41;97mERROR[41;31m][0m [1mNG5002: Parser Error: Lexer Error: Unterminated quote at column 18 in expression ['creator.avatarUrl] at the end of the expression ['creator.avatarUrl] in /home/amines/Desktop/01-blog/frontend/src/app/features/chat/chat.html@80:52[0m [1m[35m[plugin angular-compiler][0m
-
-    src/app/features/chat/chat.html:81:52:
-[37m      81 │ ...gIf="creator.avatarUrl" [src]="[32m'creator.avatarUrl[37m" alt="Avatar" />
-         ╵                                   [32m~~~~~~~~~~~~~~~~~~[0m
-
-  Error occurs in the template of component ChatComponent.
-
-    src/app/features/chat/chat.ts:50:15:
-[37m      50 │   templateUrl: [32m'./chat.html'[37m,
-         ╵                [32m~~~~~~~~~~~~~[0m
-
-
-[31m✘ [41;31m[[41;97mERROR[41;31m][0m [1mNG5002: Parser Error: Unexpected token Lexer Error: Unterminated quote at column 18 in expression ['creator.avatarUrl] at column 19 in ['creator.avatarUrl] in /home/amines/Desktop/01-blog/frontend/src/app/features/chat/chat.html@80:52[0m [1m[35m[plugin angular-compiler][0m
-
-    src/app/features/chat/chat.html:81:52:
-[37m      81 │ ...gIf="creator.avatarUrl" [src]="[32m'creator.avatarUrl[37m" alt="Avatar" />
-         ╵                                   [32m~~~~~~~~~~~~~~~~~~[0m
-
-  Error occurs in the template of component ChatComponent.
-
-    src/app/features/chat/chat.ts:50:15:
-[37m      50 │   templateUrl: [32m'./chat.html'[37m,
-         ╵                [32m~~~~~~~~~~~~~[0m
-
-
-[31m✘ [41;31m[[41;97mERROR[41;31m][0m [1mNG5002: Parser Error: Lexer Error: Unterminated quote at column 24 in expression ['activePartner.avatarUrl] at the end of the expression ['activePartner.avatarUrl] in /home/amines/Desktop/01-blog/frontend/src/app/features/chat/chat.html@109:56[0m [1m[35m[plugin angular-compiler][0m
-
-    src/app/features/chat/chat.html:110:56:
-[37m      110 │ ...rtner.avatarUrl" [src]="[32m'activePartner.avatarUrl[37m" alt="Avatar" />
-          ╵                            [32m~~~~~~~~~~~~~~~~~~~~~~~~[0m
-
-  Error occurs in the template of component ChatComponent.
-
-    src/app/features/chat/chat.ts:50:15:
-[37m      50 │   templateUrl: [32m'./chat.html'[37m,
-         ╵                [32m~~~~~~~~~~~~~[0m
-
-
-[31m✘ [41;31m[[41;97mERROR[41;31m][0m [1mNG5002: Parser Error: Unexpected token Lexer Error: Unterminated quote at column 24 in expression ['activePartner.avatarUrl] at column 25 in ['activePartner.avatarUrl] in /home/amines/Desktop/01-blog/frontend/src/app/features/chat/chat.html@109:56[0m [1m[35m[plugin angular-compiler][0m
-
-    src/app/features/chat/chat.html:110:56:
-[37m      110 │ ...rtner.avatarUrl" [src]="[32m'activePartner.avatarUrl[37m" alt="Avatar" />
-          ╵                            [32m~~~~~~~~~~~~~~~~~~~~~~~~[0m
-
-  Error occurs in the template of component ChatComponent.
-
-    src/app/features/chat/chat.ts:50:15:
-[37m      50 │   templateUrl: [32m'./chat.html'[37m,
-         ╵                [32m~~~~~~~~~~~~~[0m
-
+Application bundle generation complete. [5.465 seconds] - 2026-05-29T15:35:54.885Z
 
 Watch mode enabled. Watching for file changes...
-❯ Changes detected. Rebuilding...
-✔ Changes detected. Rebuilding...
-Application bundle generation failed. [2.129 seconds] - 2026-05-29T14:38:18.997Z
-
-[31m✘ [41;31m[[41;97mERROR[41;31m][0m [1mNG5002: Parser Error: Lexer Error: Unterminated quote at column 18 in expression ['partner.avatarUrl] at the end of the expression ['partner.avatarUrl] in /home/amines/Desktop/01-blog/frontend/src/app/features/chat/chat.html@38:50[0m [1m[35m[plugin angular-compiler][0m
-
-    src/app/features/chat/chat.html:39:50:
-[37m      39 │ ...gIf="partner.avatarUrl" [src]="[32m'partner.avatarUrl[37m" alt="Avatar" />
-         ╵                                   [32m~~~~~~~~~~~~~~~~~~[0m
-
-  Error occurs in the template of component ChatComponent.
-
-    src/app/features/chat/chat.ts:50:15:
-[37m      50 │   templateUrl: [32m'./chat.html'[37m,
-         ╵                [32m~~~~~~~~~~~~~[0m
-
-
-[31m✘ [41;31m[[41;97mERROR[41;31m][0m [1mNG5002: Parser Error: Unexpected token Lexer Error: Unterminated quote at column 18 in expression ['partner.avatarUrl] at column 19 in ['partner.avatarUrl] in /home/amines/Desktop/01-blog/frontend/src/app/features/chat/chat.html@38:50[0m [1m[35m[plugin angular-compiler][0m
-
-    src/app/features/chat/chat.html:39:50:
-[37m      39 │ ...gIf="partner.avatarUrl" [src]="[32m'partner.avatarUrl[37m" alt="Avatar" />
-         ╵                                   [32m~~~~~~~~~~~~~~~~~~[0m
-
-  Error occurs in the template of component ChatComponent.
-
-    src/app/features/chat/chat.ts:50:15:
-[37m      50 │   templateUrl: [32m'./chat.html'[37m,
-         ╵                [32m~~~~~~~~~~~~~[0m
-
-
-[31m✘ [41;31m[[41;97mERROR[41;31m][0m [1mNG5002: Parser Error: Lexer Error: Unterminated quote at column 18 in expression ['creator.avatarUrl] at the end of the expression ['creator.avatarUrl] in /home/amines/Desktop/01-blog/frontend/src/app/features/chat/chat.html@80:52[0m [1m[35m[plugin angular-compiler][0m
-
-    src/app/features/chat/chat.html:81:52:
-[37m      81 │ ...gIf="creator.avatarUrl" [src]="[32m'creator.avatarUrl[37m" alt="Avatar" />
-         ╵                                   [32m~~~~~~~~~~~~~~~~~~[0m
-
-  Error occurs in the template of component ChatComponent.
-
-    src/app/features/chat/chat.ts:50:15:
-[37m      50 │   templateUrl: [32m'./chat.html'[37m,
-         ╵                [32m~~~~~~~~~~~~~[0m
-
-
-[31m✘ [41;31m[[41;97mERROR[41;31m][0m [1mNG5002: Parser Error: Unexpected token Lexer Error: Unterminated quote at column 18 in expression ['creator.avatarUrl] at column 19 in ['creator.avatarUrl] in /home/amines/Desktop/01-blog/frontend/src/app/features/chat/chat.html@80:52[0m [1m[35m[plugin angular-compiler][0m
-
-    src/app/features/chat/chat.html:81:52:
-[37m      81 │ ...gIf="creator.avatarUrl" [src]="[32m'creator.avatarUrl[37m" alt="Avatar" />
-         ╵                                   [32m~~~~~~~~~~~~~~~~~~[0m
-
-  Error occurs in the template of component ChatComponent.
-
-    src/app/features/chat/chat.ts:50:15:
-[37m      50 │   templateUrl: [32m'./chat.html'[37m,
-         ╵                [32m~~~~~~~~~~~~~[0m
-
-
-[31m✘ [41;31m[[41;97mERROR[41;31m][0m [1mNG5002: Parser Error: Lexer Error: Unterminated quote at column 24 in expression ['activePartner.avatarUrl] at the end of the expression ['activePartner.avatarUrl] in /home/amines/Desktop/01-blog/frontend/src/app/features/chat/chat.html@109:56[0m [1m[35m[plugin angular-compiler][0m
-
-    src/app/features/chat/chat.html:110:56:
-[37m      110 │ ...rtner.avatarUrl" [src]="[32m'activePartner.avatarUrl[37m" alt="Avatar" />
-          ╵                            [32m~~~~~~~~~~~~~~~~~~~~~~~~[0m
-
-  Error occurs in the template of component ChatComponent.
-
-    src/app/features/chat/chat.ts:50:15:
-[37m      50 │   templateUrl: [32m'./chat.html'[37m,
-         ╵                [32m~~~~~~~~~~~~~[0m
-
-
-[31m✘ [41;31m[[41;97mERROR[41;31m][0m [1mNG5002: Parser Error: Unexpected token Lexer Error: Unterminated quote at column 24 in expression ['activePartner.avatarUrl] at column 25 in ['activePartner.avatarUrl] in /home/amines/Desktop/01-blog/frontend/src/app/features/chat/chat.html@109:56[0m [1m[35m[plugin angular-compiler][0m
-
-    src/app/features/chat/chat.html:110:56:
-[37m      110 │ ...rtner.avatarUrl" [src]="[32m'activePartner.avatarUrl[37m" alt="Avatar" />
-          ╵                            [32m~~~~~~~~~~~~~~~~~~~~~~~~[0m
-
-  Error occurs in the template of component ChatComponent.
-
-    src/app/features/chat/chat.ts:50:15:
-[37m      50 │   templateUrl: [32m'./chat.html'[37m,
-         ╵                [32m~~~~~~~~~~~~~[0m
-
-
-❯ Changes detected. Rebuilding...
-✔ Changes detected. Rebuilding...
-Application bundle generation failed. [1.182 seconds] - 2026-05-29T14:38:20.182Z
-
-[31m✘ [41;31m[[41;97mERROR[41;31m][0m [1mNG5002: Parser Error: Lexer Error: Unterminated quote at column 18 in expression ['partner.avatarUrl] at the end of the expression ['partner.avatarUrl] in /home/amines/Desktop/01-blog/frontend/src/app/features/chat/chat.html@38:50[0m [1m[35m[plugin angular-compiler][0m
-
-    src/app/features/chat/chat.html:39:50:
-[37m      39 │ ...gIf="partner.avatarUrl" [src]="[32m'partner.avatarUrl[37m" alt="Avatar" />
-         ╵                                   [32m~~~~~~~~~~~~~~~~~~[0m
-
-  Error occurs in the template of component ChatComponent.
-
-    src/app/features/chat/chat.ts:50:15:
-[37m      50 │   templateUrl: [32m'./chat.html'[37m,
-         ╵                [32m~~~~~~~~~~~~~[0m
-
-
-[31m✘ [41;31m[[41;97mERROR[41;31m][0m [1mNG5002: Parser Error: Unexpected token Lexer Error: Unterminated quote at column 18 in expression ['partner.avatarUrl] at column 19 in ['partner.avatarUrl] in /home/amines/Desktop/01-blog/frontend/src/app/features/chat/chat.html@38:50[0m [1m[35m[plugin angular-compiler][0m
-
-    src/app/features/chat/chat.html:39:50:
-[37m      39 │ ...gIf="partner.avatarUrl" [src]="[32m'partner.avatarUrl[37m" alt="Avatar" />
-         ╵                                   [32m~~~~~~~~~~~~~~~~~~[0m
-
-  Error occurs in the template of component ChatComponent.
-
-    src/app/features/chat/chat.ts:50:15:
-[37m      50 │   templateUrl: [32m'./chat.html'[37m,
-         ╵                [32m~~~~~~~~~~~~~[0m
-
-
-[31m✘ [41;31m[[41;97mERROR[41;31m][0m [1mNG5002: Parser Error: Lexer Error: Unterminated quote at column 18 in expression ['creator.avatarUrl] at the end of the expression ['creator.avatarUrl] in /home/amines/Desktop/01-blog/frontend/src/app/features/chat/chat.html@80:52[0m [1m[35m[plugin angular-compiler][0m
-
-    src/app/features/chat/chat.html:81:52:
-[37m      81 │ ...gIf="creator.avatarUrl" [src]="[32m'creator.avatarUrl[37m" alt="Avatar" />
-         ╵                                   [32m~~~~~~~~~~~~~~~~~~[0m
-
-  Error occurs in the template of component ChatComponent.
-
-    src/app/features/chat/chat.ts:50:15:
-[37m      50 │   templateUrl: [32m'./chat.html'[37m,
-         ╵                [32m~~~~~~~~~~~~~[0m
-
-
-[31m✘ [41;31m[[41;97mERROR[41;31m][0m [1mNG5002: Parser Error: Unexpected token Lexer Error: Unterminated quote at column 18 in expression ['creator.avatarUrl] at column 19 in ['creator.avatarUrl] in /home/amines/Desktop/01-blog/frontend/src/app/features/chat/chat.html@80:52[0m [1m[35m[plugin angular-compiler][0m
-
-    src/app/features/chat/chat.html:81:52:
-[37m      81 │ ...gIf="creator.avatarUrl" [src]="[32m'creator.avatarUrl[37m" alt="Avatar" />
-         ╵                                   [32m~~~~~~~~~~~~~~~~~~[0m
-
-  Error occurs in the template of component ChatComponent.
-
-    src/app/features/chat/chat.ts:50:15:
-[37m      50 │   templateUrl: [32m'./chat.html'[37m,
-         ╵                [32m~~~~~~~~~~~~~[0m
-
-
-[31m✘ [41;31m[[41;97mERROR[41;31m][0m [1mNG5002: Parser Error: Lexer Error: Unterminated quote at column 24 in expression ['activePartner.avatarUrl] at the end of the expression ['activePartner.avatarUrl] in /home/amines/Desktop/01-blog/frontend/src/app/features/chat/chat.html@109:56[0m [1m[35m[plugin angular-compiler][0m
-
-    src/app/features/chat/chat.html:110:56:
-[37m      110 │ ...rtner.avatarUrl" [src]="[32m'activePartner.avatarUrl[37m" alt="Avatar" />
-          ╵                            [32m~~~~~~~~~~~~~~~~~~~~~~~~[0m
-
-  Error occurs in the template of component ChatComponent.
-
-    src/app/features/chat/chat.ts:50:15:
-[37m      50 │   templateUrl: [32m'./chat.html'[37m,
-         ╵                [32m~~~~~~~~~~~~~[0m
-
-
-[31m✘ [41;31m[[41;97mERROR[41;31m][0m [1mNG5002: Parser Error: Unexpected token Lexer Error: Unterminated quote at column 24 in expression ['activePartner.avatarUrl] at column 25 in ['activePartner.avatarUrl] in /home/amines/Desktop/01-blog/frontend/src/app/features/chat/chat.html@109:56[0m [1m[35m[plugin angular-compiler][0m
-
-    src/app/features/chat/chat.html:110:56:
-[37m      110 │ ...rtner.avatarUrl" [src]="[32m'activePartner.avatarUrl[37m" alt="Avatar" />
-          ╵                            [32m~~~~~~~~~~~~~~~~~~~~~~~~[0m
-
-  Error occurs in the template of component ChatComponent.
-
-    src/app/features/chat/chat.ts:50:15:
-[37m      50 │   templateUrl: [32m'./chat.html'[37m,
-         ╵                [32m~~~~~~~~~~~~~[0m
-
-
-❯ Changes detected. Rebuilding...
-✔ Changes detected. Rebuilding...
-Application bundle generation failed. [0.335 seconds] - 2026-05-29T14:38:23.390Z
-
-[31m✘ [41;31m[[41;97mERROR[41;31m][0m [1mNG5002: Parser Error: Lexer Error: Unterminated quote at column 18 in expression ['partner.avatarUrl] at the end of the expression ['partner.avatarUrl] in /home/amines/Desktop/01-blog/frontend/src/app/features/chat/chat.html@38:50[0m [1m[35m[plugin angular-compiler][0m
-
-    src/app/features/chat/chat.html:39:50:
-[37m      39 │ ...gIf="partner.avatarUrl" [src]="[32m'partner.avatarUrl[37m" alt="Avatar" />
-         ╵                                   [32m~~~~~~~~~~~~~~~~~~[0m
-
-  Error occurs in the template of component ChatComponent.
-
-    src/app/features/chat/chat.ts:50:15:
-[37m      50 │   templateUrl: [32m'./chat.html'[37m,
-         ╵                [32m~~~~~~~~~~~~~[0m
-
-
-[31m✘ [41;31m[[41;97mERROR[41;31m][0m [1mNG5002: Parser Error: Unexpected token Lexer Error: Unterminated quote at column 18 in expression ['partner.avatarUrl] at column 19 in ['partner.avatarUrl] in /home/amines/Desktop/01-blog/frontend/src/app/features/chat/chat.html@38:50[0m [1m[35m[plugin angular-compiler][0m
-
-    src/app/features/chat/chat.html:39:50:
-[37m      39 │ ...gIf="partner.avatarUrl" [src]="[32m'partner.avatarUrl[37m" alt="Avatar" />
-         ╵                                   [32m~~~~~~~~~~~~~~~~~~[0m
-
-  Error occurs in the template of component ChatComponent.
-
-    src/app/features/chat/chat.ts:50:15:
-[37m      50 │   templateUrl: [32m'./chat.html'[37m,
-         ╵                [32m~~~~~~~~~~~~~[0m
-
-
-[31m✘ [41;31m[[41;97mERROR[41;31m][0m [1mNG5002: Parser Error: Lexer Error: Unterminated quote at column 18 in expression ['creator.avatarUrl] at the end of the expression ['creator.avatarUrl] in /home/amines/Desktop/01-blog/frontend/src/app/features/chat/chat.html@80:52[0m [1m[35m[plugin angular-compiler][0m
-
-    src/app/features/chat/chat.html:81:52:
-[37m      81 │ ...gIf="creator.avatarUrl" [src]="[32m'creator.avatarUrl[37m" alt="Avatar" />
-         ╵                                   [32m~~~~~~~~~~~~~~~~~~[0m
-
-  Error occurs in the template of component ChatComponent.
-
-    src/app/features/chat/chat.ts:50:15:
-[37m      50 │   templateUrl: [32m'./chat.html'[37m,
-         ╵                [32m~~~~~~~~~~~~~[0m
-
-
-[31m✘ [41;31m[[41;97mERROR[41;31m][0m [1mNG5002: Parser Error: Unexpected token Lexer Error: Unterminated quote at column 18 in expression ['creator.avatarUrl] at column 19 in ['creator.avatarUrl] in /home/amines/Desktop/01-blog/frontend/src/app/features/chat/chat.html@80:52[0m [1m[35m[plugin angular-compiler][0m
-
-    src/app/features/chat/chat.html:81:52:
-[37m      81 │ ...gIf="creator.avatarUrl" [src]="[32m'creator.avatarUrl[37m" alt="Avatar" />
-         ╵                                   [32m~~~~~~~~~~~~~~~~~~[0m
-
-  Error occurs in the template of component ChatComponent.
-
-    src/app/features/chat/chat.ts:50:15:
-[37m      50 │   templateUrl: [32m'./chat.html'[37m,
-         ╵                [32m~~~~~~~~~~~~~[0m
-
-
-[31m✘ [41;31m[[41;97mERROR[41;31m][0m [1mNG5002: Parser Error: Lexer Error: Unterminated quote at column 24 in expression ['activePartner.avatarUrl] at the end of the expression ['activePartner.avatarUrl] in /home/amines/Desktop/01-blog/frontend/src/app/features/chat/chat.html@109:56[0m [1m[35m[plugin angular-compiler][0m
-
-    src/app/features/chat/chat.html:110:56:
-[37m      110 │ ...rtner.avatarUrl" [src]="[32m'activePartner.avatarUrl[37m" alt="Avatar" />
-          ╵                            [32m~~~~~~~~~~~~~~~~~~~~~~~~[0m
-
-  Error occurs in the template of component ChatComponent.
-
-    src/app/features/chat/chat.ts:50:15:
-[37m      50 │   templateUrl: [32m'./chat.html'[37m,
-         ╵                [32m~~~~~~~~~~~~~[0m
-
-
-[31m✘ [41;31m[[41;97mERROR[41;31m][0m [1mNG5002: Parser Error: Unexpected token Lexer Error: Unterminated quote at column 24 in expression ['activePartner.avatarUrl] at column 25 in ['activePartner.avatarUrl] in /home/amines/Desktop/01-blog/frontend/src/app/features/chat/chat.html@109:56[0m [1m[35m[plugin angular-compiler][0m
-
-    src/app/features/chat/chat.html:110:56:
-[37m      110 │ ...rtner.avatarUrl" [src]="[32m'activePartner.avatarUrl[37m" alt="Avatar" />
-          ╵                            [32m~~~~~~~~~~~~~~~~~~~~~~~~[0m
-
-  Error occurs in the template of component ChatComponent.
-
-    src/app/features/chat/chat.ts:50:15:
-[37m      50 │   templateUrl: [32m'./chat.html'[37m,
-         ╵                [32m~~~~~~~~~~~~~[0m
-
-
-❯ Changes detected. Rebuilding...
-✔ Changes detected. Rebuilding...
-Application bundle generation failed. [0.369 seconds] - 2026-05-29T14:39:18.936Z
-
-[31m✘ [41;31m[[41;97mERROR[41;31m][0m [1mNG5002: Parser Error: Lexer Error: Unterminated quote at column 18 in expression ['partner.avatarUrl] at the end of the expression ['partner.avatarUrl] in /home/amines/Desktop/01-blog/frontend/src/app/features/chat/chat.html@38:50[0m [1m[35m[plugin angular-compiler][0m
-
-    src/app/features/chat/chat.html:39:50:
-[37m      39 │ ...gIf="partner.avatarUrl" [src]="[32m'partner.avatarUrl[37m" alt="Avatar" />
-         ╵                                   [32m~~~~~~~~~~~~~~~~~~[0m
-
-  Error occurs in the template of component ChatComponent.
-
-    src/app/features/chat/chat.ts:50:15:
-[37m      50 │   templateUrl: [32m'./chat.html'[37m,
-         ╵                [32m~~~~~~~~~~~~~[0m
-
-
-[31m✘ [41;31m[[41;97mERROR[41;31m][0m [1mNG5002: Parser Error: Unexpected token Lexer Error: Unterminated quote at column 18 in expression ['partner.avatarUrl] at column 19 in ['partner.avatarUrl] in /home/amines/Desktop/01-blog/frontend/src/app/features/chat/chat.html@38:50[0m [1m[35m[plugin angular-compiler][0m
-
-    src/app/features/chat/chat.html:39:50:
-[37m      39 │ ...gIf="partner.avatarUrl" [src]="[32m'partner.avatarUrl[37m" alt="Avatar" />
-         ╵                                   [32m~~~~~~~~~~~~~~~~~~[0m
-
-  Error occurs in the template of component ChatComponent.
-
-    src/app/features/chat/chat.ts:50:15:
-[37m      50 │   templateUrl: [32m'./chat.html'[37m,
-         ╵                [32m~~~~~~~~~~~~~[0m
-
-
-[31m✘ [41;31m[[41;97mERROR[41;31m][0m [1mNG5002: Parser Error: Lexer Error: Unterminated quote at column 18 in expression ['creator.avatarUrl] at the end of the expression ['creator.avatarUrl] in /home/amines/Desktop/01-blog/frontend/src/app/features/chat/chat.html@80:52[0m [1m[35m[plugin angular-compiler][0m
-
-    src/app/features/chat/chat.html:81:52:
-[37m      81 │ ...gIf="creator.avatarUrl" [src]="[32m'creator.avatarUrl[37m" alt="Avatar" />
-         ╵                                   [32m~~~~~~~~~~~~~~~~~~[0m
-
-  Error occurs in the template of component ChatComponent.
-
-    src/app/features/chat/chat.ts:50:15:
-[37m      50 │   templateUrl: [32m'./chat.html'[37m,
-         ╵                [32m~~~~~~~~~~~~~[0m
-
-
-[31m✘ [41;31m[[41;97mERROR[41;31m][0m [1mNG5002: Parser Error: Unexpected token Lexer Error: Unterminated quote at column 18 in expression ['creator.avatarUrl] at column 19 in ['creator.avatarUrl] in /home/amines/Desktop/01-blog/frontend/src/app/features/chat/chat.html@80:52[0m [1m[35m[plugin angular-compiler][0m
-
-    src/app/features/chat/chat.html:81:52:
-[37m      81 │ ...gIf="creator.avatarUrl" [src]="[32m'creator.avatarUrl[37m" alt="Avatar" />
-         ╵                                   [32m~~~~~~~~~~~~~~~~~~[0m
-
-  Error occurs in the template of component ChatComponent.
-
-    src/app/features/chat/chat.ts:50:15:
-[37m      50 │   templateUrl: [32m'./chat.html'[37m,
-         ╵                [32m~~~~~~~~~~~~~[0m
-
-
-❯ Changes detected. Rebuilding...
-✔ Changes detected. Rebuilding...
-Application bundle generation failed. [0.492 seconds] - 2026-05-29T14:39:37.397Z
-
-[31m✘ [41;31m[[41;97mERROR[41;31m][0m [1mNG5002: Parser Error: Lexer Error: Unterminated quote at column 18 in expression ['creator.avatarUrl] at the end of the expression ['creator.avatarUrl] in /home/amines/Desktop/01-blog/frontend/src/app/features/chat/chat.html@80:52[0m [1m[35m[plugin angular-compiler][0m
-
-    src/app/features/chat/chat.html:81:52:
-[37m      81 │ ...gIf="creator.avatarUrl" [src]="[32m'creator.avatarUrl[37m" alt="Avatar" />
-         ╵                                   [32m~~~~~~~~~~~~~~~~~~[0m
-
-  Error occurs in the template of component ChatComponent.
-
-    src/app/features/chat/chat.ts:50:15:
-[37m      50 │   templateUrl: [32m'./chat.html'[37m,
-         ╵                [32m~~~~~~~~~~~~~[0m
-
-
-[31m✘ [41;31m[[41;97mERROR[41;31m][0m [1mNG5002: Parser Error: Unexpected token Lexer Error: Unterminated quote at column 18 in expression ['creator.avatarUrl] at column 19 in ['creator.avatarUrl] in /home/amines/Desktop/01-blog/frontend/src/app/features/chat/chat.html@80:52[0m [1m[35m[plugin angular-compiler][0m
-
-    src/app/features/chat/chat.html:81:52:
-[37m      81 │ ...gIf="creator.avatarUrl" [src]="[32m'creator.avatarUrl[37m" alt="Avatar" />
-         ╵                                   [32m~~~~~~~~~~~~~~~~~~[0m
-
-  Error occurs in the template of component ChatComponent.
-
-    src/app/features/chat/chat.ts:50:15:
-[37m      50 │   templateUrl: [32m'./chat.html'[37m,
-         ╵                [32m~~~~~~~~~~~~~[0m
-
-
-❯ Changes detected. Rebuilding...
-✔ Changes detected. Rebuilding...
-Initial chunk files | Names          | Raw size
-main.js             | main           | 59.21 kB | 
-styles.css          | styles         | 14.20 kB | 
-chunk-NAPIMT4I.js   | -              |  6.53 kB | 
-chunk-KGKWBYX4.js   | -              |  2.42 kB | 
-chunk-ZOFH5NT5.js   | -              |  2.12 kB | 
-chunk-GZYWEUWH.js   | -              |  1.68 kB | 
-chunk-CZJLB7T5.js   | -              |  1.08 kB | 
-polyfills.js        | polyfills      | 95 bytes | 
-
-                    | Initial total  | 87.33 kB
-
-Lazy chunk files    | Names          | Raw size
-chunk-SSWK6YSC.js   | admin          | 92.77 kB | 
-chunk-RLTAG6PG.js   | feed           | 89.04 kB | 
-chunk-7R5IQIPS.js   | chat           | 87.08 kB | 
-chunk-V32O3TBQ.js   | profile        | 78.87 kB | 
-chunk-P2PSZXL5.js   | single-post    | 60.78 kB | 
-chunk-DTNRLQDC.js   | auth-component | 30.47 kB | 
-chunk-T3C4KIDC.js   | edit-post      | 23.43 kB | 
-chunk-CV3JL7SP.js   | create-post    | 22.73 kB | 
-chunk-UOS43KOQ.js   | -              |  2.64 kB | 
-chunk-JPPUBCFN.js   | -              |  2.47 kB | 
-chunk-WI5B7KBO.js   | -              |  1.78 kB | 
-chunk-FLXMK4ZQ.js   | -              |  1.76 kB | 
-
-Application bundle generation complete. [0.623 seconds] - 2026-05-29T14:39:53.262Z
-
 NOTE: Raw file sizes do not reflect development server per-request transformations.
   ➜  Local:   http://localhost:4200/
 ❯ Changes detected. Rebuilding...
 ✔ Changes detected. Rebuilding...
-Initial chunk files | Names | Raw size
-main.js             | main  | 59.21 kB | 
-
-Lazy chunk files    | Names | Raw size
-chunk-623QTHF2.js   | chat  | 87.03 kB | 
-
-Application bundle generation complete. [0.523 seconds] - 2026-05-29T14:40:38.482Z
-
-Component update sent to client(s).
-❯ Changes detected. Rebuilding...
-✔ Changes detected. Rebuilding...
-Initial chunk files | Names | Raw size
-main.js             | main  | 59.21 kB | 
-
-Lazy chunk files    | Names | Raw size
-chunk-M3NNHXQY.js   | feed  | 88.99 kB | 
-
-Application bundle generation complete. [0.911 seconds] - 2026-05-29T14:40:57.452Z
-
-Component update sent to client(s).
-❯ Changes detected. Rebuilding...
-✔ Changes detected. Rebuilding...
-Initial chunk files | Names | Raw size
-main.js             | main  | 59.21 kB | 
-
-Lazy chunk files    | Names | Raw size
-chunk-IO6IA264.js   | feed  | 88.99 kB | 
-
-Application bundle generation complete. [0.530 seconds] - 2026-05-29T14:40:58.474Z
-
-Component update sent to client(s).
-❯ Changes detected. Rebuilding...
-✔ Changes detected. Rebuilding...
-Initial chunk files | Names | Raw size
-main.js             | main  | 59.21 kB | 
-
-Lazy chunk files    | Names | Raw size
-chunk-F2YWAMFU.js   | feed  | 88.94 kB | 
-
-Application bundle generation complete. [0.485 seconds] - 2026-05-29T14:41:07.051Z
-
-Component update sent to client(s).
-❯ Changes detected. Rebuilding...
-✔ Changes detected. Rebuilding...
 Initial chunk files | Names       | Raw size
-main.js             | main        | 59.21 kB | 
+main.js             | main        | 59.90 kB | 
 
 Lazy chunk files    | Names       | Raw size
-chunk-Z73XRNG2.js   | feed        | 88.89 kB | 
-chunk-EOT3DRVE.js   | profile     | 78.77 kB | 
-chunk-NAYUIGLW.js   | single-post | 60.52 kB | 
-chunk-7WGVL7C7.js   | edit-post   | 23.33 kB | 
-chunk-NVD5TQZU.js   | create-post | 22.63 kB | 
+chunk-23PDU3P2.js   | single-post | 60.77 kB | 
 
-Application bundle generation complete. [1.192 seconds] - 2026-05-29T14:41:18.558Z
+Application bundle generation complete. [2.237 seconds] - 2026-05-29T15:36:13.510Z
 
-Component update sent to client(s).
+Page reload sent to client(s).
 ❯ Changes detected. Rebuilding...
 ✔ Changes detected. Rebuilding...
-Initial chunk files | Names   | Raw size
-main.js             | main    | 59.21 kB | 
+Initial chunk files | Names       |  Raw size
+main.js             | main        |  59.90 kB | 
 
-Lazy chunk files    | Names   | Raw size
-chunk-DLN5VBT2.js   | profile | 78.77 kB | 
+Lazy chunk files    | Names       |  Raw size
+chunk-TRCOFXCM.js   | profile     | 100.82 kB | 
+chunk-S6T6XNJS.js   | feed        |  89.00 kB | 
+chunk-WE65IQ7Q.js   | single-post |  61.51 kB | 
 
-Application bundle generation complete. [1.325 seconds] - 2026-05-29T14:43:57.891Z
+Application bundle generation complete. [0.397 seconds] - 2026-05-29T15:36:18.201Z
 
 Page reload sent to client(s).
 ❯ Changes detected. Rebuilding...
 ✔ Changes detected. Rebuilding...
 Initial chunk files | Names       | Raw size
-main.js             | main        | 59.21 kB | 
+main.js             | main        | 59.90 kB | 
 
 Lazy chunk files    | Names       | Raw size
-chunk-YF3E2U4A.js   | feed        | 88.89 kB | 
-chunk-EMG2FZQP.js   | chat        | 87.03 kB | 
-chunk-5YU3JBWT.js   | profile     | 79.03 kB | 
-chunk-I2RQSC2X.js   | single-post | 60.52 kB | 
-chunk-2RXJIDV3.js   | edit-post   | 23.33 kB | 
-chunk-RSH745CR.js   | create-post | 22.63 kB | 
+chunk-RCJX4X3T.js   | single-post | 64.71 kB | 
 
-Application bundle generation complete. [0.488 seconds] - 2026-05-29T14:44:02.210Z
+Application bundle generation complete. [0.578 seconds] - 2026-05-29T15:36:31.664Z
+
+Component update sent to client(s).
+❯ Changes detected. Rebuilding...
+✔ Changes detected. Rebuilding...
+Initial chunk files | Names       | Raw size
+main.js             | main        | 59.90 kB | 
+
+Lazy chunk files    | Names       | Raw size
+chunk-LBDEJCU5.js   | single-post | 65.00 kB | 
+
+Application bundle generation complete. [0.635 seconds] - 2026-05-29T15:36:35.422Z
+
+Component update sent to client(s).
+❯ Changes detected. Rebuilding...
+✔ Changes detected. Rebuilding...
+Application bundle generation failed. [0.467 seconds] - 2026-05-29T15:36:38.697Z
+
+[31m✘ [41;31m[[41;97mERROR[41;31m][0m [1mTS2339: Property 'CreatePostComponent' does not exist on type 'typeof import("/home/amines/Desktop/01-blog/frontend/src/app/features/post/create-post/create-post")'.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/app.routes.ts:33:70:
+[37m      33 │ ...post/create-post/create-post').then((m) => m.[32mCreatePostComponent[37m),
+         ╵                                                 [32m~~~~~~~~~~~~~~~~~~~[0m
+
+
+[31m✘ [41;31m[[41;97mERROR[41;31m][0m [1mTS1044: 'public' modifier cannot appear on a module or namespace element.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/post/create-post/create-post.ts:34:0:
+[37m      34 │ [32mpublic[37m class CreatePostComponent implements OnInit {
+         ╵ [32m~~~~~~[0m
+
+
+[31m✘ [41;31m[[41;97mERROR[41;31m][0m [1mTS2420: Class 'CreatePostComponent' incorrectly implements interface 'OnInit'.
+  Property 'ngOnInit' is missing in type 'CreatePostComponent' but required in type 'OnInit'.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/post/create-post/create-post.ts:34:13:
+[37m      34 │ public class [32mCreatePostComponent[37m implements OnInit {
+         ╵              [32m~~~~~~~~~~~~~~~~~~~[0m
+
+  'ngOnInit' is declared here.
+
+    node_modules/@angular/core/types/core.d.ts:725:4:
+[37m      725 │     [32mngOnInit(): void;[37m
+          ╵     [32m~~~~~~~~~~~~~~~~~[0m
+
+
+❯ Changes detected. Rebuilding...
+✔ Changes detected. Rebuilding...
+Application bundle generation failed. [0.225 seconds] - 2026-05-29T15:36:42.020Z
+
+[31m✘ [41;31m[[41;97mERROR[41;31m][0m [1mTS2339: Property 'CreatePostComponent' does not exist on type 'typeof import("/home/amines/Desktop/01-blog/frontend/src/app/features/post/create-post/create-post")'.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/app.routes.ts:33:70:
+[37m      33 │ ...post/create-post/create-post').then((m) => m.[32mCreatePostComponent[37m),
+         ╵                                                 [32m~~~~~~~~~~~~~~~~~~~[0m
+
+
+[31m✘ [41;31m[[41;97mERROR[41;31m][0m [1mTS1044: 'public' modifier cannot appear on a module or namespace element.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/post/create-post/create-post.ts:34:0:
+[37m      34 │ [32mpublic[37m class CreatePostComponent implements OnInit {
+         ╵ [32m~~~~~~[0m
+
+
+❯ Changes detected. Rebuilding...
+✔ Changes detected. Rebuilding...
+Application bundle generation failed. [0.213 seconds] - 2026-05-29T15:36:44.545Z
+
+[31m✘ [41;31m[[41;97mERROR[41;31m][0m [1mTS2339: Property 'CreatePostComponent' does not exist on type 'typeof import("/home/amines/Desktop/01-blog/frontend/src/app/features/post/create-post/create-post")'.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/app.routes.ts:33:70:
+[37m      33 │ ...post/create-post/create-post').then((m) => m.[32mCreatePostComponent[37m),
+         ╵                                                 [32m~~~~~~~~~~~~~~~~~~~[0m
+
+
+[31m✘ [41;31m[[41;97mERROR[41;31m][0m [1mTS1044: 'public' modifier cannot appear on a module or namespace element.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/post/create-post/create-post.ts:34:0:
+[37m      34 │ [32mpublic[37m class CreatePostComponent implements OnInit {
+         ╵ [32m~~~~~~[0m
+
+
+❯ Changes detected. Rebuilding...
+✔ Changes detected. Rebuilding...
+Application bundle generation failed. [0.268 seconds] - 2026-05-29T15:36:47.228Z
+
+[31m✘ [41;31m[[41;97mERROR[41;31m][0m [1mTS2339: Property 'CreatePostComponent' does not exist on type 'typeof import("/home/amines/Desktop/01-blog/frontend/src/app/features/post/create-post/create-post")'.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/app.routes.ts:33:70:
+[37m      33 │ ...post/create-post/create-post').then((m) => m.[32mCreatePostComponent[37m),
+         ╵                                                 [32m~~~~~~~~~~~~~~~~~~~[0m
+
+
+[31m✘ [41;31m[[41;97mERROR[41;31m][0m [1mTS1044: 'public' modifier cannot appear on a module or namespace element.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/post/create-post/create-post.ts:34:0:
+[37m      34 │ [32mpublic[37m class CreatePostComponent implements OnInit {
+         ╵ [32m~~~~~~[0m
+
+
+❯ Changes detected. Rebuilding...
+✔ Changes detected. Rebuilding...
+Initial chunk files | Names          |  Raw size
+main.js             | main           |  59.90 kB | 
+styles.css          | styles         |  14.20 kB | 
+chunk-GKTZE3MI.js   | -              |   6.53 kB | 
+chunk-WKPAAEET.js   | -              |   2.66 kB | 
+chunk-ZOFH5NT5.js   | -              |   2.12 kB | 
+chunk-P6C3JLQQ.js   | -              |   1.68 kB | 
+chunk-CZJLB7T5.js   | -              |   1.08 kB | 
+polyfills.js        | polyfills      |  95 bytes | 
+
+                    | Initial total  |  88.27 kB
+
+Lazy chunk files    | Names          |  Raw size
+chunk-OKCT2XCD.js   | profile        | 100.82 kB | 
+chunk-3RIICFML.js   | admin          |  97.83 kB | 
+chunk-AISRIKLG.js   | feed           |  89.00 kB | 
+chunk-Y6OXUR3Q.js   | chat           |  88.13 kB | 
+chunk-UTEHMSS7.js   | single-post    |  65.00 kB | 
+chunk-7LL2MH4T.js   | auth-component |  30.47 kB | 
+chunk-OZTSFKVK.js   | create-post    |  28.13 kB | 
+chunk-2RXJIDV3.js   | edit-post      |  23.33 kB | 
+chunk-UOS43KOQ.js   | -              |   2.64 kB | 
+chunk-JPPUBCFN.js   | -              |   2.47 kB | 
+chunk-V3BYQ4DX.js   | -              |   1.87 kB | 
+chunk-WI5B7KBO.js   | -              |   1.78 kB | 
+
+Application bundle generation complete. [2.955 seconds] - 2026-05-29T15:37:17.279Z
 
 Page reload sent to client(s).
 ❯ Changes detected. Rebuilding...
 ✔ Changes detected. Rebuilding...
-Initial chunk files | Names   | Raw size
-main.js             | main    | 59.21 kB | 
+Initial chunk files | Names | Raw size
+main.js             | main  | 59.90 kB | 
 
-Lazy chunk files    | Names   | Raw size
-chunk-52VGM3HG.js   | profile | 80.28 kB | 
-
-Application bundle generation complete. [0.476 seconds] - 2026-05-29T14:44:08.311Z
+Application bundle generation complete. [1.039 seconds] - 2026-05-29T15:38:18.129Z
 
 Page reload sent to client(s).
 ❯ Changes detected. Rebuilding...
 ✔ Changes detected. Rebuilding...
-Initial chunk files | Names   | Raw size
-main.js             | main    | 59.21 kB | 
+Initial chunk files | Names | Raw size
+main.js             | main  | 60.70 kB | 
 
-Lazy chunk files    | Names   | Raw size
-chunk-J25B4PLL.js   | profile | 84.19 kB | 
+Application bundle generation complete. [0.772 seconds] - 2026-05-29T15:38:21.106Z
 
-Application bundle generation complete. [0.547 seconds] - 2026-05-29T14:44:14.028Z
+Page reload sent to client(s).
+❯ Changes detected. Rebuilding...
+✔ Changes detected. Rebuilding...
+Initial chunk files | Names | Raw size
+main.js             | main  | 62.44 kB | 
+
+Application bundle generation complete. [0.279 seconds] - 2026-05-29T15:38:32.894Z
 
 Component update sent to client(s).
 ❯ Changes detected. Rebuilding...
 ✔ Changes detected. Rebuilding...
-Initial chunk files | Names   | Raw size
-main.js             | main    | 59.21 kB | 
+Initial chunk files | Names | Raw size
+main.js             | main  | 63.59 kB | 
 
-Lazy chunk files    | Names   | Raw size
-chunk-YWBGXO4Y.js   | profile | 85.42 kB | 
-
-Application bundle generation complete. [0.738 seconds] - 2026-05-29T14:44:21.832Z
+Application bundle generation complete. [0.310 seconds] - 2026-05-29T15:38:36.521Z
 
 Component update sent to client(s).
 ❯ Changes detected. Rebuilding...
 ✔ Changes detected. Rebuilding...
-Initial chunk files | Names   | Raw size
-main.js             | main    | 59.21 kB | 
+Initial chunk files | Names | Raw size
+main.js             | main  | 63.59 kB | 
 
-Lazy chunk files    | Names   | Raw size
-chunk-YC52XTG2.js   | profile | 87.84 kB | 
+Lazy chunk files    | Names | Raw size
+chunk-BNYGPMXK.js   | feed  | 89.45 kB | 
 
-Application bundle generation complete. [0.706 seconds] - 2026-05-29T14:44:27.466Z
+Application bundle generation complete. [0.483 seconds] - 2026-05-29T15:39:50.571Z
+
+Page reload sent to client(s).
+❯ Changes detected. Rebuilding...
+✔ Changes detected. Rebuilding...
+Initial chunk files | Names | Raw size
+main.js             | main  | 63.59 kB | 
+
+Lazy chunk files    | Names | Raw size
+chunk-4B5CWOHL.js   | feed  | 90.44 kB | 
+
+Application bundle generation complete. [0.600 seconds] - 2026-05-29T15:39:59.846Z
 
 Component update sent to client(s).
 ❯ Changes detected. Rebuilding...
 ✔ Changes detected. Rebuilding...
-Initial chunk files | Names   | Raw size
-main.js             | main    | 59.21 kB | 
+Initial chunk files | Names | Raw size
+main.js             | main  | 63.59 kB | 
 
-Lazy chunk files    | Names   | Raw size
-chunk-V2W47ZBC.js   | profile | 90.08 kB | 
+Lazy chunk files    | Names | Raw size
+chunk-6XJCQBR2.js   | feed  | 90.73 kB | 
 
-Application bundle generation complete. [0.695 seconds] - 2026-05-29T14:44:31.730Z
-
-Component update sent to client(s).
-❯ Changes detected. Rebuilding...
-✔ Changes detected. Rebuilding...
-Initial chunk files | Names   | Raw size
-main.js             | main    | 59.21 kB | 
-
-Lazy chunk files    | Names   | Raw size
-chunk-AQZYGE5N.js   | profile | 90.12 kB | 
-
-Application bundle generation complete. [0.762 seconds] - 2026-05-29T14:48:44.391Z
-
-Component update sent to client(s).
-❯ Changes detected. Rebuilding...
-✔ Changes detected. Rebuilding...
-Initial chunk files | Names   | Raw size
-main.js             | main    | 59.21 kB | 
-
-Lazy chunk files    | Names   | Raw size
-chunk-XSJXVIKB.js   | profile | 90.16 kB | 
-
-Application bundle generation complete. [0.688 seconds] - 2026-05-29T14:48:47.478Z
-
-Component update sent to client(s).
-❯ Changes detected. Rebuilding...
-✔ Changes detected. Rebuilding...
-Initial chunk files | Names   | Raw size
-main.js             | main    | 59.21 kB | 
-
-Lazy chunk files    | Names   | Raw size
-chunk-XY2767PI.js   | profile | 90.20 kB | 
-
-Application bundle generation complete. [0.645 seconds] - 2026-05-29T14:48:50.097Z
-
-Component update sent to client(s).
-❯ Changes detected. Rebuilding...
-✔ Changes detected. Rebuilding...
-Initial chunk files | Names   | Raw size
-main.js             | main    | 59.21 kB | 
-
-Lazy chunk files    | Names   | Raw size
-chunk-UJDHSOJJ.js   | profile | 90.16 kB | 
-
-Application bundle generation complete. [0.723 seconds] - 2026-05-29T14:49:46.529Z
-
-Component update sent to client(s).
-❯ Changes detected. Rebuilding...
-✔ Changes detected. Rebuilding...
-Initial chunk files | Names   | Raw size
-main.js             | main    | 59.21 kB | 
-
-Lazy chunk files    | Names   | Raw size
-chunk-BPHTVZA5.js   | profile | 90.43 kB | 
-
-Application bundle generation complete. [0.769 seconds] - 2026-05-29T14:49:52.242Z
+Application bundle generation complete. [0.605 seconds] - 2026-05-29T15:40:06.256Z
 
 Component update sent to client(s).

@@ -309,6 +309,7 @@ public class PostService {
                 post.getContent(),
                 post.getMediaUrl(),
                 post.getAuthor().getUsername(),
+                post.getAuthor().getDisplayName(),
                 post.getAuthor().getProfile() != null ? post.getAuthor().getProfile().getAvatarUrl() : null,
                 post.getCreatedAt(),
                 post.getUpdatedAt(),

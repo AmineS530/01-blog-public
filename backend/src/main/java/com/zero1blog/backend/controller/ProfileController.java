@@ -32,6 +32,13 @@ public class ProfileController {
         return ResponseEntity.ok(profileService.updateProfile(userDetails.getUsername(), request));
     }
 
+    @PutMapping("/{username}")
+    public ResponseEntity<ProfileResponse> updateProfileByUsername(@PathVariable String username,
+                                                                   @RequestBody ProfileUpdateRequest request,
+                                                                   @AuthenticationPrincipal UserDetails userDetails) {
+        return ResponseEntity.ok(profileService.updateProfileByUsername(username, request, userDetails.getUsername()));
+    }
+
     @PostMapping("/{username}/follow")
     public ResponseEntity<Void> toggleFollow(@PathVariable String username,
                                              @AuthenticationPrincipal UserDetails userDetails) {

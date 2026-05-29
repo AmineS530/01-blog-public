@@ -26,11 +26,12 @@
   <mat-card *ngIf="!loading && post" class="post-card main-post-card">
     <div class="post-header">
       <div class="author-avatar" (click)="goToProfile(post.authorUsername)">
-        {{ post.authorUsername.charAt(0).toUpperCase() }}
+        <img *ngIf="post.authorAvatarUrl" [src]="post.authorAvatarUrl" alt="Avatar" />
+        <span *ngIf="!post.authorAvatarUrl">{{ (post.authorDisplayName || post.authorUsername).charAt(0).toUpperCase() }}</span>
       </div>
       <div class="header-text">
         <a class="author-name" href="javascript:void(0)" (click)="goToProfile(post.authorUsername)">
-          {{ post.authorUsername }}
+          {{ post.authorDisplayName || post.authorUsername }}
         </a>
         <div class="post-date">
           {{ post.createdAt | date:'MMM d, y, h:mm a' }}
@@ -69,11 +70,12 @@
     <mat-card *ngFor="let comment of comments" class="comment-card">
       <div class="comment-header">
         <div class="author-avatar small-avatar" (click)="goToProfile(comment.authorUsername)">
-          {{ comment.authorUsername.charAt(0).toUpperCase() }}
+          <img *ngIf="comment.authorAvatarUrl" [src]="comment.authorAvatarUrl" alt="Avatar" />
+          <span *ngIf="!comment.authorAvatarUrl">{{ (comment.authorDisplayName || comment.authorUsername).charAt(0).toUpperCase() }}</span>
         </div>
         <div class="header-text">
           <a class="author-name" href="javascript:void(0)" (click)="goToProfile(comment.authorUsername)">
-            {{ comment.authorUsername }}
+            {{ comment.authorDisplayName || comment.authorUsername }}
           </a>
           <span class="post-date">· {{ comment.createdAt | date:'MMM d, y, h:mm a' }}</span>
           <span *ngIf="comment.updatedAt !== comment.createdAt" class="edited-flag"> · edited</span>
@@ -125,7 +127,8 @@
 
     <div class="comment-form-container">
       <div class="author-avatar small-avatar me-avatar">
-        {{ currentUsername.charAt(0).toUpperCase() }}
+        <img *ngIf="currentUserAvatarUrl" [src]="currentUserAvatarUrl" alt="Avatar" />
+        <span *ngIf="!currentUserAvatarUrl">{{ (currentUserDisplayName || currentUsername).charAt(0).toUpperCase() }}</span>
       </div>
       <form [formGroup]="commentForm" (ngSubmit)="submitComment()" class="comment-form">
         <mat-form-field appearance="outline" class="full-width">

@@ -19,7 +19,8 @@
     <div class="quick-post-card glass-panel">
       <div class="quick-post-header">
         <div class="user-avatar-small">
-          <span>{{ currentUsername.charAt(0).toUpperCase() }}</span>
+          <img *ngIf="currentUserAvatarUrl" [src]="currentUserAvatarUrl" alt="Avatar" />
+          <span *ngIf="!currentUserAvatarUrl">{{ (currentUserDisplayName || currentUsername).charAt(0).toUpperCase() }}</span>
         </div>
         <h3>Share something today</h3>
       </div>
@@ -119,12 +120,12 @@
       <mat-card *ngFor="let post of posts" class="post-card" (click)="goToPost(post.id)">
         <div class="post-header">
           <div class="author-avatar" (click)="goToProfile($event, post.authorUsername)">
-            <img *ngIf="post.authorAvatarUrl" [src]=" post.authorAvatarUrl" alt="Avatar" />
-            <span *ngIf="!post.authorAvatarUrl">{{ post.authorUsername.charAt(0).toUpperCase() }}</span>
+            <img *ngIf="post.authorAvatarUrl" [src]="post.authorAvatarUrl" alt="Avatar" />
+            <span *ngIf="!post.authorAvatarUrl">{{ (post.authorDisplayName || post.authorUsername).charAt(0).toUpperCase() }}</span>
           </div>
           <div class="header-text">
             <a class="author-name" href="javascript:void(0)" (click)="goToProfile($event, post.authorUsername)">
-              {{ post.authorUsername }}
+              {{ post.authorDisplayName || post.authorUsername }}
             </a>
             <span class="post-date">{{ post.createdAt | date:'MMM d, y, h:mm a' }}</span>
           </div>

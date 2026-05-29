@@ -48,6 +48,8 @@ export class FeedComponent implements OnInit, OnDestroy {
   loadingRecommended = false;
   error = '';
   currentUsername = '';
+  currentUserAvatarUrl: string | null = null;
+  currentUserDisplayName = '';
   activeTab: 'global' | 'following' = 'global';
 
   currentPage = 0;
@@ -78,6 +80,16 @@ export class FeedComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.currentUsername = this.authService.getUsername() ?? '';
+    if (this.currentUsername) {
+      this.profileService.getProfile(this.currentUsername).subscribe({
+        next: (profile) => {
+          this.currentUserAvatarUrl = profile.avatarUrl;
+          this.currentUserDisplayName = profile.displayName || profile.username;
+        },
+        error: (err) => console.error('Failed to load profile for quick post avatar', err)
+      });
+    }
+
     this.loadPosts();
     this.loadRecommendedUsers();
 

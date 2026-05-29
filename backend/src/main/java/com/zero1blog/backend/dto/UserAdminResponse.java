@@ -17,5 +17,7 @@ public class UserAdminResponse {
     private String email;
     private String role;
     private boolean isBanned;
+    private String avatarUrl;
+    private String displayName;
     private LocalDateTime createdAt;
 }

@@ -207,6 +207,12 @@
   cursor: pointer;
   border: 1px solid var(--mat-sys-outline-variant);
   transition: background-color 0.2s ease;
+  overflow: hidden;
+}
+.user-avatar-mini img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 .user-avatar-mini:hover {
   background: var(--mat-sys-surface-container-highest);
@@ -439,4 +445,24 @@
 .action-ban-btn {
   color: #ef4444 !important;
   border-color: rgba(239, 68, 68, 0.3) !important;
+}
+
+/* Display Name Column Styling */
+.display-name-cell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.display-name-cell button {
+  width: 32px;
+  height: 32px;
+  line-height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.display-name-cell .edit-icon-small {
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
 }

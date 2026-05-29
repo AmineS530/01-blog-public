@@ -52,6 +52,34 @@
   font-weight: 700;
 }
 
+/* Navbar Avatar Styles */
+.nav-avatar-container {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: var(--mat-sys-primary-container);
+  color: var(--mat-sys-on-primary-container);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 14px;
+  border: 1px solid var(--mat-sys-outline-variant);
+  margin-right: 8px;
+  vertical-align: middle;
+}
+
+.nav-avatar {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.nav-avatar-fallback {
+  line-height: 32px;
+}
+
 .main-bg {
   padding-top: 24px;
   min-height: calc(100vh - 64px);

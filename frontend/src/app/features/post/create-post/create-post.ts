@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -11,6 +11,8 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { PostService } from '../../../core/services/post.service';
 import { MediaService } from '../../../core/services/media.service';
+import { AuthService } from '../../../core/services/auth.service';
+import { ProfileService } from '../../../core/services/profile.service';
 
 @Component({
   selector: 'app-create-post',
@@ -29,23 +31,40 @@ import { MediaService } from '../../../core/services/media.service';
   templateUrl: './create-post.html',
   styleUrl: './create-post.css',
 })
-export class CreatePostComponent {
+export class CreatePostComponent implements OnInit {
   postForm: FormGroup;
   error = '';
   submitting = false;
   mediaUrl: string | null = null;
   uploadingMedia = false;
+  currentUserAvatarUrl: string | null = null;
+  currentUserDisplayName = '';
 
   constructor(
     private fb: FormBuilder,
     private postService: PostService,
     private mediaService: MediaService,
-    private router: Router
+    private router: Router,
+    private authService: AuthService,
+    private profileService: ProfileService
   ) {
     this.postForm = this.fb.group({
       title: ['', [Validators.required, Validators.maxLength(100)]],
       content: ['', [Validators.required, Validators.maxLength(5000)]]
     });
+  }
+
+  ngOnInit(): void {
+    const username = this.authService.getUsername();
+    if (username) {
+      this.profileService.getProfile(username).subscribe({
+        next: (profile) => {
+          this.currentUserAvatarUrl = profile.avatarUrl;
+          this.currentUserDisplayName = profile.displayName || profile.username;
+        },
+        error: (err) => console.error('Failed to load profile for creator avatar', err)
+      });
+    }
   }
 
   onFileSelected(event: Event): void {

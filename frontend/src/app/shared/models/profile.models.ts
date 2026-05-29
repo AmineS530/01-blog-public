@@ -2,7 +2,7 @@ export interface ProfileResponse {
   id: number;
   publicId: string;
   username: string;
-  fullName: string;
+  displayName: string;
   bio: string;
   avatarUrl: string;
   followerCount: number;
@@ -13,7 +13,7 @@ export interface ProfileResponse {
 }
 
 export interface ProfileUpdateRequest {
-  fullName: string;
+  displayName: string;
   bio: string;
   avatarUrl: string;
 }

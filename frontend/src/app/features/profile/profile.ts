@@ -7,6 +7,9 @@ import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { FormsModule } from '@angular/forms';
 import { ProfileService } from '../../core/services/profile.service';
 import { PostService } from '../../core/services/post.service';
 import { AuthService } from '../../core/services/auth.service';
@@ -28,6 +31,9 @@ import { MarkdownPipe } from '../../shared/pipes/markdown.pipe';
     MatIconModule,
     MatProgressSpinnerModule,
     MatTooltipModule,
+    MatFormFieldModule,
+    MatInputModule,
+    FormsModule,
     MarkdownPipe
   ],
   templateUrl: './profile.html',
@@ -55,6 +61,12 @@ export class ProfileComponent implements OnInit {
   loadingFollowing = false;
   uploadingAvatar = false;
 
+  isEditingProfile = false;
+  editDisplayName = '';
+  editBio = '';
+  savingProfile = false;
+  isCallerAdminOrSuperAdmin = false;
+
   constructor(
     private route: ActivatedRoute,
     private router: Router,
@@ -68,6 +80,8 @@ export class ProfileComponent implements OnInit {
 
   ngOnInit(): void {
     this.currentUsername = this.authService.getUsername() ?? '';
+    const role = this.authService.getRole();
+    this.isCallerAdminOrSuperAdmin = role === 'ADMIN' || role === 'SUPER_ADMIN';
     
     this.route.paramMap.subscribe(params => {
       this.targetUsername = params.get('username') || '';
@@ -295,7 +309,7 @@ export class ProfileComponent implements OnInit {
       next: (res) => {
         if (this.profile) {
           const updateReq = {
-            fullName: this.profile.fullName || '',
+            displayName: this.profile.displayName || '',
             bio: this.profile.bio || '',
             avatarUrl: res.url
           };
@@ -317,6 +331,41 @@ export class ProfileComponent implements OnInit {
       error: () => {
         this.feedback.showToast('Failed to upload image.', 'error');
         this.uploadingAvatar = false;
+      }
+    });
+  }
+
+  openEditBioModal(): void {
+    if (!this.profile) return;
+    this.editDisplayName = this.profile.displayName || '';
+    this.editBio = this.profile.bio || '';
+    this.isEditingProfile = true;
+  }
+
+  cancelEditProfile(): void {
+    this.isEditingProfile = false;
+  }
+
+  saveProfileChanges(): void {
+    if (!this.profile) return;
+    this.savingProfile = true;
+
+    const request = {
+      displayName: this.editDisplayName,
+      bio: this.editBio,
+      avatarUrl: this.profile.avatarUrl || ''
+    };
+
+    this.profileService.updateProfileByUsername(this.profile.username, request).subscribe({
+      next: (updatedProfile) => {
+        this.profile = updatedProfile;
+        this.isEditingProfile = false;
+        this.savingProfile = false;
+        this.feedback.showToast('Profile updated successfully!', 'success');
+      },
+      error: () => {
+        this.feedback.showToast('Failed to update profile.', 'error');
+        this.savingProfile = false;
       }
     });
   }
