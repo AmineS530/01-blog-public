@@ -12,6 +12,7 @@ import { PostService } from '../../core/services/post.service';
 import { AuthService } from '../../core/services/auth.service';
 import { ReportService } from '../../core/services/report.service';
 import { FeedbackService } from '../../core/services/feedback.service';
+import { MediaService } from '../../core/services/media.service';
 import { ProfileResponse } from '../../shared/models/profile.models';
 import { PostResponse } from '../../shared/models/post.models';
 import { MarkdownPipe } from '../../shared/pipes/markdown.pipe';
@@ -52,6 +53,7 @@ export class ProfileComponent implements OnInit {
   followingList: ProfileResponse[] = [];
   loadingFollowers = false;
   loadingFollowing = false;
+  uploadingAvatar = false;
 
   constructor(
     private route: ActivatedRoute,
@@ -59,6 +61,7 @@ export class ProfileComponent implements OnInit {
     private profileService: ProfileService,
     private postService: PostService,
     private authService: AuthService,
+    private mediaService: MediaService,
     private reportService: ReportService,
     private feedback: FeedbackService
   ) {}
@@ -274,6 +277,46 @@ export class ProfileComponent implements OnInit {
         if (this.currentUsername === this.targetUsername && this.profile) {
           this.profile.followingCount += wasFollowing ? 1 : -1;
         }
+      }
+    });
+  }
+
+  onAvatarSelected(event: any): void {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      this.feedback.showToast('Please select a valid image file.', 'error');
+      return;
+    }
+
+    this.uploadingAvatar = true;
+    this.mediaService.upload(file).subscribe({
+      next: (res) => {
+        if (this.profile) {
+          const updateReq = {
+            fullName: this.profile.fullName || '',
+            bio: this.profile.bio || '',
+            avatarUrl: res.url
+          };
+          this.profileService.updateProfile(updateReq).subscribe({
+            next: (updatedProfile) => {
+              this.profile = updatedProfile;
+              this.uploadingAvatar = false;
+              this.feedback.showToast('Profile picture updated successfully!', 'success');
+            },
+            error: () => {
+              this.feedback.showToast('Failed to update profile picture.', 'error');
+              this.uploadingAvatar = false;
+            }
+          });
+        } else {
+          this.uploadingAvatar = false;
+        }
+      },
+      error: () => {
+        this.feedback.showToast('Failed to upload image.', 'error');
+        this.uploadingAvatar = false;
       }
     });
   }

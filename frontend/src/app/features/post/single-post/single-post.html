@@ -9,6 +9,8 @@
       <button mat-icon-button (click)="edit()" matTooltip="Edit post">
         <mat-icon>edit</mat-icon>
       </button>
+    </ng-container>
+    <ng-container *ngIf="isAuthor || isAdminOrSuperAdmin">
       <button mat-icon-button color="warn" (click)="delete()" matTooltip="Delete post">
         <mat-icon>delete</mat-icon>
       </button>
@@ -40,8 +42,8 @@
     <mat-card-content>
       <h1 class="post-title">{{ post.title }}</h1>
       <div class="post-media" *ngIf="post.mediaUrl">
-        <img *ngIf="post.mediaUrl.toLowerCase().match('\\.(jpg|jpeg|png|gif|webp)$')" [src]="'http://localhost:8080' + post.mediaUrl" alt="Media" />
-        <video *ngIf="post.mediaUrl.toLowerCase().match('\\.(mp4|webm|ogg)$')" [src]="'http://localhost:8080' + post.mediaUrl" controls></video>
+        <img *ngIf="post.mediaUrl.toLowerCase().match('\\.(jpg|jpeg|png|gif|webp)$')" [src]=" post.mediaUrl" alt="Media" />
+        <video *ngIf="post.mediaUrl.toLowerCase().match('\\.(mp4|webm|ogg)$')" [src]=" post.mediaUrl" controls></video>
       </div>
       <p class="content" [innerHTML]="post.content | markdown"></p>
     </mat-card-content>
@@ -102,8 +104,8 @@
 
         <p class="comment-content" *ngIf="editingCommentId !== comment.id" [innerHTML]="comment.content | markdown"></p>
         <div class="comment-media" *ngIf="comment.mediaUrl && editingCommentId !== comment.id">
-          <img *ngIf="comment.mediaUrl.toLowerCase().match('\\.(jpg|jpeg|png|gif|webp)$')" [src]="'http://localhost:8080' + comment.mediaUrl" alt="Comment Media" />
-          <video *ngIf="comment.mediaUrl.toLowerCase().match('\\.(mp4|webm|ogg)$')" [src]="'http://localhost:8080' + comment.mediaUrl" controls></video>
+          <img *ngIf="comment.mediaUrl.toLowerCase().match('\\.(jpg|jpeg|png|gif|webp)$')" [src]=" comment.mediaUrl" alt="Comment Media" />
+          <video *ngIf="comment.mediaUrl.toLowerCase().match('\\.(mp4|webm|ogg)$')" [src]=" comment.mediaUrl" controls></video>
         </div>
       </mat-card-content>
 
@@ -138,7 +140,7 @@
           </button>
           
           <div class="comment-media-preview" *ngIf="commentMediaUrl">
-            <img *ngIf="commentMediaUrl.toLowerCase().match('\\.(jpg|jpeg|png|gif|webp)$')" [src]="'http://localhost:8080' + commentMediaUrl" alt="Preview" />
+            <img *ngIf="commentMediaUrl.toLowerCase().match('\\.(jpg|jpeg|png|gif|webp)$')" [src]=" commentMediaUrl" alt="Preview" />
             <button mat-icon-button color="warn" type="button" class="remove-comment-media" (click)="removeCommentMedia()">
               <mat-icon>close</mat-icon>
             </button>

@@ -12,11 +12,11 @@ import org.springframework.stereotype.Service;
 import com.zero1blog.backend.dto.PostRequest;
 import com.zero1blog.backend.dto.PostResponse;
 import com.zero1blog.backend.model.Post;
+import com.zero1blog.backend.model.Subscription;
 import com.zero1blog.backend.model.User;
 import com.zero1blog.backend.repository.CommentRepository;
 import com.zero1blog.backend.repository.PostLikeRepository;
 import com.zero1blog.backend.repository.PostRepository;
-import com.zero1blog.backend.model.Subscription;
 import com.zero1blog.backend.repository.SubscriptionRepository;
 import com.zero1blog.backend.repository.UserBlockRepository;
 import com.zero1blog.backend.repository.UserRepository;
@@ -260,11 +260,17 @@ public class PostService {
      * @param id             ID of the target blog post to delete.
      * @param authorPublicId public ID of the post author requesting deletion.
      */
-    public void deletePost(Long id, String authorPublicId) {
+    public void deletePost(Long id, String requesterPublicId) {
         Post post = postRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Post not found"));
 
-        if (!post.getAuthor().getPublicId().equals(authorPublicId)) {
+        User requester = userRepository.findByPublicId(requesterPublicId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        boolean isAuthor = post.getAuthor().getPublicId().equals(requesterPublicId);
+        boolean isAdmin = requester.getRole() == User.Role.ADMIN || requester.getRole() == User.Role.SUPER_ADMIN;
+
+        if (!isAuthor && !isAdmin) {
             throw new RuntimeException("Not authorized to delete this post");
         }
 

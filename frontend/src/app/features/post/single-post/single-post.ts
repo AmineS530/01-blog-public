@@ -44,6 +44,7 @@ export class SinglePostComponent implements OnInit, OnDestroy {
   loading = true;
   error = '';
   isAuthor = false;
+  isAdminOrSuperAdmin = false;
   currentUsername = '';
 
   commentForm: FormGroup;
@@ -89,6 +90,8 @@ export class SinglePostComponent implements OnInit, OnDestroy {
       next: (post) => {
         this.post = post;
         this.isAuthor = this.currentUsername === post.authorUsername;
+        const role = this.authService.getRole();
+        this.isAdminOrSuperAdmin = role === 'ADMIN' || role === 'SUPER_ADMIN';
         this.loadComments(id);
         this.loading = false;
         this.setupRealtime(id);

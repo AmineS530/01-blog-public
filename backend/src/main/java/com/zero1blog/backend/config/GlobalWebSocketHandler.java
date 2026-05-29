@@ -79,8 +79,11 @@ public class GlobalWebSocketHandler extends TextWebSocketHandler {
             JsonNode node = objectMapper.readTree(message.getPayload());
             if (node.has("type") && "REGISTER".equals(node.get("type").asText())) {
                 String publicId = node.get("publicId").asText();
-                userSessions.put(publicId, session);
+                WebSocketSession oldSession = userSessions.put(publicId, session);
                 session.getAttributes().put("publicId", publicId);
+                if (oldSession == null || !oldSession.isOpen()) {
+                    broadcast("USER_ONLINE", Map.of("publicId", publicId));
+                }
             }
         } catch (Exception e) {
             // Ignore malformed text payloads to keep connection robust
@@ -101,7 +104,10 @@ public class GlobalWebSocketHandler extends TextWebSocketHandler {
         activeSessions.remove(session);
         String publicId = (String) session.getAttributes().get("publicId");
         if (publicId != null) {
-            userSessions.remove(publicId);
+            boolean removed = userSessions.remove(publicId, session);
+            if (removed) {
+                broadcast("USER_OFFLINE", Map.of("publicId", publicId));
+            }
         }
     }
 
@@ -156,6 +162,13 @@ public class GlobalWebSocketHandler extends TextWebSocketHandler {
                 }
             }
         }
+    }
+
+    /**
+     * Retrieves the set of public IDs of all currently online/connected users.
+     */
+    public static java.util.Set<String> getOnlineUsers() {
+        return userSessions.keySet();
     }
 
     /**

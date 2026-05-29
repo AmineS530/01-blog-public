@@ -76,6 +76,9 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
   loadingThread = false;
   loadingRecommended = false;
 
+  /** Set of currently online user public IDs. */
+  onlineUsers = new Set<string>();
+
   /** Search/Filter query string to filter inbox and recommendations. */
   searchQuery = '';
 
@@ -90,6 +93,9 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
 
   /** Unsubscribe reference tracking WebSocket real-time messages to prevent leaks. */
   private messageSubscription?: Subscription;
+
+  /** Unsubscribe reference tracking WebSocket online status updates. */
+  private onlineSubscription?: Subscription;
   
   /** Internal dirty flag triggered to request programmatic scrolling on next view update. */
   private shouldScrollToBottom = false;
@@ -123,6 +129,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
 
     this.loadInbox();
     this.loadRecommended();
+    this.loadOnlineUsers();
     this.setupRealtime();
 
     // Support starting a chat directly via query params (e.g. /chat?user=publicId&username=username)
@@ -173,6 +180,18 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
         this.feedback.showToast('Failed to load inbox.', 'error');
         this.loadingInbox = false;
       },
+    });
+  }
+
+  /**
+   * Fetches the initial list of online user public IDs.
+   */
+  loadOnlineUsers(): void {
+    this.messageService.getOnlineUsers().subscribe({
+      next: (users) => {
+        this.onlineUsers = new Set(users);
+      },
+      error: () => {}
     });
   }
 
@@ -248,6 +267,16 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
             unreadCount: msg.recipientPublicId === this.currentUserId ? 1 : 0,
           };
           this.inbox.unshift(partner);
+        }
+      },
+    });
+
+    this.onlineSubscription = this.realtimeService.onlineStatus$.subscribe({
+      next: (status) => {
+        if (status.online) {
+          this.onlineUsers.add(status.publicId);
+        } else {
+          this.onlineUsers.delete(status.publicId);
         }
       },
     });
@@ -419,5 +448,6 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
 
   ngOnDestroy(): void {
     this.messageSubscription?.unsubscribe();
+    this.onlineSubscription?.unsubscribe();
   }
 }

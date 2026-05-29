@@ -36,9 +36,9 @@
           (click)="selectPartner(partner)"
         >
           <div class="partner-avatar">
-            <img *ngIf="partner.avatarUrl" [src]="'http://localhost:8080' + partner.avatarUrl" alt="Avatar" />
+            <img *ngIf="partner.avatarUrl" [src]="partner.avatarUrl" alt="Avatar" />
             <span *ngIf="!partner.avatarUrl">{{ partner.username.charAt(0).toUpperCase() }}</span>
-            <div class="status-indicator online"></div>
+            <div class="status-indicator" [class.online]="onlineUsers.has(partner.publicId)"></div>
           </div>
           
           <div class="conversation-meta">
@@ -78,7 +78,7 @@
             })"
           >
             <div class="recommendation-avatar">
-              <img *ngIf="creator.avatarUrl" [src]="'http://localhost:8080' + creator.avatarUrl" alt="Avatar" />
+              <img *ngIf="creator.avatarUrl" [src]="creator.avatarUrl" alt="Avatar" />
               <span *ngIf="!creator.avatarUrl">{{ creator.username.charAt(0).toUpperCase() }}</span>
             </div>
             <span class="recommendation-name">{{ creator.username }}</span>
@@ -107,13 +107,13 @@
       <div class="room-header">
         <div class="room-header-left" (click)="goToProfile(activePartner.username)">
           <div class="room-partner-avatar">
-            <img *ngIf="activePartner.avatarUrl" [src]="'http://localhost:8080' + activePartner.avatarUrl" alt="Avatar" />
+            <img *ngIf="activePartner.avatarUrl" [src]="activePartner.avatarUrl" alt="Avatar" />
             <span *ngIf="!activePartner.avatarUrl">{{ activePartner.username.charAt(0).toUpperCase() }}</span>
-            <div class="status-indicator-header online"></div>
+            <div class="status-indicator-header" [class.online]="onlineUsers.has(activePartner.publicId)"></div>
           </div>
           <div class="room-partner-meta">
             <h3>{{ activePartner.username }}</h3>
-            <span class="status-text">Active Now</span>
+            <span class="status-text">{{ onlineUsers.has(activePartner.publicId) ? 'Active Now' : 'Offline' }}</span>
           </div>
         </div>
         
@@ -150,12 +150,12 @@
               <div class="message-media" *ngIf="msg.mediaUrl">
                 <img 
                   *ngIf="msg.mediaUrl.toLowerCase().match('\\.(jpg|jpeg|png|gif|webp)$')" 
-                  [src]="'http://localhost:8080' + msg.mediaUrl" 
+                  [src]="msg.mediaUrl" 
                   alt="Attachment" 
                 />
                 <video 
                   *ngIf="msg.mediaUrl.toLowerCase().match('\\.(mp4|webm|ogg)$')" 
-                  [src]="'http://localhost:8080' + msg.mediaUrl" 
+                  [src]="msg.mediaUrl" 
                   controls
                 ></video>
               </div>
@@ -182,8 +182,8 @@
           <button class="remove-attachment-btn" (click)="removeAttachment()" matTooltip="Remove attachment">
             <mat-icon>close</mat-icon>
           </button>
-          <img *ngIf="attachedMediaUrl.toLowerCase().match('\\.(jpg|jpeg|png|gif|webp)$')" [src]="'http://localhost:8080' + attachedMediaUrl" alt="Attachment" />
-          <video *ngIf="attachedMediaUrl.toLowerCase().match('\\.(mp4|webm|ogg)$')" [src]="'http://localhost:8080' + attachedMediaUrl" controls></video>
+          <img *ngIf="attachedMediaUrl.toLowerCase().match('\\.(jpg|jpeg|png|gif|webp)$')" [src]="attachedMediaUrl" alt="Attachment" />
+          <video *ngIf="attachedMediaUrl.toLowerCase().match('\\.(mp4|webm|ogg)$')" [src]="attachedMediaUrl" controls></video>
         </div>
 
         <div class="compose-inputs-row">

@@ -32,7 +32,8 @@ export class RealtimeService implements OnDestroy {
   private commentsSubject = new Subject<any>();
   private likesSubject = new Subject<any>();
   private messagesSubject = new Subject<any>();
-
+  private onlineStatusSubject = new Subject<{ publicId: string, online: boolean }>();
+  
   /** Observable stream emitting new posts published across the ecosystem. */
   public posts$: Observable<any> = this.postsSubject.asObservable();
   
@@ -44,6 +45,9 @@ export class RealtimeService implements OnDestroy {
   
   /** Observable stream emitting direct chat messages targeted to the current logged-in user. */
   public messages$: Observable<any> = this.messagesSubject.asObservable();
+
+  /** Observable stream emitting user online status changes (USER_ONLINE / USER_OFFLINE). */
+  public onlineStatus$: Observable<{ publicId: string, online: boolean }> = this.onlineStatusSubject.asObservable();
 
   /**
    * Initializes the RealtimeService and triggers an immediate asynchronous connection attempt.
@@ -102,6 +106,12 @@ export class RealtimeService implements OnDestroy {
               break;
             case 'NEW_MESSAGE':
               this.messagesSubject.next(data);
+              break;
+            case 'USER_ONLINE':
+              this.onlineStatusSubject.next({ publicId: data.publicId, online: true });
+              break;
+            case 'USER_OFFLINE':
+              this.onlineStatusSubject.next({ publicId: data.publicId, online: false });
               break;
             default:
               console.log('Unhandled WebSocket event:', type, data);

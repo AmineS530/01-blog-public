@@ -49,4 +49,8 @@ export class MessageService {
   getUnreadCount(): Observable<{ count: number }> {
     return this.http.get<{ count: number }>(`${this.apiUrl}/unread-count`);
   }
+
+  getOnlineUsers(): Observable<string[]> {
+    return this.http.get<string[]>(`${this.apiUrl}/online`);
+  }
 }

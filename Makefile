@@ -4,7 +4,6 @@ YELLOW = \033[0;33m
 BLUE = \033[0;34m
 NC = \033[0m # No Color
 
-.PHONY: all help install-docker run-backend run-frontend
 
 all: run-backend run-frontend
 
@@ -26,12 +25,10 @@ run-frontend:
 	@echo "📝 Frontend logs are being written to ${BLUE}frontend/console.log${NC}"
 
 clean:
-# 	@echo "${YELLOW}Stopping Docker containers...${NC}"
-# 	@cd backend && sudo docker compose down
-# 	@echo "✅ ${GREEN}Docker containers stopped!${NC}"
-# 	@echo "${YELLOW}Killing backend and frontend processes...${NC}"
 	@fuser -k 8080/tcp > /dev/null 2>&1 || true
 	@fuser -k 4200/tcp > /dev/null 2>&1 || true
 	@echo "✅ ${GREEN}All processes stopped!${NC}"
 
 re: clean all
+
+.PHONY: all help run-backend run-frontend

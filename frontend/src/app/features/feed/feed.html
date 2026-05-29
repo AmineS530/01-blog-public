@@ -44,8 +44,8 @@
           <button class="remove-media-btn" (click)="removeMedia()" matTooltip="Remove media">
             <mat-icon>close</mat-icon>
           </button>
-          <img *ngIf="quickPostMediaUrl.toLowerCase().match('\\.(jpg|jpeg|png|gif|webp)$')" [src]="'http://localhost:8080' + quickPostMediaUrl" alt="Preview" />
-          <video *ngIf="quickPostMediaUrl.toLowerCase().match('\\.(mp4|webm|ogg)$')" [src]="'http://localhost:8080' + quickPostMediaUrl" controls></video>
+          <img *ngIf="quickPostMediaUrl.toLowerCase().match('\\.(jpg|jpeg|png|gif|webp)$')" [src]="quickPostMediaUrl" alt="Preview" />
+          <video *ngIf="quickPostMediaUrl.toLowerCase().match('\\.(mp4|webm|ogg)$')" [src]="quickPostMediaUrl" controls></video>
         </div>
       </div>
 
@@ -119,7 +119,7 @@
       <mat-card *ngFor="let post of posts" class="post-card" (click)="goToPost(post.id)">
         <div class="post-header">
           <div class="author-avatar" (click)="goToProfile($event, post.authorUsername)">
-            <img *ngIf="post.authorAvatarUrl" [src]="'http://localhost:8080' + post.authorAvatarUrl" alt="Avatar" />
+            <img *ngIf="post.authorAvatarUrl" [src]=" post.authorAvatarUrl" alt="Avatar" />
             <span *ngIf="!post.authorAvatarUrl">{{ post.authorUsername.charAt(0).toUpperCase() }}</span>
           </div>
           <div class="header-text">
@@ -132,8 +132,8 @@
         
         <mat-card-content class="post-card-body">
           <div class="post-media-container" *ngIf="post.mediaUrl" (click)="$event.stopPropagation()">
-            <img *ngIf="post.mediaUrl.toLowerCase().match('\\.(jpg|jpeg|png|gif|webp)$')" [src]="'http://localhost:8080' + post.mediaUrl" alt="Media" />
-            <video *ngIf="post.mediaUrl.toLowerCase().match('\\.(mp4|webm|ogg)$')" [src]="'http://localhost:8080' + post.mediaUrl" controls></video>
+            <img *ngIf="post.mediaUrl.toLowerCase().match('\\.(jpg|jpeg|png|gif|webp)$')" [src]=" post.mediaUrl" alt="Media" />
+            <video *ngIf="post.mediaUrl.toLowerCase().match('\\.(mp4|webm|ogg)$')" [src]=" post.mediaUrl" controls></video>
           </div>
           <h3 class="post-title">{{ post.title }}</h3>
           <p class="preview-text" [innerHTML]="(post.content | slice:0:280) + (post.content.length > 280 ? '...' : '') | markdown"></p>
@@ -208,7 +208,7 @@
           <div class="recommended-user-item" *ngFor="let user of recommendedUsers">
             <div class="user-info-group" (click)="goToProfile($event, user.username)">
               <div class="user-avatar-mid">
-                <img *ngIf="user.avatarUrl" [src]="'http://localhost:8080' + user.avatarUrl" alt="Avatar" />
+                <img *ngIf="user.avatarUrl" [src]=" user.avatarUrl" alt="Avatar" />
                 <span *ngIf="!user.avatarUrl">{{ user.username.charAt(0).toUpperCase() }}</span>
               </div>
               <div class="user-meta-info">

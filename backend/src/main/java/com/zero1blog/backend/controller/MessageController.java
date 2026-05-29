@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
+import com.zero1blog.backend.config.GlobalWebSocketHandler;
 
 @RestController
 @RequestMapping("/api/messages")
@@ -48,5 +49,10 @@ public class MessageController {
     @GetMapping("/unread-count")
     public ResponseEntity<Map<String, Long>> getUnreadCount(Authentication authentication) {
         return ResponseEntity.ok(Map.of("count", messageService.getUnreadCount(authentication.getName())));
+    }
+
+    @GetMapping("/online")
+    public ResponseEntity<List<String>> getOnlineUsers() {
+        return ResponseEntity.ok(List.copyOf(GlobalWebSocketHandler.getOnlineUsers()));
     }
 }

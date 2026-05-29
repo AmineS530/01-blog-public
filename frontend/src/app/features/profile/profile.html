@@ -16,9 +16,23 @@
       
       <div class="profile-details-card">
         <div class="profile-top-row">
-          <div class="large-avatar">
-            {{ profile.username.charAt(0).toUpperCase() }}
+          <div class="large-avatar" [class.editable]="currentUsername === targetUsername" (click)="currentUsername === targetUsername && fileInput.click()">
+            <img *ngIf="profile.avatarUrl" [src]="profile.avatarUrl" alt="Profile Picture" class="avatar-img" />
+            <span *ngIf="!profile.avatarUrl">{{ profile.username.charAt(0).toUpperCase() }}</span>
+            
+            <!-- Upload Overlay on Hover (for own profile) -->
+            <div class="avatar-overlay" *ngIf="currentUsername === targetUsername">
+              <mat-icon>camera_alt</mat-icon>
+              <span>Change Photo</span>
+            </div>
+            
+            <!-- Upload Spinner -->
+            <div class="avatar-loading" *ngIf="uploadingAvatar">
+              <mat-spinner diameter="36"></mat-spinner>
+            </div>
           </div>
+          
+          <input type="file" #fileInput style="display: none;" (change)="onAvatarSelected($event)" accept="image/*" />
           
           <div class="profile-actions" *ngIf="currentUsername !== targetUsername">
             <button mat-stroked-button color="warn" (click)="toggleBlock()" class="block-btn" matTooltip="Block User">
@@ -95,7 +109,8 @@
         <mat-card *ngFor="let post of posts" class="post-card" (click)="goToPost(post.id)">
           <div class="post-header">
             <div class="author-avatar">
-              {{ post.authorUsername.charAt(0).toUpperCase() }}
+              <img *ngIf="post.authorAvatarUrl" [src]="post.authorAvatarUrl" alt="Avatar" class="avatar-img" />
+              <span *ngIf="!post.authorAvatarUrl">{{ post.authorUsername.charAt(0).toUpperCase() }}</span>
             </div>
             <div class="header-text">
               <span class="author-name">{{ post.authorUsername }}</span>
@@ -104,8 +119,8 @@
           </div>
           <mat-card-content>
             <div class="post-media" *ngIf="post.mediaUrl">
-              <img *ngIf="post.mediaUrl.toLowerCase().match('\\.(jpg|jpeg|png|gif|webp)$')" [src]="'http://localhost:8080' + post.mediaUrl" alt="Media" />
-              <video *ngIf="post.mediaUrl.toLowerCase().match('\\.(mp4|webm|ogg)$')" [src]="'http://localhost:8080' + post.mediaUrl" controls></video>
+              <img *ngIf="post.mediaUrl.toLowerCase().match('\\.(jpg|jpeg|png|gif|webp)$')" [src]=" post.mediaUrl" alt="Media" />
+              <video *ngIf="post.mediaUrl.toLowerCase().match('\\.(mp4|webm|ogg)$')" [src]=" post.mediaUrl" controls></video>
             </div>
             <p class="preview" [innerHTML]="(post.content | slice:0:200) + (post.content.length > 200 ? '...' : '') | markdown"></p>
           </mat-card-content>
@@ -171,7 +186,8 @@
           <div *ngFor="let user of followers" class="minimal-list-row" (click)="navigateToProfile(user.username)">
             <div class="row-left">
               <div class="row-avatar">
-                {{ user.username.charAt(0).toUpperCase() }}
+                <img *ngIf="user.avatarUrl" [src]="user.avatarUrl" alt="Avatar" class="avatar-img" />
+                <span *ngIf="!user.avatarUrl">{{ user.username.charAt(0).toUpperCase() }}</span>
               </div>
               <div class="row-info">
                 <div class="row-name">{{ user.fullName || user.username }}</div>
@@ -208,7 +224,8 @@
           <div *ngFor="let user of followingList" class="minimal-list-row" (click)="navigateToProfile(user.username)">
             <div class="row-left">
               <div class="row-avatar">
-                {{ user.username.charAt(0).toUpperCase() }}
+                <img *ngIf="user.avatarUrl" [src]="user.avatarUrl" alt="Avatar" class="avatar-img" />
+                <span *ngIf="!user.avatarUrl">{{ user.username.charAt(0).toUpperCase() }}</span>
               </div>
               <div class="row-info">
                 <div class="row-name">{{ user.fullName || user.username }}</div>

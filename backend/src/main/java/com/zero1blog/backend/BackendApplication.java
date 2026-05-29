@@ -8,7 +8,6 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
-import com.zero1blog.backend.model.User;
 import com.zero1blog.backend.repository.UserCredentialsRepository;
 import com.zero1blog.backend.repository.UserProfileRepository;
 import com.zero1blog.backend.repository.UserRepository;
@@ -34,12 +33,13 @@ public class BackendApplication {
 
 			if (userCount > 0) {
 				var users = userRepository.findAll();
-				User firstUser = users.get(0);
-				if (firstUser.getRole() != User.Role.SUPER_ADMIN) {
-					firstUser.setRole(User.Role.SUPER_ADMIN);
-					userRepository.save(firstUser);
-					logger.info("Startup: Promoted first user '{}' (ID: {}) to SUPER_ADMIN", firstUser.getUsername(), firstUser.getId());
-				}
+				// I already have a superadmin so commenting this part for extra security
+				// User firstUser = users.get(0);
+				// if (firstUser.getRole() != User.Role.SUPER_ADMIN) {
+				// 	firstUser.setRole(User.Role.SUPER_ADMIN);
+				// 	userRepository.save(firstUser);
+				// 	logger.info("Startup: Promoted first user '{}' (ID: {}) to SUPER_ADMIN", firstUser.getUsername(), firstUser.getId());
+				// }
 				users.forEach(u -> logger.info("User: {}, Role: {}, PublicId: {}", u.getUsername(), u.getRole(), u.getPublicId()));
 			}
 		};

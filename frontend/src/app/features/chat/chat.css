@@ -177,8 +177,13 @@
   width: 11px;
   height: 11px;
   border-radius: 50%;
-  background: #10b981;
+  background: #9ca3af;
   border: 2px solid var(--mat-sys-surface-container);
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.status-indicator.online {
+  background: #10b981;
   box-shadow: 0 0 8px #10b981;
 }
 
@@ -189,8 +194,13 @@
   width: 10px;
   height: 10px;
   border-radius: 50%;
-  background: #10b981;
+  background: #9ca3af;
   border: 1.5px solid var(--mat-sys-surface-container);
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.status-indicator-header.online {
+  background: #10b981;
   box-shadow: 0 0 6px #10b981;
 }
 
