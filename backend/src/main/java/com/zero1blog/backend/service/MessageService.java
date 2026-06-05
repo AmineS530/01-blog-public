@@ -7,6 +7,7 @@ import com.zero1blog.backend.model.User;
 import com.zero1blog.backend.repository.MessageRepository;
 import com.zero1blog.backend.repository.UserBlockRepository;
 import com.zero1blog.backend.repository.UserRepository;
+import com.zero1blog.backend.exception.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -55,21 +56,21 @@ public class MessageService {
     @Transactional
     public MessageResponse sendMessage(String senderPublicId, MessageRequest request) {
         User sender = userRepository.findByPublicId(senderPublicId)
-                .orElseThrow(() -> new RuntimeException("Sender not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Sender not found"));
         User recipient = userRepository.findByPublicId(request.getRecipientPublicId())
-                .orElseThrow(() -> new RuntimeException("Recipient not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Recipient not found"));
 
         if (sender.isBanned()) {
-            throw new RuntimeException("You are banned and cannot send messages");
+            throw new UnauthorizedActionException("You are banned and cannot send messages");
         }
         if (recipient.isBanned()) {
-            throw new RuntimeException("Recipient account has been suspended");
+            throw new BadRequestException("Recipient account has been suspended");
         }
 
         // Bi-directional block checks ensure a user cannot communicate with someone they blocked, or who blocked them
         if (userBlockRepository.existsByBlockerAndBlocked(sender, recipient) ||
                 userBlockRepository.existsByBlockerAndBlocked(recipient, sender)) {
-            throw new RuntimeException("You cannot exchange messages with this user");
+            throw new BadRequestException("You cannot exchange messages with this user");
         }
 
         Message message = new Message();
@@ -99,9 +100,9 @@ public class MessageService {
     @Transactional(readOnly = true)
     public List<MessageResponse> getConversation(String user1PublicId, String user2PublicId) {
         User user1 = userRepository.findByPublicId(user1PublicId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
         User user2 = userRepository.findByPublicId(user2PublicId)
-                .orElseThrow(() -> new RuntimeException("Chat partner not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Chat partner not found"));
 
         return messageRepository.findConversation(user1.getId(), user2.getId()).stream()
                 .map(this::toResponse)
@@ -118,7 +119,7 @@ public class MessageService {
     @Transactional(readOnly = true)
     public List<MessageResponse> getInbox(String userPublicId) {
         User user = userRepository.findByPublicId(userPublicId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         return messageRepository.findInbox(user.getId()).stream()
                 .map(this::toResponse)
@@ -136,10 +137,10 @@ public class MessageService {
     @Transactional
     public void markAsRead(Long messageId, String recipientPublicId) {
         Message message = messageRepository.findById(messageId)
-                .orElseThrow(() -> new RuntimeException("Message not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Message not found"));
 
         if (!message.getRecipient().getPublicId().equals(recipientPublicId)) {
-            throw new RuntimeException("Unauthorized");
+            throw new UnauthorizedActionException("Unauthorized");
         }
 
         message.setRead(true);
@@ -156,9 +157,9 @@ public class MessageService {
     @Transactional
     public void markConversationAsRead(String currentUserId, String partnerId) {
         User me = userRepository.findByPublicId(currentUserId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
         User partner = userRepository.findByPublicId(partnerId)
-                .orElseThrow(() -> new RuntimeException("Partner not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Partner not found"));
 
         List<Message> conversation = messageRepository.findConversation(me.getId(), partner.getId());
         boolean changed = false;
@@ -183,7 +184,7 @@ public class MessageService {
     @Transactional(readOnly = true)
     public long getUnreadCount(String userPublicId) {
         User user = userRepository.findByPublicId(userPublicId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
         return messageRepository.countByRecipientIdAndIsReadFalse(user.getId());
     }
 

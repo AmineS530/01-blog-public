@@ -10,6 +10,7 @@ import com.zero1blog.backend.repository.CommentRepository;
 import com.zero1blog.backend.repository.PostRepository;
 import com.zero1blog.backend.repository.ReportRepository;
 import com.zero1blog.backend.repository.UserRepository;
+import com.zero1blog.backend.exception.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,7 +32,7 @@ public class ReportService {
     @Transactional
     public ReportResponse createReport(ReportRequest request, String reporterPublicId) {
         User reporter = userRepository.findByPublicId(reporterPublicId)
-                .orElseThrow(() -> new RuntimeException("Reporter not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Reporter not found"));
 
         // BUG FIX: Ensure exactly one target is provided
         int targetCount = 0;
@@ -40,7 +41,7 @@ public class ReportService {
         if (request.getTargetCommentId() != null) targetCount++;
 
         if (targetCount != 1) {
-            throw new RuntimeException("Report must have exactly one target (User, Post, or Comment)");
+            throw new BadRequestException("Report must have exactly one target (User, Post, or Comment)");
         }
 
         Report report = Report.builder()
@@ -50,31 +51,31 @@ public class ReportService {
 
         if (request.getTargetUserId() != null) {
             User targetUser = userRepository.findById(request.getTargetUserId())
-                    .orElseThrow(() -> new RuntimeException("Target user not found"));
+                    .orElseThrow(() -> new ResourceNotFoundException("Target user not found"));
             
             // BUG FIX: Prevent self-reporting
             if (targetUser.getId().equals(reporter.getId())) {
-                throw new RuntimeException("Cannot report yourself");
+                throw new BadRequestException("Cannot report yourself");
             }
             report.setTargetUser(targetUser);
         }
 
         if (request.getTargetPostId() != null) {
             Post targetPost = postRepository.findById(request.getTargetPostId())
-                    .orElseThrow(() -> new RuntimeException("Target post not found"));
+                    .orElseThrow(() -> new ResourceNotFoundException("Target post not found"));
             
             if (targetPost.getAuthor().getId().equals(reporter.getId())) {
-                throw new RuntimeException("Cannot report your own post");
+                throw new BadRequestException("Cannot report your own post");
             }
             report.setTargetPost(targetPost);
         }
 
         if (request.getTargetCommentId() != null) {
             Comment targetComment = commentRepository.findById(request.getTargetCommentId())
-                    .orElseThrow(() -> new RuntimeException("Target comment not found"));
+                    .orElseThrow(() -> new ResourceNotFoundException("Target comment not found"));
             
             if (targetComment.getAuthor().getId().equals(reporter.getId())) {
-                throw new RuntimeException("Cannot report your own comment");
+                throw new BadRequestException("Cannot report your own comment");
             }
             report.setTargetComment(targetComment);
         }

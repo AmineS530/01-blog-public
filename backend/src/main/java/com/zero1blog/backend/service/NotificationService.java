@@ -6,6 +6,7 @@ import com.zero1blog.backend.model.Post;
 import com.zero1blog.backend.model.User;
 import com.zero1blog.backend.repository.NotificationRepository;
 import com.zero1blog.backend.repository.UserRepository;
+import com.zero1blog.backend.exception.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -42,7 +43,7 @@ public class NotificationService {
     @Transactional(readOnly = true)
     public List<NotificationResponse> getNotifications(String userPublicId) {
         User user = userRepository.findByPublicId(userPublicId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
         return notificationRepository.findByUserOrderByCreatedAtDesc(user).stream()
                 .map(this::toResponse)
                 .collect(Collectors.toList());
@@ -51,17 +52,17 @@ public class NotificationService {
     @Transactional(readOnly = true)
     public long getUnreadCount(String userPublicId) {
         User user = userRepository.findByPublicId(userPublicId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
         return notificationRepository.countByUserAndIsReadFalse(user);
     }
 
     @Transactional
     public void markAsRead(Long id, String userPublicId) {
         Notification notification = notificationRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Notification not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Notification not found"));
         
         if (!notification.getUser().getPublicId().equals(userPublicId)) {
-            throw new RuntimeException("Unauthorized");
+            throw new UnauthorizedActionException("Unauthorized");
         }
 
         notification.setRead(true);
@@ -71,7 +72,7 @@ public class NotificationService {
     @Transactional
     public void markAllAsRead(String userPublicId) {
         User user = userRepository.findByPublicId(userPublicId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
         notificationRepository.markAllAsRead(user);
     }
 

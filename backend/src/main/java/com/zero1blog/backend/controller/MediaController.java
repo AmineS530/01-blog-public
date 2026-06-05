@@ -7,6 +7,7 @@ import com.zero1blog.backend.model.Media;
 import com.zero1blog.backend.model.User;
 import com.zero1blog.backend.repository.MediaRepository;
 import com.zero1blog.backend.repository.UserRepository;
+import com.zero1blog.backend.exception.ResourceNotFoundException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
@@ -32,7 +33,7 @@ public class MediaController {
     public ResponseEntity<?> uploadMedia(@RequestBody UploadMediaRequest req, Authentication authentication) {
         try {
             User uploader = userRepository.findByPublicId(authentication.getName())
-                    .orElseThrow(() -> new RuntimeException("User not found"));
+                    .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
             byte[] decoded = Base64.getDecoder().decode(
                     req.getData().contains(",") ? req.getData().split(",", 2)[1] : req.getData());

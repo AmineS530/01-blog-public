@@ -7,6 +7,7 @@ import com.zero1blog.backend.model.Report;
 import com.zero1blog.backend.model.User;
 import com.zero1blog.backend.model.UserProfile;
 import com.zero1blog.backend.repository.*;
+import com.zero1blog.backend.exception.*;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -77,16 +78,16 @@ public class AdminService {
     @Transactional
     public void updateUserRole(String username, String roleName, String callerPublicId) {
         User targetUser = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
         User caller = userRepository.findByPublicId(callerPublicId)
-                .orElseThrow(() -> new RuntimeException("Caller not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Caller not found"));
 
         User.Role targetNewRole = User.Role.valueOf(roleName.toUpperCase());
 
         if (targetUser.getRole() == User.Role.ADMIN || targetUser.getRole() == User.Role.SUPER_ADMIN ||
             targetNewRole == User.Role.ADMIN || targetNewRole == User.Role.SUPER_ADMIN) {
             if (caller.getRole() != User.Role.SUPER_ADMIN) {
-                throw new RuntimeException("Only SUPER_ADMIN can promote or demote administrators.");
+                throw new UnauthorizedActionException("Only SUPER_ADMIN can promote or demote administrators.");
             }
         }
 
@@ -98,17 +99,17 @@ public class AdminService {
     @Transactional
     public void toggleBan(String username, String adminPublicId) {
         User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
         User caller = userRepository.findByPublicId(adminPublicId)
-                .orElseThrow(() -> new RuntimeException("Admin not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Admin not found"));
         
         if (user.getPublicId().equals(adminPublicId)) {
-            throw new RuntimeException("You cannot ban yourself.");
+            throw new BadRequestException("You cannot ban yourself.");
         }
 
         if (user.getRole() == User.Role.ADMIN || user.getRole() == User.Role.SUPER_ADMIN) {
             if (caller.getRole() != User.Role.SUPER_ADMIN) {
-                throw new RuntimeException("Only SUPER_ADMIN can ban or unban administrators.");
+                throw new UnauthorizedActionException("Only SUPER_ADMIN can ban or unban administrators.");
             }
         }
 
@@ -121,7 +122,7 @@ public class AdminService {
     @Transactional
     public void resolveReport(Long reportId, String action, String note) {
         Report report = reportRepository.findById(reportId)
-                .orElseThrow(() -> new RuntimeException("Report not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Report not found"));
         
         log.info("Admin resolving report ID: {}. Action: {}", reportId, action);
         report.setStatus(action.equals("resolve") ? "resolved" : "dismissed");
@@ -132,17 +133,17 @@ public class AdminService {
     @Transactional
     public void banUser(String username, String adminPublicId) {
         User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
         User caller = userRepository.findByPublicId(adminPublicId)
-                .orElseThrow(() -> new RuntimeException("Admin not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Admin not found"));
         
         if (user.getPublicId().equals(adminPublicId)) {
-            throw new RuntimeException("You cannot ban yourself.");
+            throw new BadRequestException("You cannot ban yourself.");
         }
 
         if (user.getRole() == User.Role.ADMIN || user.getRole() == User.Role.SUPER_ADMIN) {
             if (caller.getRole() != User.Role.SUPER_ADMIN) {
-                throw new RuntimeException("Only SUPER_ADMIN can ban administrators.");
+                throw new UnauthorizedActionException("Only SUPER_ADMIN can ban administrators.");
             }
         }
 
@@ -192,7 +193,7 @@ public class AdminService {
     public void updateDisplayName(String username, String displayName, String callerUsername) {
         log.info("Admin {} updating display name for user {}: {}", callerUsername, username, displayName);
         User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
         UserProfile profile = userProfileRepository.findByUser(user)
                 .orElse(UserProfile.builder().user(user).build());
         profile.setDisplayName(displayName);

@@ -13,6 +13,7 @@ import com.zero1blog.backend.model.UserProfile;
 import com.zero1blog.backend.repository.UserCredentialsRepository;
 import com.zero1blog.backend.repository.UserProfileRepository;
 import com.zero1blog.backend.repository.UserRepository;
+import com.zero1blog.backend.exception.*;
 
 import lombok.RequiredArgsConstructor;
 
@@ -31,11 +32,11 @@ public class AuthService {
         log.info("Registration attempt for username: {}", request.getUsername());
         if (userRepository.existsByEmail(request.getEmail())) {
             log.warn("Registration failed: Email already in use: {}", request.getEmail());
-            throw new RuntimeException("Email already in use");
+            throw new BadRequestException("Email already in use");
         }
         if (userRepository.existsByUsername(request.getUsername())) {
             log.warn("Registration failed: Username already taken: {}", request.getUsername());
-            throw new RuntimeException("Username already taken");
+            throw new BadRequestException("Username already taken");
         }
 
         User.Role role = userRepository.count() == 0 ? User.Role.SUPER_ADMIN : User.Role.USER;
@@ -72,23 +73,23 @@ public class AuthService {
                 .orElseGet(() -> userRepository.findByUsername(request.getUsernameOrEmail())
                         .orElseThrow(() -> {
                             log.warn("Login failed: User not found: {}", request.getUsernameOrEmail());
-                            return new RuntimeException("Invalid credentials");
+                            return new UnauthorizedActionException("Invalid credentials");
                         }));
 
         UserCredentials credentials = userCredentialsRepository.findByUser(user)
                 .orElseThrow(() -> {
                     log.error("Integrity error: Credentials missing for user: {}", user.getUsername());
-                    return new RuntimeException("Invalid credentials");
+                    return new UnauthorizedActionException("Invalid credentials");
                 });
 
         if (!passwordEncoder.matches(request.getPassword(), credentials.getPasswordHash())) {
             log.warn("Login failed: Invalid password for user: {}", user.getUsername());
-            throw new RuntimeException("Invalid credentials");
+            throw new UnauthorizedActionException("Invalid credentials");
         }
 
         if (user.isBanned()) {
             log.warn("Login failed: User is banned: {}", user.getUsername());
-            throw new RuntimeException("Your account has been banned");
+            throw new UnauthorizedActionException("Your account has been banned");
         }
 
         log.info("User logged in successfully: {}", user.getUsername());

@@ -10,6 +10,7 @@ import com.zero1blog.backend.repository.SubscriptionRepository;
 import com.zero1blog.backend.repository.UserBlockRepository;
 import com.zero1blog.backend.repository.UserProfileRepository;
 import com.zero1blog.backend.repository.UserRepository;
+import com.zero1blog.backend.exception.*;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -38,7 +39,7 @@ public class ProfileService {
 
     public ProfileResponse getProfile(String targetUsername, String currentUserPublicId) {
         User targetUser = userRepository.findByUsername(targetUsername)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         UserProfile profile = userProfileRepository.findByUser(targetUser).orElse(new UserProfile());
 
@@ -75,7 +76,7 @@ public class ProfileService {
 
     public ProfileResponse updateProfile(String currentUserPublicId, ProfileUpdateRequest request) {
         User currentUser = userRepository.findByPublicId(currentUserPublicId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         UserProfile profile = userProfileRepository.findByUser(currentUser)
                 .orElse(UserProfile.builder().user(currentUser).build());
@@ -91,15 +92,15 @@ public class ProfileService {
 
     public ProfileResponse updateProfileByUsername(String targetUsername, ProfileUpdateRequest request, String callerPublicId) {
         User caller = userRepository.findByPublicId(callerPublicId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
         User targetUser = userRepository.findByUsername(targetUsername)
-                .orElseThrow(() -> new RuntimeException("Target user not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Target user not found"));
 
         boolean isSelf = targetUser.getPublicId().equals(callerPublicId);
         boolean isAdmin = caller.getRole() == User.Role.ADMIN || caller.getRole() == User.Role.SUPER_ADMIN;
 
         if (!isSelf && !isAdmin) {
-            throw new RuntimeException("Not authorized to update this profile");
+            throw new UnauthorizedActionException("Not authorized to update this profile");
         }
 
         UserProfile profile = userProfileRepository.findByUser(targetUser)
@@ -116,16 +117,16 @@ public class ProfileService {
 
     public void toggleFollow(String targetUsername, String currentUserPublicId) {
         User currentUser = userRepository.findByPublicId(currentUserPublicId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
         User targetUser = userRepository.findByUsername(targetUsername)
-                .orElseThrow(() -> new RuntimeException("Target user not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Target user not found"));
 
         if (currentUser.getId().equals(targetUser.getId())) {
-            throw new RuntimeException("Cannot follow yourself");
+            throw new BadRequestException("Cannot follow yourself");
         }
         
         if (userBlockRepository.existsByBlockerAndBlocked(targetUser, currentUser)) {
-            throw new RuntimeException("You are blocked by this user");
+            throw new BadRequestException("You are blocked by this user");
         }
 
         Optional<Subscription> existing = subscriptionRepository.findByFollowerAndFollowed(currentUser, targetUser);
@@ -150,12 +151,12 @@ public class ProfileService {
 
     public void toggleBlock(String targetUsername, String currentUserPublicId) {
         User currentUser = userRepository.findByPublicId(currentUserPublicId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
         User targetUser = userRepository.findByUsername(targetUsername)
-                .orElseThrow(() -> new RuntimeException("Target user not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Target user not found"));
 
         if (currentUser.getId().equals(targetUser.getId())) {
-            throw new RuntimeException("Cannot block yourself");
+            throw new BadRequestException("Cannot block yourself");
         }
 
         Optional<UserBlock> existing = userBlockRepository.findByBlockerAndBlocked(currentUser, targetUser);
@@ -176,7 +177,7 @@ public class ProfileService {
 
     public List<ProfileResponse> getRecommendedProfiles(String currentUserPublicId) {
         User currentUser = userRepository.findByPublicId(currentUserPublicId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         Set<Long> followedIds = subscriptionRepository.findByFollower(currentUser)
                 .stream()
@@ -207,7 +208,7 @@ public class ProfileService {
 
     public List<ProfileResponse> getFollowers(String username, String currentUserPublicId) {
         User targetUser = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         if (currentUserPublicId != null) {
             User currentUser = userRepository.findByPublicId(currentUserPublicId).orElse(null);
@@ -225,7 +226,7 @@ public class ProfileService {
 
     public List<ProfileResponse> getFollowing(String username, String currentUserPublicId) {
         User targetUser = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         if (currentUserPublicId != null) {
             User currentUser = userRepository.findByPublicId(currentUserPublicId).orElse(null);
@@ -247,7 +248,7 @@ public class ProfileService {
         }
 
         User currentUser = userRepository.findByPublicId(currentUserPublicId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         Set<Long> blockedIds = userBlockRepository.findByBlocker(currentUser)
                 .stream()

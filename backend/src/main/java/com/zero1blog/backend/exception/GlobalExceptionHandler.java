@@ -13,28 +13,35 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class GlobalExceptionHandler {
 
+    @ExceptionHandler(ResourceNotFoundException.class)
+    public ResponseEntity<Map<String, Object>> handleResourceNotFoundException(ResourceNotFoundException ex) {
+        log.error("Resource not found exception: {}", ex.getMessage());
+        return buildResponse(ex.getMessage(), HttpStatus.NOT_FOUND);
+    }
+
+    @ExceptionHandler(UnauthorizedActionException.class)
+    public ResponseEntity<Map<String, Object>> handleUnauthorizedActionException(UnauthorizedActionException ex) {
+        log.error("Unauthorized action exception: {}", ex.getMessage());
+        return buildResponse(ex.getMessage(), HttpStatus.UNAUTHORIZED);
+    }
+
+    @ExceptionHandler(BadRequestException.class)
+    public ResponseEntity<Map<String, Object>> handleBadRequestException(BadRequestException ex) {
+        log.error("Bad request exception: {}", ex.getMessage());
+        return buildResponse(ex.getMessage(), HttpStatus.BAD_REQUEST);
+    }
+
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<Map<String, Object>> handleRuntimeException(RuntimeException ex) {
-        log.error("Exception occurred: {}", ex.getMessage());
-        
-        HttpStatus status = HttpStatus.INTERNAL_SERVER_ERROR;
-        String message = ex.getMessage();
+        log.error("Runtime exception occurred: ", ex);
+        return buildResponse(ex.getMessage() != null ? ex.getMessage() : "Internal Server Error", HttpStatus.INTERNAL_SERVER_ERROR);
+    }
 
-        if (message != null) {
-            String lowerMsg = message.toLowerCase();
-            if (lowerMsg.contains("not found")) {
-                status = HttpStatus.NOT_FOUND;
-            } else if (lowerMsg.contains("invalid credentials") || lowerMsg.contains("banned") || lowerMsg.contains("unauthorized")) {
-                status = HttpStatus.UNAUTHORIZED;
-            } else if (lowerMsg.contains("already in use") || lowerMsg.contains("already taken")) {
-                status = HttpStatus.BAD_REQUEST;
-            }
-        }
-
+    private ResponseEntity<Map<String, Object>> buildResponse(String message, HttpStatus status) {
         return ResponseEntity
                 .status(status)
                 .body(Map.of(
-                        "error", message != null ? message : "Internal Server Error",
+                        "error", message,
                         "status", status.value(),
                         "timestamp", LocalDateTime.now().toString()
                 ));

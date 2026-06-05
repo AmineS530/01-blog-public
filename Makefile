@@ -9,9 +9,10 @@ all: run-backend run-frontend
 
 help:
 	@echo "${BLUE}Available commands:${NC}"
-	@echo "  ${GREEN}make all${NC}             - Start the backend and frontend (connecting to Supabase)"
-	@echo "  ${GREEN}make run-backend${NC}     - Start the Spring Boot API (connecting to Supabase)"
-	@echo "  ${GREEN}make run-frontend${NC}    - Start the Angular UI"
+	@echo "  ${GREEN}make all${NC}             - Start the backend and frontend in development mode"
+	@echo "  ${GREEN}make run-backend${NC}     - Start the Spring Boot API in development mode"
+	@echo "  ${GREEN}make run-frontend${NC}    - Start the Angular UI in development mode"
+	@echo "  ${GREEN}make run-production${NC} - Build and start the backend and frontend in production mode"
 	
 run-backend:
 	@echo "${YELLOW}Starting Spring Boot Backend...${NC}"
@@ -23,6 +24,24 @@ run-backend:
 run-frontend: node_modules
 	@echo "${YELLOW}Starting Angular Frontend...${NC}"
 	@cd frontend && npx ng serve > console.log 2>&1 &
+	@echo "📝 Frontend logs are being written to ${BLUE}frontend/console.log${NC}"
+	@echo "🚀 Frontend is running at ${BLUE}http://localhost:4200${NC}"
+
+run-production: run-production-backend run-production-frontend
+
+run-production-backend:
+	@echo "${YELLOW}Building and Starting Spring Boot Backend in Production...${NC}"
+	@mkdir -p backend/logs
+	@cd backend && ./mvnw clean package -DskipTests > logs/build.log 2>&1
+	@cd backend && java -jar target/backend-0.0.1-SNAPSHOT.jar --spring.profiles.active=prod > logs/console.log 2>&1 &
+	@echo "📝 Backend logs are being written to ${BLUE}backend/logs/console.log${NC}"
+	@echo "🚀 Backend is running at ${BLUE}http://localhost:8080${NC}"
+
+run-production-frontend: node_modules
+	@echo "${YELLOW}Building Angular Frontend in Production...${NC}"
+	@cd frontend && npx ng build --configuration production > console.log 2>&1
+	@echo "${YELLOW}Starting Angular Frontend in Production (with npx)...${NC}"
+	@cd frontend && npx -y serve -s dist/frontend/browser -l 4200 > console.log 2>&1 &
 	@echo "📝 Frontend logs are being written to ${BLUE}frontend/console.log${NC}"
 	@echo "🚀 Frontend is running at ${BLUE}http://localhost:4200${NC}"
 
@@ -41,4 +60,4 @@ clean:
 
 re: clean all
 
-.PHONY: all help run-backend run-frontend
+.PHONY: all help run-backend run-frontend run-production run-production-backend run-production-frontend

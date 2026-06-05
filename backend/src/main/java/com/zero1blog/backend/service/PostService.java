@@ -20,6 +20,7 @@ import com.zero1blog.backend.repository.PostRepository;
 import com.zero1blog.backend.repository.SubscriptionRepository;
 import com.zero1blog.backend.repository.UserBlockRepository;
 import com.zero1blog.backend.repository.UserRepository;
+import com.zero1blog.backend.exception.*;
 
 /**
  * Service managing the life cycle and feed aggregation of blog posts.
@@ -64,7 +65,7 @@ public class PostService {
      */
     public PostResponse createPost(PostRequest request, String authorPublicId) {
         User author = userRepository.findByPublicId(authorPublicId)
-        .orElseThrow(() -> new RuntimeException("User not found"));
+        .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         Post post = new Post();
         post.setTitle(request.getTitle());
@@ -101,7 +102,7 @@ public class PostService {
         }
 
         User currentUser = userRepository.findByPublicId(currentUserPublicId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         // Retrieve mutual block IDs
         Set<Long> blockedIds = userBlockRepository.findByBlocker(currentUser).stream()
@@ -146,7 +147,7 @@ public class PostService {
         }
 
         User currentUser = userRepository.findByPublicId(currentUserPublicId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         List<User> followedUsers = subscriptionRepository.findByFollower(currentUser).stream()
                 .map(Subscription::getFollowed)
@@ -185,11 +186,11 @@ public class PostService {
      */
     public List<PostResponse> getPostsByUsername(String username, String currentUserPublicId, int page, int limit) {
         User author = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         if (currentUserPublicId != null) {
             User currentUser = userRepository.findByPublicId(currentUserPublicId)
-                    .orElseThrow(() -> new RuntimeException("User not found"));
+                    .orElseThrow(() -> new ResourceNotFoundException("User not found"));
             
             if (userBlockRepository.existsByBlockerAndBlocked(currentUser, author) || 
                 userBlockRepository.existsByBlockerAndBlocked(author, currentUser)) {
@@ -211,15 +212,15 @@ public class PostService {
      */
     public PostResponse getPostById(Long id, String currentUserPublicId) {
         Post post = postRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Post not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Post not found"));
 
         if (currentUserPublicId != null) {
             User currentUser = userRepository.findByPublicId(currentUserPublicId)
-                    .orElseThrow(() -> new RuntimeException("User not found"));
+                    .orElseThrow(() -> new ResourceNotFoundException("User not found"));
             
             if (userBlockRepository.existsByBlockerAndBlocked(currentUser, post.getAuthor()) || 
                 userBlockRepository.existsByBlockerAndBlocked(post.getAuthor(), currentUser)) {
-                throw new RuntimeException("Post not available");
+                throw new BadRequestException("Post not available");
             }
         }
 
@@ -232,10 +233,10 @@ public class PostService {
      */
     public PostResponse updatePost(Long id, PostRequest request, String authorPublicId) {
         Post post = postRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Post not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Post not found"));
 
         if (!post.getAuthor().getPublicId().equals(authorPublicId)) {
-            throw new RuntimeException("Not authorized to edit this post");
+            throw new UnauthorizedActionException("Not authorized to edit this post");
         }
 
         post.setTitle(request.getTitle());
@@ -262,16 +263,16 @@ public class PostService {
      */
     public void deletePost(Long id, String requesterPublicId) {
         Post post = postRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Post not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Post not found"));
 
         User requester = userRepository.findByPublicId(requesterPublicId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         boolean isAuthor = post.getAuthor().getPublicId().equals(requesterPublicId);
         boolean isAdmin = requester.getRole() == User.Role.ADMIN || requester.getRole() == User.Role.SUPER_ADMIN;
 
         if (!isAuthor && !isAdmin) {
-            throw new RuntimeException("Not authorized to delete this post");
+            throw new UnauthorizedActionException("Not authorized to delete this post");
         }
 
         // Physical media storage cleanup
