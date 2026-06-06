@@ -1,26 +1,40 @@
 <mat-toolbar color="primary" *ngIf="authService.isLoggedIn()" class="global-header">
   <div class="header-content">
     <span class="brand" (click)="goToFeed()">Z1Spot</span>
-    
+
     <span class="spacer"></span>
-    
+
     <div class="nav-actions">
       <button mat-icon-button (click)="goToNotifications()" matTooltip="Notifications">
-        <mat-icon [matBadge]="unreadCount" matBadgeColor="warn" [matBadgeHidden]="unreadCount === 0">notifications</mat-icon>
+        <mat-icon [matBadge]="unreadCount" matBadgeColor="warn" [matBadgeHidden]="unreadCount === 0"
+          >notifications</mat-icon
+        >
       </button>
 
       <button mat-icon-button (click)="goToChat()" matTooltip="Messages">
-        <mat-icon [matBadge]="unreadMessagesCount" matBadgeColor="accent" [matBadgeHidden]="unreadMessagesCount === 0">forum</mat-icon>
+        <mat-icon
+          [matBadge]="unreadMessagesCount"
+          matBadgeColor="accent"
+          [matBadgeHidden]="unreadMessagesCount === 0"
+          >forum</mat-icon
+        >
       </button>
 
       <button mat-icon-button (click)="goToCreate()" matTooltip="Write a Post">
         <mat-icon>add_box</mat-icon>
       </button>
-      
+
       <button mat-button class="profile-btn" [matMenuTriggerFor]="userMenu">
         <div class="nav-avatar-container">
-          <img *ngIf="currentUserAvatarUrl" [src]="currentUserAvatarUrl" alt="Avatar" class="nav-avatar" />
-          <span *ngIf="!currentUserAvatarUrl" class="nav-avatar-fallback">{{ (currentUserDisplayName || authService.getUsername() || '').charAt(0).toUpperCase() }}</span>
+          <img
+            *ngIf="currentUserAvatarUrl"
+            [src]="currentUserAvatarUrl"
+            alt="Avatar"
+            class="nav-avatar"
+          />
+          <span *ngIf="!currentUserAvatarUrl" class="nav-avatar-fallback">{{
+            (currentUserDisplayName || authService.getUsername() || '').charAt(0).toUpperCase()
+          }}</span>
         </div>
         <span class="nav-username">{{ currentUserDisplayName || authService.getUsername() }}</span>
         <mat-icon iconPositionEnd>arrow_drop_down</mat-icon>
@@ -32,7 +46,11 @@
           <span>My Profile</span>
         </button>
 
-        <button mat-menu-item *ngIf="authService.getRole() === 'ADMIN' || authService.getRole() === 'SUPER_ADMIN'" (click)="goToAdmin()">
+        <button
+          mat-menu-item
+          *ngIf="authService.getRole() === 'ADMIN' || authService.getRole() === 'SUPER_ADMIN'"
+          (click)="goToAdmin()"
+        >
           <mat-icon>admin_panel_settings</mat-icon>
           <span>Admin Panel</span>
         </button>
@@ -59,7 +77,11 @@
 
 <!-- Custom Glassmorphic Toast Notifications -->
 <div class="toast-container">
-  <div *ngFor="let toast of feedbackService.toasts" class="toast-item glass-toast animate-toast" [ngClass]="toast.type">
+  <div
+    *ngFor="let toast of feedbackService.toasts"
+    class="toast-item glass-toast animate-toast"
+    [ngClass]="toast.type"
+  >
     <div class="toast-content-wrapper">
       <mat-icon class="toast-icon">
         {{ toast.type === 'success' ? 'check_circle' : toast.type === 'error' ? 'error' : 'info' }}
@@ -73,7 +95,11 @@
 </div>
 
 <!-- Custom Premium Glassmorphic Confirmation Modal -->
-<div class="confirm-modal-overlay" *ngIf="feedbackService.confirmState.isOpen" (click)="feedbackService.closeConfirmation()">
+<div
+  class="confirm-modal-overlay"
+  *ngIf="feedbackService.confirmState.isOpen"
+  (click)="feedbackService.closeConfirmation()"
+>
   <div class="confirm-modal-card glass-modal" (click)="$event.stopPropagation()">
     <div class="confirm-modal-header">
       <mat-icon class="confirm-warning-icon">help_outline</mat-icon>
@@ -86,14 +112,64 @@
       <button mat-button class="modal-cancel-btn" (click)="feedbackService.closeConfirmation()">
         {{ feedbackService.confirmState.cancelText }}
       </button>
-      <button mat-flat-button class="modal-confirm-btn" (click)="feedbackService.confirmState.onConfirm?.()">
+      <button
+        mat-flat-button
+        class="modal-confirm-btn"
+        (click)="feedbackService.confirmState.onConfirm?.()"
+      >
         {{ feedbackService.confirmState.confirmText }}
       </button>
     </div>
   </div>
 </div>
 
+<!-- Custom Premium Glassmorphic Prompt / Input Modal -->
+<div
+  class="confirm-modal-overlay"
+  *ngIf="feedbackService.promptState.isOpen"
+  (click)="feedbackService.closePrompt()"
+>
+  <div class="confirm-modal-card glass-modal" (click)="$event.stopPropagation()">
+    <div class="confirm-modal-header">
+      <mat-icon class="confirm-warning-icon" style="color: #ef4444">report_problem</mat-icon>
+      <h2>{{ feedbackService.promptState.title }}</h2>
+    </div>
+    <div class="confirm-modal-body">
+      <p style="margin-bottom: 16px">{{ feedbackService.promptState.message }}</p>
+      <mat-form-field appearance="outline" class="modal-input-field">
+        <mat-label>{{ feedbackService.promptState.placeholder }}</mat-label>
+        <textarea
+          matInput
+          rows="3"
+          [(ngModel)]="feedbackService.promptState.value"
+          placeholder="Type here..."
+        ></textarea>
+      </mat-form-field>
+    </div>
+    <div class="confirm-modal-footer">
+      <button mat-button class="modal-cancel-btn" (click)="feedbackService.closePrompt()">
+        {{ feedbackService.promptState.cancelText }}
+      </button>
+      <button
+        mat-flat-button
+        class="modal-confirm-btn"
+        [disabled]="!feedbackService.promptState.value.trim()"
+        (click)="feedbackService.confirmPrompt()"
+      >
+        {{ feedbackService.promptState.confirmText }}
+      </button>
+    </div>
+  </div>
+</div>
+
 <!-- Custom Premium Notifications Overlay -->
-<div class="notifications-overlay" *ngIf="showNotificationsOverlay" (click)="showNotificationsOverlay = false; fetchUnreadCount()">
-  <app-notifications (close)="showNotificationsOverlay = false; fetchUnreadCount()" (click)="$event.stopPropagation()"></app-notifications>
+<div
+  class="notifications-overlay"
+  *ngIf="showNotificationsOverlay"
+  (click)="showNotificationsOverlay = false; fetchUnreadCount()"
+>
+  <app-notifications
+    (close)="showNotificationsOverlay = false; fetchUnreadCount()"
+    (click)="$event.stopPropagation()"
+  ></app-notifications>
 </div>

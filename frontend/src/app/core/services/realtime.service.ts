@@ -6,8 +6,8 @@ import { AuthService } from './auth.service';
  * Core frontend client for real-time WebSocket communication.
  * <p>
  * This service manages the state of the active connection to the Spring Boot backend,
- * coordinates auto-reconnection with an exponential backoff strategy, and distributes 
- * deserialized server frames to specific feature areas (posts, comments, likes, messages) 
+ * coordinates auto-reconnection with an exponential backoff strategy, and distributes
+ * deserialized server frames to specific feature areas (posts, comments, likes, messages)
  * through high-performance reactive RxJS Observables.
  * </p>
  */
@@ -17,13 +17,13 @@ import { AuthService } from './auth.service';
 export class RealtimeService implements OnDestroy {
   /** The underlying browser WebSocket instance. */
   private socket: WebSocket | null = null;
-  
+
   /** Current reconnection timeout in milliseconds. Starts at 3000ms and scales progressively. */
   private reconnectInterval = 3000;
-  
+
   /** Toggle switch to enable or disable automatic retry loops upon connection loss. */
   private shouldReconnect = true;
-  
+
   /** Reactive state flag representing connection status. */
   private isConnected = false;
 
@@ -32,30 +32,33 @@ export class RealtimeService implements OnDestroy {
   private commentsSubject = new Subject<any>();
   private likesSubject = new Subject<any>();
   private messagesSubject = new Subject<any>();
-  private onlineStatusSubject = new Subject<{ publicId: string, online: boolean }>();
-  
+  private onlineStatusSubject = new Subject<{ publicId: string; online: boolean }>();
+
   /** Observable stream emitting new posts published across the ecosystem. */
   public posts$: Observable<any> = this.postsSubject.asObservable();
-  
+
   /** Observable stream emitting new comments added to any existing post. */
   public comments$: Observable<any> = this.commentsSubject.asObservable();
-  
+
   /** Observable stream emitting post and comment like count updates. */
   public likes$: Observable<any> = this.likesSubject.asObservable();
-  
+
   /** Observable stream emitting direct chat messages targeted to the current logged-in user. */
   public messages$: Observable<any> = this.messagesSubject.asObservable();
 
   /** Observable stream emitting user online status changes (USER_ONLINE / USER_OFFLINE). */
-  public onlineStatus$: Observable<{ publicId: string, online: boolean }> = this.onlineStatusSubject.asObservable();
+  public onlineStatus$: Observable<{ publicId: string; online: boolean }> =
+    this.onlineStatusSubject.asObservable();
 
-  /**
-   * Initializes the RealtimeService and triggers an immediate asynchronous connection attempt.
-   *
-   * @param authService Used to fetch the logged-in user's public ID for socket-to-user linking.
-   */
   constructor(private authService: AuthService) {
-    this.connect();
+    this.authService.loggedIn$.subscribe((isLoggedIn) => {
+      if (isLoggedIn) {
+        this.connect();
+        this.registerUser();
+      } else {
+        this.disconnect();
+      }
+    });
   }
 
   /**
@@ -70,13 +73,16 @@ export class RealtimeService implements OnDestroy {
    * </p>
    */
   public connect(): void {
-    if (this.socket && (this.socket.readyState === WebSocket.OPEN || this.socket.readyState === WebSocket.CONNECTING)) {
+    if (
+      this.socket &&
+      (this.socket.readyState === WebSocket.OPEN || this.socket.readyState === WebSocket.CONNECTING)
+    ) {
       return;
     }
 
     this.shouldReconnect = true;
     const wsUrl = 'ws://localhost:8080/ws';
-    
+
     try {
       this.socket = new WebSocket(wsUrl);
 
@@ -123,7 +129,7 @@ export class RealtimeService implements OnDestroy {
 
       this.socket.onclose = () => {
         this.isConnected = false;
-        
+
         // Execute progressive retry using an exponential backoff formula, capped at 30 seconds
         if (this.shouldReconnect) {
           setTimeout(() => {
@@ -159,7 +165,7 @@ export class RealtimeService implements OnDestroy {
         JSON.stringify({
           type: 'REGISTER',
           publicId: publicId,
-        })
+        }),
       );
     }
   }

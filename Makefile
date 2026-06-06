@@ -18,11 +18,21 @@ run-backend:
 	@mkdir -p backend/logs
 	@cd backend && env -u SPRING_DATASOURCE_URL -u SPRING_DATASOURCE_USERNAME -u SPRING_DATASOURCE_PASSWORD -u DATABASE_URL -u JDBC_DATABASE_URL -u JDBC_DATABASE_USERNAME -u JDBC_DATABASE_PASSWORD ./mvnw clean spring-boot:run > logs/console.log 2>&1 &
 	@echo "📝 Backend logs are being written to ${BLUE}backend/logs/console.log${NC}"
+	@echo "🚀 Backend is running at ${BLUE}http://localhost:8080${NC}"
 
-run-frontend:
+run-frontend: node_modules
 	@echo "${YELLOW}Starting Angular Frontend...${NC}"
-	@cd frontend && ng serve > console.log 2>&1 &
+	@cd frontend && npx ng serve > console.log 2>&1 &
 	@echo "📝 Frontend logs are being written to ${BLUE}frontend/console.log${NC}"
+	@echo "🚀 Frontend is running at ${BLUE}http://localhost:4200${NC}"
+
+node_modules: frontend/package.json
+	@if [ -d "frontend/node_modules" ]; then \
+		echo "✅ Dependencies already installed."; \
+	else \
+		echo "📦 Installing frontend dependencies..."; \
+		cd frontend && npm install; \
+	fi
 
 clean:
 	@fuser -k 8080/tcp > /dev/null 2>&1 || true

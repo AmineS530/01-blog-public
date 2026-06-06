@@ -16,8 +16,18 @@ export interface ConfirmOptions {
   onCancel?: () => void;
 }
 
+export interface PromptOptions {
+  title: string;
+  message: string;
+  placeholder?: string;
+  confirmText?: string;
+  cancelText?: string;
+  onConfirm: (value: string) => void;
+  onCancel?: () => void;
+}
+
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class FeedbackService {
   toasts: Toast[] = [];
@@ -36,7 +46,27 @@ export class FeedbackService {
     title: '',
     message: '',
     confirmText: 'Confirm',
-    cancelText: 'Cancel'
+    cancelText: 'Cancel',
+  };
+
+  promptState: {
+    isOpen: boolean;
+    title: string;
+    message: string;
+    value: string;
+    placeholder: string;
+    confirmText: string;
+    cancelText: string;
+    onConfirm?: (value: string) => void;
+    onCancel?: () => void;
+  } = {
+    isOpen: false,
+    title: '',
+    message: '',
+    value: '',
+    placeholder: '',
+    confirmText: 'Submit',
+    cancelText: 'Cancel',
   };
 
   showToast(message: string, type: 'success' | 'error' | 'info' = 'info', duration = 4000): void {
@@ -50,7 +80,7 @@ export class FeedbackService {
   }
 
   removeToast(id: number): void {
-    this.toasts = this.toasts.filter(t => t.id !== id);
+    this.toasts = this.toasts.filter((t) => t.id !== id);
   }
 
   askConfirmation(options: ConfirmOptions): void {
@@ -67,7 +97,7 @@ export class FeedbackService {
       onCancel: () => {
         this.confirmState.isOpen = false;
         if (options.onCancel) options.onCancel();
-      }
+      },
     };
   }
 
@@ -76,6 +106,40 @@ export class FeedbackService {
       this.confirmState.onCancel();
     } else {
       this.confirmState.isOpen = false;
+    }
+  }
+
+  askPrompt(options: PromptOptions): void {
+    this.promptState = {
+      isOpen: true,
+      title: options.title,
+      message: options.message,
+      value: '',
+      placeholder: options.placeholder || 'Enter details...',
+      confirmText: options.confirmText || 'Submit',
+      cancelText: options.cancelText || 'Cancel',
+      onConfirm: (val) => {
+        this.promptState.isOpen = false;
+        if (options.onConfirm) options.onConfirm(val);
+      },
+      onCancel: () => {
+        this.promptState.isOpen = false;
+        if (options.onCancel) options.onCancel();
+      },
+    };
+  }
+
+  confirmPrompt(): void {
+    if (this.promptState.onConfirm) {
+      this.promptState.onConfirm(this.promptState.value);
+    }
+  }
+
+  closePrompt(): void {
+    if (this.promptState.onCancel) {
+      this.promptState.onCancel();
+    } else {
+      this.promptState.isOpen = false;
     }
   }
 }

@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, tap } from 'rxjs';
+import { Observable, BehaviorSubject, tap } from 'rxjs';
 import { RegisterRequest, LoginRequest, AuthResponse } from '../../shared/models/auth.models';
 
 @Injectable({
@@ -8,8 +8,13 @@ import { RegisterRequest, LoginRequest, AuthResponse } from '../../shared/models
 })
 export class AuthService {
   private apiUrl = 'http://localhost:8080/api/auth';
+  private loggedInSubject: BehaviorSubject<boolean>;
+  public loggedIn$: Observable<boolean>;
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) {
+    this.loggedInSubject = new BehaviorSubject<boolean>(this.isLoggedIn());
+    this.loggedIn$ = this.loggedInSubject.asObservable();
+  }
 
   register(data: RegisterRequest): Observable<AuthResponse> {
     return this.http
@@ -25,6 +30,7 @@ export class AuthService {
 
   logout(): void {
     localStorage.removeItem('token');
+    this.loggedInSubject.next(false);
   }
 
   getToken(): string | null {
@@ -51,7 +57,9 @@ export class AuthService {
       const pad = payload.length % 4;
       if (pad) {
         if (pad === 1) {
-          throw new Error('InvalidLengthError: Input base64url string is the wrong length to determine padding');
+          throw new Error(
+            'InvalidLengthError: Input base64url string is the wrong length to determine padding',
+          );
         }
         payload += new Array(5 - pad).join('=');
       }
@@ -75,5 +83,6 @@ export class AuthService {
 
   private saveSession(res: AuthResponse): void {
     localStorage.setItem('token', res.token);
+    this.loggedInSubject.next(true);
   }
 }
