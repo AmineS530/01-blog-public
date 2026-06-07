@@ -17,19 +17,35 @@
         </mat-form-field>
         <mat-form-field appearance="outline" class="auth-field">
           <mat-label>Password</mat-label>
-          <input matInput type="password" formControlName="password" />
+           <input
+            matInput
+            type="password"
+            [type]="hidePassword ? 'password' : 'text'"
+            formControlName="password"
+          />
           <mat-icon matPrefix>lock</mat-icon>
+          <button mat-icon-button matSuffix type="button" (click)="togglePassword()">
+            <mat-icon>
+              {{ hidePassword ? 'visibility' : 'visibility_off' }}
+            </mat-icon>
+          </button>
         </mat-form-field>
         <div class="error-container" *ngIf="error && !isLoginMode">
           <mat-icon color="warn">error</mat-icon>
           <span>{{ error }}</span>
         </div>
-        <button mat-flat-button color="primary" type="submit" [disabled]="registerForm.invalid || loading" class="submit-btn">
+        <button
+          mat-flat-button
+          color="primary"
+          type="submit"
+          [disabled]="registerForm.invalid || loading"
+          class="submit-btn"
+        >
           {{ loading ? 'Creating...' : 'Sign Up' }}
         </button>
       </form>
     </div>
-    
+
     <div class="form-container sign-in-container">
       <form [formGroup]="loginForm" (ngSubmit)="submitLogin()">
         <div class="auth-brand">
@@ -42,19 +58,35 @@
         </mat-form-field>
         <mat-form-field appearance="outline" class="auth-field">
           <mat-label>Password</mat-label>
-          <input matInput type="password" formControlName="password" />
+          <input
+            matInput
+            type="password"
+            [type]="hidePassword ? 'password' : 'text'"
+            formControlName="password"
+          />
           <mat-icon matPrefix>lock</mat-icon>
+          <button mat-icon-button matSuffix type="button" (click)="togglePassword()">
+            <mat-icon>
+              {{ hidePassword ? 'visibility' : 'visibility_off' }}
+            </mat-icon>
+          </button>
         </mat-form-field>
         <div class="error-container" *ngIf="error && isLoginMode">
           <mat-icon color="warn">error</mat-icon>
           <span>{{ error }}</span>
         </div>
-        <button mat-flat-button color="primary" type="submit" [disabled]="loginForm.invalid || loading" class="submit-btn">
+        <button
+          mat-flat-button
+          color="primary"
+          type="submit"
+          [disabled]="loginForm.invalid || loading"
+          class="submit-btn"
+        >
           {{ loading ? 'Logging in...' : 'Sign In' }}
         </button>
       </form>
     </div>
-    
+
     <div class="overlay-container">
       <div class="overlay">
         <div class="overlay-panel overlay-left">

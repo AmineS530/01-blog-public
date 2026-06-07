@@ -19,10 +19,10 @@ import { AuthService } from '../../core/services/auth.service';
     MatButtonModule,
     MatCardModule,
     MatFormFieldModule,
-    MatIconModule
+    MatIconModule,
   ],
   templateUrl: './auth.component.html',
-  styleUrl: './auth.component.css'
+  styleUrl: './auth.component.css',
 })
 export class AuthComponent implements OnInit {
   isLoginMode = true;
@@ -35,17 +35,17 @@ export class AuthComponent implements OnInit {
     private fb: FormBuilder,
     private auth: AuthService,
     private router: Router,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
   ) {
     this.loginForm = this.fb.group({
       usernameOrEmail: ['', [Validators.required]],
-      password: ['', [Validators.required, Validators.minLength(6)]]
+      password: ['', [Validators.required, Validators.minLength(6)]],
     });
 
     this.registerForm = this.fb.group({
       username: ['', [Validators.required, Validators.minLength(3)]],
       email: ['', [Validators.required, Validators.email]],
-      password: ['', [Validators.required, Validators.minLength(6)]]
+      password: ['', [Validators.required, Validators.minLength(6)]],
     });
   }
 
@@ -69,10 +69,10 @@ export class AuthComponent implements OnInit {
     this.error = '';
     this.auth.login(this.loginForm.value).subscribe({
       next: () => this.router.navigate(['/feed']),
-      error: err => {
+      error: (err) => {
         this.error = err.error?.message || 'Invalid credentials';
         this.loading = false;
-      }
+      },
     });
   }
 
@@ -82,10 +82,15 @@ export class AuthComponent implements OnInit {
     this.error = '';
     this.auth.register(this.registerForm.value).subscribe({
       next: () => this.router.navigate(['/feed']),
-      error: err => {
+      error: (err) => {
         this.error = err.error?.message || 'Registration failed';
         this.loading = false;
-      }
+      },
     });
+  }
+  hidePassword = true;
+
+  togglePassword(): void {
+    this.hidePassword = !this.hidePassword;
   }
 }

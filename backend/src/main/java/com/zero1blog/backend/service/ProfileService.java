@@ -1,7 +1,17 @@
 package com.zero1blog.backend.service;
 
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import org.springframework.stereotype.Service;
+
 import com.zero1blog.backend.dto.ProfileResponse;
 import com.zero1blog.backend.dto.ProfileUpdateRequest;
+import com.zero1blog.backend.exception.BadRequestException;
+import com.zero1blog.backend.exception.ResourceNotFoundException;
+import com.zero1blog.backend.exception.UnauthorizedActionException;
 import com.zero1blog.backend.model.Subscription;
 import com.zero1blog.backend.model.User;
 import com.zero1blog.backend.model.UserBlock;
@@ -10,13 +20,6 @@ import com.zero1blog.backend.repository.SubscriptionRepository;
 import com.zero1blog.backend.repository.UserBlockRepository;
 import com.zero1blog.backend.repository.UserProfileRepository;
 import com.zero1blog.backend.repository.UserRepository;
-import com.zero1blog.backend.exception.*;
-import org.springframework.stereotype.Service;
-
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 @Service
 public class ProfileService {
