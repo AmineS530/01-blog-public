@@ -34,18 +34,18 @@ import { MarkdownPipe } from '../../shared/pipes/markdown.pipe';
     MatFormFieldModule,
     MatInputModule,
     FormsModule,
-    MarkdownPipe
+    MarkdownPipe,
   ],
   templateUrl: './profile.html',
-  styleUrl: './profile.css'
+  styleUrl: './profile.css',
 })
 export class ProfileComponent implements OnInit {
   profile: ProfileResponse | null = null;
   posts: PostResponse[] = [];
-  
+
   loading = true;
   error = '';
-  
+
   currentUsername = '';
   targetUsername = '';
 
@@ -75,15 +75,15 @@ export class ProfileComponent implements OnInit {
     private authService: AuthService,
     private mediaService: MediaService,
     private reportService: ReportService,
-    private feedback: FeedbackService
+    private feedback: FeedbackService,
   ) {}
 
   ngOnInit(): void {
     this.currentUsername = this.authService.getUsername() ?? '';
     const role = this.authService.getRole();
     this.isCallerAdminOrSuperAdmin = role === 'ADMIN' || role === 'SUPER_ADMIN';
-    
-    this.route.paramMap.subscribe(params => {
+
+    this.route.paramMap.subscribe((params) => {
       this.targetUsername = params.get('username') || '';
       if (!this.targetUsername) {
         this.router.navigate(['/feed']);
@@ -110,7 +110,7 @@ export class ProfileComponent implements OnInit {
       error: () => {
         this.error = 'Profile not found.';
         this.loading = false;
-      }
+      },
     });
   }
 
@@ -123,7 +123,7 @@ export class ProfileComponent implements OnInit {
       },
       error: () => {
         this.loading = false;
-      }
+      },
     });
   }
 
@@ -135,7 +135,9 @@ export class ProfileComponent implements OnInit {
     this.postService.getByUsername(this.targetUsername, nextPage, this.pageSize).subscribe({
       next: (posts) => {
         if (posts.length > 0) {
-          const newPosts = posts.filter(p => !this.posts.some(existing => existing.id === p.id));
+          const newPosts = posts.filter(
+            (p) => !this.posts.some((existing) => existing.id === p.id),
+          );
           this.posts = [...this.posts, ...newPosts];
           this.currentPage = nextPage;
           this.hasMorePosts = posts.length >= this.pageSize;
@@ -147,7 +149,7 @@ export class ProfileComponent implements OnInit {
       error: () => {
         this.feedback.showToast('Failed to load more posts.', 'error');
         this.loadingMore = false;
-      }
+      },
     });
   }
 
@@ -161,7 +163,7 @@ export class ProfileComponent implements OnInit {
       error: () => {
         this.profile!.isFollowing = wasFollowing;
         this.profile!.followerCount += wasFollowing ? 1 : -1;
-      }
+      },
     });
   }
 
@@ -169,7 +171,7 @@ export class ProfileComponent implements OnInit {
     if (!this.profile) return;
     const wasBlocked = this.profile.isBlocked;
     this.profile.isBlocked = !wasBlocked;
-    
+
     // If we just blocked them, also reset following statuses locally since backend does it
     if (this.profile.isBlocked) {
       if (this.profile.isFollowing) {
@@ -184,7 +186,7 @@ export class ProfileComponent implements OnInit {
       },
       error: () => {
         this.profile!.isBlocked = wasBlocked;
-      }
+      },
     });
   }
 
@@ -196,30 +198,40 @@ export class ProfileComponent implements OnInit {
       error: () => {
         post.isLikedByCurrentUser = !post.isLikedByCurrentUser;
         post.likeCount += post.isLikedByCurrentUser ? 1 : -1;
-      }
+      },
     });
   }
 
   reportUser(): void {
     if (!this.profile) return;
-    const reason = prompt(`Why are you reporting user ${this.profile.username}?`);
-    if (reason) {
-      this.reportService.reportUser(this.profile.id, reason).subscribe({
-        next: () => this.feedback.showToast('User reported successfully.', 'success'),
-        error: () => this.feedback.showToast('Failed to report user.', 'error')
-      });
-    }
+    this.feedback.askPrompt({
+      title: 'Report User',
+      message: `Why are you reporting user ${this.profile.displayName || this.profile.username}?`,
+      placeholder: 'Reason for reporting',
+      confirmText: 'Report',
+      onConfirm: (reason) => {
+        this.reportService.reportUser(this.profile!.id, reason).subscribe({
+          next: () => this.feedback.showToast('User reported successfully.', 'success'),
+          error: () => this.feedback.showToast('Failed to report user.', 'error'),
+        });
+      },
+    });
   }
 
   reportPost(event: Event, post: PostResponse): void {
     event.stopPropagation();
-    const reason = prompt(`Why are you reporting this post by ${post.authorUsername}?`);
-    if (reason) {
-      this.reportService.reportPost(post.id, reason).subscribe({
-        next: () => this.feedback.showToast('Post reported successfully.', 'success'),
-        error: () => this.feedback.showToast('Failed to report post.', 'error')
-      });
-    }
+    this.feedback.askPrompt({
+      title: 'Report Post',
+      message: `Why are you reporting this post by ${post.authorDisplayName || post.authorUsername}?`,
+      placeholder: 'Reason for reporting',
+      confirmText: 'Report',
+      onConfirm: (reason) => {
+        this.reportService.reportPost(post.id, reason).subscribe({
+          next: () => this.feedback.showToast('Post reported successfully.', 'success'),
+          error: () => this.feedback.showToast('Failed to report post.', 'error'),
+        });
+      },
+    });
   }
 
   goToPost(id: number): void {
@@ -254,7 +266,7 @@ export class ProfileComponent implements OnInit {
       error: () => {
         this.feedback.showToast('Failed to load followers.', 'error');
         this.loadingFollowers = false;
-      }
+      },
     });
   }
 
@@ -269,7 +281,7 @@ export class ProfileComponent implements OnInit {
       error: () => {
         this.feedback.showToast('Failed to load following.', 'error');
         this.loadingFollowing = false;
-      }
+      },
     });
   }
 
@@ -291,7 +303,7 @@ export class ProfileComponent implements OnInit {
         if (this.currentUsername === this.targetUsername && this.profile) {
           this.profile.followingCount += wasFollowing ? 1 : -1;
         }
-      }
+      },
     });
   }
 
@@ -311,7 +323,7 @@ export class ProfileComponent implements OnInit {
           const updateReq = {
             displayName: this.profile.displayName || '',
             bio: this.profile.bio || '',
-            avatarUrl: res.url
+            avatarUrl: res.url,
           };
           this.profileService.updateProfile(updateReq).subscribe({
             next: (updatedProfile) => {
@@ -322,7 +334,7 @@ export class ProfileComponent implements OnInit {
             error: () => {
               this.feedback.showToast('Failed to update profile picture.', 'error');
               this.uploadingAvatar = false;
-            }
+            },
           });
         } else {
           this.uploadingAvatar = false;
@@ -331,7 +343,7 @@ export class ProfileComponent implements OnInit {
       error: () => {
         this.feedback.showToast('Failed to upload image.', 'error');
         this.uploadingAvatar = false;
-      }
+      },
     });
   }
 
@@ -353,7 +365,7 @@ export class ProfileComponent implements OnInit {
     const request = {
       displayName: this.editDisplayName,
       bio: this.editBio,
-      avatarUrl: this.profile.avatarUrl || ''
+      avatarUrl: this.profile.avatarUrl || '',
     };
 
     this.profileService.updateProfileByUsername(this.profile.username, request).subscribe({
@@ -366,7 +378,7 @@ export class ProfileComponent implements OnInit {
       error: () => {
         this.feedback.showToast('Failed to update profile.', 'error');
         this.savingProfile = false;
-      }
+      },
     });
   }
 }

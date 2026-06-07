@@ -35,10 +35,10 @@ import { Subscription } from 'rxjs';
     MatFormFieldModule,
     MatProgressSpinnerModule,
     MatTooltipModule,
-    MarkdownPipe
+    MarkdownPipe,
   ],
   templateUrl: './single-post.html',
-  styleUrl: './single-post.css'
+  styleUrl: './single-post.css',
 })
 export class SinglePostComponent implements OnInit, OnDestroy {
   post: PostResponse | null = null;
@@ -72,13 +72,13 @@ export class SinglePostComponent implements OnInit, OnDestroy {
     private fb: FormBuilder,
     private feedback: FeedbackService,
     private realtimeService: RealtimeService,
-    private profileService: ProfileService
+    private profileService: ProfileService,
   ) {
     this.commentForm = this.fb.group({
-      content: ['', [Validators.required, Validators.maxLength(1000)]]
+      content: ['', [Validators.required, Validators.maxLength(1000)]],
     });
     this.editCommentForm = this.fb.group({
-      content: ['', [Validators.required, Validators.maxLength(1000)]]
+      content: ['', [Validators.required, Validators.maxLength(1000)]],
     });
   }
 
@@ -90,7 +90,7 @@ export class SinglePostComponent implements OnInit, OnDestroy {
           this.currentUserAvatarUrl = profile.avatarUrl;
           this.currentUserDisplayName = profile.displayName || profile.username;
         },
-        error: (err) => console.error('Failed to load profile for commenter avatar', err)
+        error: (err) => console.error('Failed to load profile for commenter avatar', err),
       });
     }
 
@@ -113,26 +113,23 @@ export class SinglePostComponent implements OnInit, OnDestroy {
       error: () => {
         this.error = 'Post not found.';
         this.loading = false;
-      }
+      },
     });
   }
 
   private setupRealtime(postId: number): void {
-    // 1. Subscribe to new comments for this post
     this.commentsSubscription = this.realtimeService.comments$.subscribe({
       next: (payload) => {
         if (payload.postId === postId) {
           const newComment = payload.comment;
-          if (newComment.authorUsername !== this.currentUsername) {
-            if (!this.comments.some(c => c.id === newComment.id)) {
-              this.comments.push(newComment);
-              if (this.post) {
-                this.post.commentCount++;
-              }
+          if (!this.comments.some((c) => c.id === newComment.id)) {
+            this.comments.push(newComment);
+            if (this.post) {
+              this.post.commentCount++;
             }
           }
         }
-      }
+      },
     });
 
     // 2. Subscribe to like count updates
@@ -143,17 +140,17 @@ export class SinglePostComponent implements OnInit, OnDestroy {
             this.post.likeCount = event.likeCount;
           }
         } else if (event.type === 'COMMENT_LIKE' && event.postId === postId) {
-          const targetComment = this.comments.find(c => c.id === event.commentId);
+          const targetComment = this.comments.find((c) => c.id === event.commentId);
           if (targetComment) {
             targetComment.likeCount = event.likeCount;
           }
         }
-      }
+      },
     });
   }
 
   loadComments(postId: number): void {
-    this.postService.getComments(postId).subscribe(comments => {
+    this.postService.getComments(postId).subscribe((comments) => {
       this.comments = comments;
     });
   }
@@ -172,7 +169,7 @@ export class SinglePostComponent implements OnInit, OnDestroy {
       error: () => {
         this.feedback.showToast('Failed to upload comment media', 'error');
         this.uploadingCommentMedia = false;
-      }
+      },
     });
   }
 
@@ -186,7 +183,7 @@ export class SinglePostComponent implements OnInit, OnDestroy {
 
     const request = {
       ...this.commentForm.value,
-      mediaUrl: this.commentMediaUrl
+      mediaUrl: this.commentMediaUrl,
     };
 
     this.postService.addComment(this.post.id, request).subscribe({
@@ -196,7 +193,7 @@ export class SinglePostComponent implements OnInit, OnDestroy {
         this.commentForm.reset();
         this.commentMediaUrl = null;
         this.feedback.showToast('Comment posted!', 'success');
-      }
+      },
     });
   }
 
@@ -215,14 +212,14 @@ export class SinglePostComponent implements OnInit, OnDestroy {
 
     this.postService.updateComment(comment.id, this.editCommentForm.value).subscribe({
       next: (updatedComment) => {
-        const index = this.comments.findIndex(c => c.id === updatedComment.id);
+        const index = this.comments.findIndex((c) => c.id === updatedComment.id);
         if (index !== -1) {
           this.comments[index] = updatedComment;
         }
         this.cancelEditComment();
         this.feedback.showToast('Comment updated!', 'success');
       },
-      error: () => this.feedback.showToast('Failed to update comment', 'error')
+      error: () => this.feedback.showToast('Failed to update comment', 'error'),
     });
   }
 
@@ -234,13 +231,13 @@ export class SinglePostComponent implements OnInit, OnDestroy {
       onConfirm: () => {
         this.postService.deleteComment(commentId).subscribe({
           next: () => {
-            this.comments = this.comments.filter(c => c.id !== commentId);
+            this.comments = this.comments.filter((c) => c.id !== commentId);
             if (this.post) this.post.commentCount--;
             this.feedback.showToast('Comment deleted successfully!', 'success');
           },
-          error: () => this.feedback.showToast('Failed to delete comment', 'error')
+          error: () => this.feedback.showToast('Failed to delete comment', 'error'),
         });
-      }
+      },
     });
   }
 
@@ -253,7 +250,7 @@ export class SinglePostComponent implements OnInit, OnDestroy {
         this.post!.isLikedByCurrentUser = !this.post!.isLikedByCurrentUser;
         this.post!.likeCount += this.post!.isLikedByCurrentUser ? 1 : -1;
         this.feedback.showToast('Failed to update post like status.', 'error');
-      }
+      },
     });
   }
 
@@ -265,29 +262,39 @@ export class SinglePostComponent implements OnInit, OnDestroy {
         comment.isLikedByCurrentUser = !comment.isLikedByCurrentUser;
         comment.likeCount += comment.isLikedByCurrentUser ? 1 : -1;
         this.feedback.showToast('Failed to update comment like status.', 'error');
-      }
+      },
     });
   }
 
   reportPost(): void {
     if (!this.post) return;
-    const reason = prompt(`Why are you reporting this post by ${this.post.authorUsername}?`);
-    if (reason) {
-      this.reportService.reportPost(this.post.id, reason).subscribe({
-        next: () => this.feedback.showToast('Post reported successfully.', 'success'),
-        error: () => this.feedback.showToast('Failed to report post.', 'error')
-      });
-    }
+    this.feedback.askPrompt({
+      title: 'Report Post',
+      message: `Why are you reporting this post by ${this.post.authorDisplayName || this.post.authorUsername}?`,
+      placeholder: 'Reason for reporting',
+      confirmText: 'Report',
+      onConfirm: (reason) => {
+        this.reportService.reportPost(this.post!.id, reason).subscribe({
+          next: () => this.feedback.showToast('Post reported successfully.', 'success'),
+          error: () => this.feedback.showToast('Failed to report post.', 'error'),
+        });
+      },
+    });
   }
 
   reportComment(comment: CommentResponse): void {
-    const reason = prompt(`Why are you reporting this comment by ${comment.authorUsername}?`);
-    if (reason) {
-      this.reportService.reportComment(comment.id, reason).subscribe({
-        next: () => this.feedback.showToast('Comment reported successfully.', 'success'),
-        error: () => this.feedback.showToast('Failed to report comment.', 'error')
-      });
-    }
+    this.feedback.askPrompt({
+      title: 'Report Comment',
+      message: `Why are you reporting this comment by ${comment.authorDisplayName || comment.authorUsername}?`,
+      placeholder: 'Reason for reporting',
+      confirmText: 'Report',
+      onConfirm: (reason) => {
+        this.reportService.reportComment(comment.id, reason).subscribe({
+          next: () => this.feedback.showToast('Comment reported successfully.', 'success'),
+          error: () => this.feedback.showToast('Failed to report comment.', 'error'),
+        });
+      },
+    });
   }
 
   edit(): void {
@@ -301,7 +308,8 @@ export class SinglePostComponent implements OnInit, OnDestroy {
   delete(): void {
     this.feedback.askConfirmation({
       title: 'DELETE POST',
-      message: 'Delete this post? This action cannot be undone and will permanently remove associated media files.',
+      message:
+        'Delete this post? This action cannot be undone and will permanently remove associated media files.',
       confirmText: 'Delete',
       onConfirm: () => {
         this.postService.delete(this.post!.id).subscribe({
@@ -312,9 +320,9 @@ export class SinglePostComponent implements OnInit, OnDestroy {
           error: () => {
             this.feedback.showToast('Failed to delete post.', 'error');
             this.error = 'Failed to delete post. Please try again.';
-          }
+          },
         });
-      }
+      },
     });
   }
 

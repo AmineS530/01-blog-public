@@ -36,7 +36,7 @@ import { Subscription } from 'rxjs';
     MatTooltipModule,
     MatInputModule,
     MatFormFieldModule,
-    MarkdownPipe
+    MarkdownPipe,
   ],
   templateUrl: './feed.html',
   styleUrl: './feed.css',
@@ -75,7 +75,7 @@ export class FeedComponent implements OnInit, OnDestroy {
     private mediaService: MediaService,
     private router: Router,
     private feedback: FeedbackService,
-    private realtimeService: RealtimeService
+    private realtimeService: RealtimeService,
   ) {}
 
   ngOnInit(): void {
@@ -86,27 +86,33 @@ export class FeedComponent implements OnInit, OnDestroy {
           this.currentUserAvatarUrl = profile.avatarUrl;
           this.currentUserDisplayName = profile.displayName || profile.username;
         },
-        error: (err) => console.error('Failed to load profile for quick post avatar', err)
+        error: (err) => console.error('Failed to load profile for quick post avatar', err),
       });
     }
 
     this.loadPosts();
     this.loadRecommendedUsers();
 
-    // Subscribe to new posts in real-time
     this.postsSubscription = this.realtimeService.posts$.subscribe({
       next: (newPost: PostResponse) => {
-        if (newPost.authorUsername !== this.currentUsername) {
-          // If the post matches current tab filter (if we follow the user, or if on global feed)
-          const isFromFollowed = this.recommendedUsers.some(u => u.username === newPost.authorUsername && u.isFollowing);
-          
-          if (this.activeTab === 'global' || (this.activeTab === 'following' && isFromFollowed)) {
-            if (!this.posts.some(p => p.id === newPost.id) && !this.newIncomingPosts.some(p => p.id === newPost.id)) {
-              this.newIncomingPosts = [newPost, ...this.newIncomingPosts];
-            }
+        // If the post matches current tab filter (if we follow the user, or if on global feed)
+        const isFromFollowed = this.recommendedUsers.some(
+          (u) => u.username === newPost.authorUsername && u.isFollowing,
+        );
+        const isAuthor = newPost.authorUsername === this.currentUsername;
+
+        if (
+          this.activeTab === 'global' ||
+          (this.activeTab === 'following' && (isFromFollowed || isAuthor))
+        ) {
+          if (
+            !this.posts.some((p) => p.id === newPost.id) &&
+            !this.newIncomingPosts.some((p) => p.id === newPost.id)
+          ) {
+            this.newIncomingPosts = [newPost, ...this.newIncomingPosts];
           }
         }
-      }
+      },
     });
   }
 
@@ -115,10 +121,11 @@ export class FeedComponent implements OnInit, OnDestroy {
     this.error = '';
     this.currentPage = 0;
     this.hasMorePosts = true;
-    
-    const request = this.activeTab === 'global' 
-      ? this.postService.getAll(this.currentPage, this.pageSize) 
-      : this.postService.getFollowingFeed(this.currentPage, this.pageSize);
+
+    const request =
+      this.activeTab === 'global'
+        ? this.postService.getAll(this.currentPage, this.pageSize)
+        : this.postService.getFollowingFeed(this.currentPage, this.pageSize);
 
     request.subscribe({
       next: (posts) => {
@@ -137,16 +144,19 @@ export class FeedComponent implements OnInit, OnDestroy {
     if (this.loadingMore || !this.hasMorePosts) return;
     this.loadingMore = true;
     const nextPage = this.currentPage + 1;
-    
-    const request = this.activeTab === 'global'
-      ? this.postService.getAll(nextPage, this.pageSize)
-      : this.postService.getFollowingFeed(nextPage, this.pageSize);
+
+    const request =
+      this.activeTab === 'global'
+        ? this.postService.getAll(nextPage, this.pageSize)
+        : this.postService.getFollowingFeed(nextPage, this.pageSize);
 
     request.subscribe({
       next: (posts) => {
         if (posts.length > 0) {
           // Filter out any posts we already have to prevent duplicates (e.g. from live updates)
-          const newPosts = posts.filter(p => !this.posts.some(existing => existing.id === p.id));
+          const newPosts = posts.filter(
+            (p) => !this.posts.some((existing) => existing.id === p.id),
+          );
           this.posts = [...this.posts, ...newPosts];
           this.currentPage = nextPage;
           this.hasMorePosts = posts.length >= this.pageSize;
@@ -158,7 +168,7 @@ export class FeedComponent implements OnInit, OnDestroy {
       error: () => {
         this.feedback.showToast('Failed to load more posts.', 'error');
         this.loadingMore = false;
-      }
+      },
     });
   }
 
@@ -171,7 +181,7 @@ export class FeedComponent implements OnInit, OnDestroy {
       },
       error: () => {
         this.loadingRecommended = false;
-      }
+      },
     });
   }
 
@@ -183,7 +193,7 @@ export class FeedComponent implements OnInit, OnDestroy {
 
   toggleFollow(event: Event, user: ProfileResponse): void {
     event.stopPropagation();
-    
+
     // Optimistic toggle
     user.isFollowing = !user.isFollowing;
     user.followerCount += user.isFollowing ? 1 : -1;
@@ -200,7 +210,7 @@ export class FeedComponent implements OnInit, OnDestroy {
         // Revert on failure
         user.isFollowing = !user.isFollowing;
         user.followerCount += user.isFollowing ? 1 : -1;
-      }
+      },
     });
   }
 
@@ -218,7 +228,7 @@ export class FeedComponent implements OnInit, OnDestroy {
       error: () => {
         this.feedback.showToast('Failed to upload media. Please try again.', 'error');
         this.uploadingMedia = false;
-      }
+      },
     });
   }
 
@@ -236,7 +246,7 @@ export class FeedComponent implements OnInit, OnDestroy {
     const postData = {
       title: this.quickPostTitle,
       content: this.quickPostContent,
-      mediaUrl: this.quickPostMediaUrl ?? undefined
+      mediaUrl: this.quickPostMediaUrl ?? undefined,
     };
 
     this.postService.create(postData).subscribe({
@@ -246,7 +256,7 @@ export class FeedComponent implements OnInit, OnDestroy {
         this.quickPostContent = '';
         this.quickPostMediaUrl = null;
         this.submittingPost = false;
-        
+
         // Add new post to feed dynamically at the top
         this.posts = [newPost, ...this.posts];
         this.feedback.showToast('Post published successfully!', 'success');
@@ -254,7 +264,7 @@ export class FeedComponent implements OnInit, OnDestroy {
       error: () => {
         this.feedback.showToast('Failed to publish post. Please try again.', 'error');
         this.submittingPost = false;
-      }
+      },
     });
   }
 
@@ -280,19 +290,24 @@ export class FeedComponent implements OnInit, OnDestroy {
         post.isLikedByCurrentUser = !post.isLikedByCurrentUser;
         post.likeCount += post.isLikedByCurrentUser ? 1 : -1;
         this.feedback.showToast('Failed to update like status.', 'error');
-      }
+      },
     });
   }
 
   reportPost(event: Event, post: PostResponse): void {
     event.stopPropagation();
-    const reason = prompt(`Why are you reporting this post by ${post.authorUsername}?`);
-    if (reason) {
-      this.reportService.reportPost(post.id, reason).subscribe({
-        next: () => this.feedback.showToast('Post reported successfully.', 'success'),
-        error: () => this.feedback.showToast('Failed to report post.', 'error')
-      });
-    }
+    this.feedback.askPrompt({
+      title: 'Report Post',
+      message: `Why are you reporting this post by ${post.authorDisplayName || post.authorUsername}?`,
+      placeholder: 'Reason for reporting',
+      confirmText: 'Report',
+      onConfirm: (reason) => {
+        this.reportService.reportPost(post.id, reason).subscribe({
+          next: () => this.feedback.showToast('Post reported successfully.', 'success'),
+          error: () => this.feedback.showToast('Failed to report post.', 'error'),
+        });
+      },
+    });
   }
 
   logout(): void {
