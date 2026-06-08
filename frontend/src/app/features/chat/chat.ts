@@ -1,4 +1,11 @@
-import { Component, OnInit, OnDestroy, ViewChild, ElementRef, AfterViewChecked } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  OnDestroy,
+  ViewChild,
+  ElementRef,
+  AfterViewChecked,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
@@ -8,7 +15,11 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatInputModule } from '@angular/material/input';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { ActivatedRoute, Router } from '@angular/router';
-import { MessageService, MessageResponse, MessageRequest } from '../../core/services/message.service';
+import {
+  MessageService,
+  MessageResponse,
+  MessageRequest,
+} from '../../core/services/message.service';
 import { AuthService } from '../../core/services/auth.service';
 import { ProfileService } from '../../core/services/profile.service';
 import { MediaService } from '../../core/services/media.service';
@@ -57,19 +68,19 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
 
   /** The public ID of the logged-in user. */
   currentUserId = '';
-  
+
   /** The username of the logged-in user. */
   currentUsername = '';
-  
+
   /** Sorted list of conversation threads (inbox partners). */
   inbox: ChatPartner[] = [];
-  
+
   /** List of suggested profiles to start new conversations. */
   recommended: ProfileResponse[] = [];
-  
+
   /** The currently selected partner thread. */
   activePartner: ChatPartner | null = null;
-  
+
   /** Historical message list for the active conversation thread. */
   activeMessages: MessageResponse[] = [];
 
@@ -82,13 +93,15 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
 
   /** Search/Filter query string to filter inbox and recommendations. */
   searchQuery = '';
+  searchResults: ProfileResponse[] = [];
+  isSearching = false;
 
   /** Outbound raw text message content. */
   messageContent = '';
-  
+
   /** Uploaded file media URL attachment. */
   attachedMediaUrl: string | null = null;
-  
+
   uploadingMedia = false;
   sendingMessage = false;
 
@@ -97,7 +110,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
 
   /** Unsubscribe reference tracking WebSocket online status updates. */
   private onlineSubscription?: Subscription;
-  
+
   /** Internal dirty flag triggered to request programmatic scrolling on next view update. */
   private shouldScrollToBottom = false;
 
@@ -109,7 +122,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
     private realtimeService: RealtimeService,
     private feedback: FeedbackService,
     private route: ActivatedRoute,
-    private router: Router
+    private router: Router,
   ) {}
 
   /**
@@ -192,7 +205,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
       next: (users) => {
         this.onlineUsers = new Set(users);
       },
-      error: () => {}
+      error: () => {},
     });
   }
 
@@ -228,15 +241,23 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
     this.messageSubscription = this.realtimeService.messages$.subscribe({
       next: (msg: MessageResponse) => {
         // Determine the partner in this message
-        const messagePartnerId = msg.senderPublicId === this.currentUserId ? msg.recipientPublicId : msg.senderPublicId;
-        const messagePartnerUsername = msg.senderPublicId === this.currentUserId ? msg.recipientUsername : msg.senderUsername;
-        const messagePartnerDisplayName = msg.senderPublicId === this.currentUserId ? (msg.recipientDisplayName || msg.recipientUsername) : (msg.senderDisplayName || msg.senderUsername);
-        const messagePartnerAvatar = msg.senderPublicId === this.currentUserId ? msg.recipientAvatarUrl : msg.senderAvatarUrl;
+        const messagePartnerId =
+          msg.senderPublicId === this.currentUserId ? msg.recipientPublicId : msg.senderPublicId;
+        const messagePartnerUsername =
+          msg.senderPublicId === this.currentUserId ? msg.recipientUsername : msg.senderUsername;
+        const messagePartnerDisplayName =
+          msg.senderPublicId === this.currentUserId
+            ? msg.recipientDisplayName || msg.recipientUsername
+            : msg.senderDisplayName || msg.senderUsername;
+        const messagePartnerAvatar =
+          msg.senderPublicId === this.currentUserId ? msg.recipientAvatarUrl : msg.senderAvatarUrl;
 
         // If it belongs to our active conversation
         if (this.activePartner && this.activePartner.publicId === messagePartnerId) {
-          this.activeMessages.push(msg);
-          this.shouldScrollToBottom = true;
+          if (!this.activeMessages.some((m) => m.id === msg.id)) {
+            this.activeMessages.push(msg);
+            this.shouldScrollToBottom = true;
+          }
 
           // If we are recipient, mark it as read on the backend
           if (msg.recipientPublicId === this.currentUserId) {
@@ -253,7 +274,10 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
           partner.lastMessageSnippet = snippet;
           partner.lastMessageTime = msg.createdAt;
           partner.displayName = messagePartnerDisplayName || partner.displayName;
-          if (msg.recipientPublicId === this.currentUserId && (!this.activePartner || this.activePartner.publicId !== messagePartnerId)) {
+          if (
+            msg.recipientPublicId === this.currentUserId &&
+            (!this.activePartner || this.activePartner.publicId !== messagePartnerId)
+          ) {
             partner.unreadCount++;
           }
           // Move to top of inbox
@@ -290,10 +314,16 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
     const partnersMap = new Map<string, ChatPartner>();
 
     for (const m of messages) {
-      const partnerId = m.senderPublicId === this.currentUserId ? m.recipientPublicId : m.senderPublicId;
-      const partnerUsername = m.senderPublicId === this.currentUserId ? m.recipientUsername : m.senderUsername;
-      const partnerDisplayName = m.senderPublicId === this.currentUserId ? (m.recipientDisplayName || m.recipientUsername) : (m.senderDisplayName || m.senderUsername);
-      const partnerAvatar = m.senderPublicId === this.currentUserId ? m.recipientAvatarUrl : m.senderAvatarUrl;
+      const partnerId =
+        m.senderPublicId === this.currentUserId ? m.recipientPublicId : m.senderPublicId;
+      const partnerUsername =
+        m.senderPublicId === this.currentUserId ? m.recipientUsername : m.senderUsername;
+      const partnerDisplayName =
+        m.senderPublicId === this.currentUserId
+          ? m.recipientDisplayName || m.recipientUsername
+          : m.senderDisplayName || m.senderUsername;
+      const partnerAvatar =
+        m.senderPublicId === this.currentUserId ? m.recipientAvatarUrl : m.senderAvatarUrl;
 
       const snippet = m.mediaUrl ? '📷 Image/Video' : m.content;
 
@@ -312,7 +342,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
 
     // Sort inbox partners based on last message time
     this.inbox = Array.from(partnersMap.values()).sort(
-      (a, b) => new Date(b.lastMessageTime).getTime() - new Date(a.lastMessageTime).getTime()
+      (a, b) => new Date(b.lastMessageTime).getTime() - new Date(a.lastMessageTime).getTime(),
     );
 
     // Load unread counts or verify unread statuses
@@ -332,6 +362,8 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
     this.activePartner = partner;
     this.loadingThread = true;
     this.activeMessages = [];
+    this.searchQuery = '';
+    this.searchResults = [];
 
     // Reset unread count locally
     partner.unreadCount = 0;
@@ -340,7 +372,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
       next: (messages) => {
         // Sort ascending by creation time
         this.activeMessages = messages.sort(
-          (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+          (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
         );
         this.loadingThread = false;
         this.shouldScrollToBottom = true;
@@ -379,7 +411,11 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
   }
 
   sendMessage(): void {
-    if ((!this.messageContent.trim() && !this.attachedMediaUrl) || !this.activePartner || this.sendingMessage) {
+    if (
+      (!this.messageContent.trim() && !this.attachedMediaUrl) ||
+      !this.activePartner ||
+      this.sendingMessage
+    ) {
       return;
     }
 
@@ -426,7 +462,11 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
       return this.inbox;
     }
     const q = this.searchQuery.toLowerCase();
-    return this.inbox.filter((c) => c.username.toLowerCase().includes(q));
+    return this.inbox.filter(
+      (c) =>
+        c.username.toLowerCase().includes(q) ||
+        (c.displayName && c.displayName.toLowerCase().includes(q)),
+    );
   }
 
   get filteredRecommended(): ProfileResponse[] {
@@ -434,7 +474,31 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
       return this.recommended;
     }
     const q = this.searchQuery.toLowerCase();
-    return this.recommended.filter((p) => p.username.toLowerCase().includes(q));
+    return this.recommended.filter(
+      (p) =>
+        p.username.toLowerCase().includes(q) ||
+        (p.displayName && p.displayName.toLowerCase().includes(q)),
+    );
+  }
+
+  onSearchChange(): void {
+    const query = this.searchQuery.trim();
+    if (!query) {
+      this.searchResults = [];
+      this.isSearching = false;
+      return;
+    }
+
+    this.isSearching = true;
+    this.profileService.searchProfiles(query).subscribe({
+      next: (results) => {
+        this.searchResults = results.filter((p) => p.username !== this.currentUsername);
+        this.isSearching = false;
+      },
+      error: () => {
+        this.isSearching = false;
+      },
+    });
   }
 
   private scrollToBottom(): void {

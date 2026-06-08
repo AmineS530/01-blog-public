@@ -21,7 +21,10 @@ export class ProfileService {
     return this.http.put<ProfileResponse>(`${this.api}/me`, request);
   }
 
-  updateProfileByUsername(username: string, request: ProfileUpdateRequest): Observable<ProfileResponse> {
+  updateProfileByUsername(
+    username: string,
+    request: ProfileUpdateRequest,
+  ): Observable<ProfileResponse> {
     return this.http.put<ProfileResponse>(`${this.api}/${username}`, request);
   }
 
@@ -39,5 +42,9 @@ export class ProfileService {
 
   getFollowing(username: string): Observable<ProfileResponse[]> {
     return this.http.get<ProfileResponse[]>(`${this.api}/${username}/following`);
+  }
+
+  searchProfiles(query: string): Observable<ProfileResponse[]> {
+    return this.http.get<ProfileResponse[]>(`${this.api}/search`, { params: { query } });
   }
 }

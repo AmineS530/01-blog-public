@@ -71,4 +71,11 @@ public class ProfileController {
         String currentUserPublicId = userDetails != null ? userDetails.getUsername() : null;
         return ResponseEntity.ok(profileService.getFollowing(username, currentUserPublicId));
     }
+
+    @GetMapping("/search")
+    public ResponseEntity<List<ProfileResponse>> searchProfiles(@RequestParam String query,
+                                                                @AuthenticationPrincipal UserDetails userDetails) {
+        return ResponseEntity.ok(profileService.searchProfiles(query, userDetails.getUsername()));
+    }
 }
+

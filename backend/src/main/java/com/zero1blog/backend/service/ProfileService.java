@@ -240,4 +240,35 @@ public class ProfileService {
                 .map(sub -> getProfile(sub.getFollowed().getUsername(), currentUserPublicId))
                 .collect(Collectors.toList());
     }
+
+    public List<ProfileResponse> searchProfiles(String query, String currentUserPublicId) {
+        if (query == null || query.trim().isEmpty()) {
+            return List.of();
+        }
+
+        User currentUser = userRepository.findByPublicId(currentUserPublicId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        Set<Long> blockedIds = userBlockRepository.findByBlocker(currentUser)
+                .stream()
+                .map(ub -> ub.getBlocked().getId())
+                .collect(Collectors.toSet());
+
+        Set<Long> blockingMeIds = userBlockRepository.findByBlocked(currentUser)
+                .stream()
+                .map(ub -> ub.getBlocker().getId())
+                .collect(Collectors.toSet());
+
+        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(0, 20);
+        org.springframework.data.domain.Page<User> usersPage = userRepository.findByUsernameContainingIgnoreCaseOrEmailContainingIgnoreCase(query, query, pageable);
+
+        return usersPage.stream()
+                .filter(u -> !u.getId().equals(currentUser.getId()))
+                .filter(u -> !u.isBanned())
+                .filter(u -> !blockedIds.contains(u.getId()))
+                .filter(u -> !blockingMeIds.contains(u.getId()))
+                .map(u -> getProfile(u.getUsername(), currentUserPublicId))
+                .collect(Collectors.toList());
+    }
 }
+

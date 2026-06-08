@@ -5,10 +5,11 @@
       <h2>Conversations</h2>
       <div class="search-bar-container">
         <mat-icon class="search-icon">search</mat-icon>
-        <input 
-          type="text" 
-          placeholder="Search chats or creators..." 
-          [(ngModel)]="searchQuery" 
+        <input
+          type="text"
+          placeholder="Search chats or creators..."
+          [(ngModel)]="searchQuery"
+          (ngModelChange)="onSearchChange()"
           class="chat-search-input"
         />
       </div>
@@ -21,30 +22,80 @@
       </div>
 
       <!-- Empty Inbox State -->
-      <div *ngIf="!loadingInbox && inbox.length === 0 && recommended.length === 0" class="empty-inbox">
+      <div
+        *ngIf="
+          !loadingInbox &&
+          inbox.length === 0 &&
+          recommended.length === 0 &&
+          searchResults.length === 0
+        "
+        class="empty-inbox"
+      >
         <mat-icon class="inbox-icon">forum</mat-icon>
         <h3>Your inbox is empty</h3>
         <p class="muted">Start a conversation with recommended creators below!</p>
       </div>
 
+      <!-- Search Results Tray -->
+      <div
+        *ngIf="searchQuery.trim() && searchResults.length > 0"
+        class="recommendations-tray search-results-tray"
+      >
+        <div class="tray-title">
+          <mat-icon>search</mat-icon>
+          <span>Search Results</span>
+          <mat-spinner diameter="16" style="margin-left: 8px" *ngIf="isSearching"></mat-spinner>
+        </div>
+        <div class="recommendations-list">
+          <div
+            *ngFor="let creator of searchResults"
+            class="recommendation-item"
+            (click)="
+              startConversationWith({
+                publicId: creator.publicId,
+                username: creator.username,
+                displayName: creator.displayName || creator.username,
+                avatarUrl: creator.avatarUrl,
+                lastMessageSnippet: '',
+                lastMessageTime: '',
+                unreadCount: 0,
+              })
+            "
+          >
+            <div class="recommendation-avatar">
+              <img *ngIf="creator.avatarUrl" [src]="creator.avatarUrl" alt="Avatar" />
+              <span *ngIf="!creator.avatarUrl">{{
+                (creator.displayName || creator.username).charAt(0).toUpperCase()
+              }}</span>
+            </div>
+            <span class="recommendation-name">{{ creator.displayName || creator.username }}</span>
+            <button mat-icon-button class="chat-btn-action" matTooltip="Message creator">
+              <mat-icon>chat</mat-icon>
+            </button>
+          </div>
+        </div>
+      </div>
+
       <!-- Inbox List -->
       <div *ngIf="!loadingInbox && filteredInbox.length > 0" class="inbox-list">
-        <div 
-          *ngFor="let partner of filteredInbox" 
+        <div
+          *ngFor="let partner of filteredInbox"
           class="conversation-item"
           [class.active-chat]="activePartner?.publicId === partner.publicId"
           (click)="selectPartner(partner)"
         >
           <div class="partner-avatar">
             <img *ngIf="partner.avatarUrl" [src]="partner.avatarUrl" alt="Avatar" />
-            <span *ngIf="!partner.avatarUrl">{{ (partner.displayName || partner.username).charAt(0).toUpperCase() }}</span>
+            <span *ngIf="!partner.avatarUrl">{{
+              (partner.displayName || partner.username).charAt(0).toUpperCase()
+            }}</span>
             <div class="status-indicator" [class.online]="onlineUsers.has(partner.publicId)"></div>
           </div>
-          
+
           <div class="conversation-meta">
             <div class="meta-row">
               <span class="partner-name">{{ partner.displayName || partner.username }}</span>
-              <span class="message-time">{{ partner.lastMessageTime | date:'h:mm a' }}</span>
+              <span class="message-time">{{ partner.lastMessageTime | date: 'h:mm a' }}</span>
             </div>
             <div class="meta-row">
               <span class="message-snippet" [class.unread-snippet]="partner.unreadCount > 0">
@@ -59,28 +110,35 @@
       </div>
 
       <!-- Creator Recommendations / Direct Start chat tray -->
-      <div *ngIf="filteredRecommended.length > 0" class="recommendations-tray">
+      <div
+        *ngIf="!searchQuery.trim() && filteredRecommended.length > 0"
+        class="recommendations-tray"
+      >
         <div class="tray-title">
           <mat-icon>auto_awesome</mat-icon>
           <span>Recommended Creators</span>
         </div>
         <div class="recommendations-list">
-          <div 
-            *ngFor="let creator of filteredRecommended" 
+          <div
+            *ngFor="let creator of filteredRecommended"
             class="recommendation-item"
-            (click)="startConversationWith({
-              publicId: creator.publicId,
-              username: creator.username,
-              displayName: creator.displayName || creator.username,
-              avatarUrl: creator.avatarUrl,
-              lastMessageSnippet: '',
-              lastMessageTime: '',
-              unreadCount: 0
-            })"
+            (click)="
+              startConversationWith({
+                publicId: creator.publicId,
+                username: creator.username,
+                displayName: creator.displayName || creator.username,
+                avatarUrl: creator.avatarUrl,
+                lastMessageSnippet: '',
+                lastMessageTime: '',
+                unreadCount: 0,
+              })
+            "
           >
             <div class="recommendation-avatar">
               <img *ngIf="creator.avatarUrl" [src]="creator.avatarUrl" alt="Avatar" />
-              <span *ngIf="!creator.avatarUrl">{{ (creator.displayName || creator.username).charAt(0).toUpperCase() }}</span>
+              <span *ngIf="!creator.avatarUrl">{{
+                (creator.displayName || creator.username).charAt(0).toUpperCase()
+              }}</span>
             </div>
             <span class="recommendation-name">{{ creator.displayName || creator.username }}</span>
             <button mat-icon-button class="chat-btn-action" matTooltip="Message creator">
@@ -99,7 +157,10 @@
       <div class="glow-orb"></div>
       <mat-icon class="room-icon-main">chat_bubble</mat-icon>
       <h2>Select a conversation</h2>
-      <p class="muted">Select an active conversation from the sidebar or click a recommended creator to start private messaging instantly.</p>
+      <p class="muted">
+        Select an active conversation from the sidebar or click a recommended creator to start
+        private messaging instantly.
+      </p>
     </div>
 
     <!-- Active Conversation Frame -->
@@ -109,17 +170,28 @@
         <div class="room-header-left" (click)="goToProfile(activePartner.username)">
           <div class="room-partner-avatar">
             <img *ngIf="activePartner.avatarUrl" [src]="activePartner.avatarUrl" alt="Avatar" />
-            <span *ngIf="!activePartner.avatarUrl">{{ (activePartner.displayName || activePartner.username).charAt(0).toUpperCase() }}</span>
-            <div class="status-indicator-header" [class.online]="onlineUsers.has(activePartner.publicId)"></div>
+            <span *ngIf="!activePartner.avatarUrl">{{
+              (activePartner.displayName || activePartner.username).charAt(0).toUpperCase()
+            }}</span>
+            <div
+              class="status-indicator-header"
+              [class.online]="onlineUsers.has(activePartner.publicId)"
+            ></div>
           </div>
           <div class="room-partner-meta">
             <h3>{{ activePartner.displayName || activePartner.username }}</h3>
-            <span class="status-text">{{ onlineUsers.has(activePartner.publicId) ? 'Active Now' : 'Offline' }}</span>
+            <span class="status-text">{{
+              onlineUsers.has(activePartner.publicId) ? 'Active Now' : 'Offline'
+            }}</span>
           </div>
         </div>
-        
+
         <div class="room-header-actions">
-          <button mat-icon-button (click)="goToProfile(activePartner.username)" matTooltip="View Profile">
+          <button
+            mat-icon-button
+            (click)="goToProfile(activePartner.username)"
+            matTooltip="View Profile"
+          >
             <mat-icon>account_circle</mat-icon>
           </button>
         </div>
@@ -135,13 +207,16 @@
         <div *ngIf="!loadingThread && activeMessages.length === 0" class="empty-thread-placeholder">
           <mat-icon>waving_hand</mat-icon>
           <h3>Say hello to {{ activePartner.displayName || activePartner.username }}!</h3>
-          <p class="muted">Send a message to start this private conversation. Direct messages are secure and private.</p>
+          <p class="muted">
+            Send a message to start this private conversation. Direct messages are secure and
+            private.
+          </p>
         </div>
 
         <!-- Message List -->
         <div *ngIf="!loadingThread && activeMessages.length > 0" class="messages-list">
-          <div 
-            *ngFor="let msg of activeMessages" 
+          <div
+            *ngFor="let msg of activeMessages"
             class="message-bubble-wrapper"
             [class.mine]="msg.senderPublicId === currentUserId"
           >
@@ -149,25 +224,29 @@
             <div class="message-bubble">
               <!-- Attached Media Preview -->
               <div class="message-media" *ngIf="msg.mediaUrl">
-                <img 
-                  *ngIf="msg.mediaUrl.toLowerCase().match('\\.(jpg|jpeg|png|gif|webp)$')" 
-                  [src]="msg.mediaUrl" 
-                  alt="Attachment" 
+                <img
+                  *ngIf="msg.mediaUrl.toLowerCase().match('\\.(jpg|jpeg|png|gif|webp)$')"
+                  [src]="msg.mediaUrl"
+                  alt="Attachment"
                 />
-                <video 
-                  *ngIf="msg.mediaUrl.toLowerCase().match('\\.(mp4|webm|ogg)$')" 
-                  [src]="msg.mediaUrl" 
+                <video
+                  *ngIf="msg.mediaUrl.toLowerCase().match('\\.(mp4|webm|ogg)$')"
+                  [src]="msg.mediaUrl"
                   controls
                 ></video>
               </div>
 
               <!-- Message Content text -->
               <p class="message-text" *ngIf="msg.content">{{ msg.content }}</p>
-              
+
               <!-- Message Timestamp & Read Status -->
               <div class="message-meta-row">
-                <span class="message-timestamp">{{ msg.createdAt | date:'h:mm a' }}</span>
-                <mat-icon class="read-status-icon" *ngIf="msg.senderPublicId === currentUserId" [class.read-done]="msg.read">
+                <span class="message-timestamp">{{ msg.createdAt | date: 'h:mm a' }}</span>
+                <mat-icon
+                  class="read-status-icon"
+                  *ngIf="msg.senderPublicId === currentUserId"
+                  [class.read-done]="msg.read"
+                >
                   {{ msg.read ? 'done_all' : 'done' }}
                 </mat-icon>
               </div>
@@ -180,31 +259,47 @@
       <div class="compose-bar-container">
         <!-- Attachment Previews -->
         <div class="compose-attachment-preview" *ngIf="attachedMediaUrl">
-          <button class="remove-attachment-btn" (click)="removeAttachment()" matTooltip="Remove attachment">
+          <button
+            class="remove-attachment-btn"
+            (click)="removeAttachment()"
+            matTooltip="Remove attachment"
+          >
             <mat-icon>close</mat-icon>
           </button>
-          <img *ngIf="attachedMediaUrl.toLowerCase().match('\\.(jpg|jpeg|png|gif|webp)$')" [src]="attachedMediaUrl" alt="Attachment" />
-          <video *ngIf="attachedMediaUrl.toLowerCase().match('\\.(mp4|webm|ogg)$')" [src]="attachedMediaUrl" controls></video>
+          <img
+            *ngIf="attachedMediaUrl.toLowerCase().match('\\.(jpg|jpeg|png|gif|webp)$')"
+            [src]="attachedMediaUrl"
+            alt="Attachment"
+          />
+          <video
+            *ngIf="attachedMediaUrl.toLowerCase().match('\\.(mp4|webm|ogg)$')"
+            [src]="attachedMediaUrl"
+            controls
+          ></video>
         </div>
 
         <div class="compose-inputs-row">
           <!-- Photo Attachment Trigger -->
-          <input 
-            type="file" 
-            id="chat-attachment-input" 
-            accept="image/*,video/*" 
-            style="display: none;" 
-            (change)="onFileSelected($event)" 
+          <input
+            type="file"
+            id="chat-attachment-input"
+            accept="image/*,video/*"
+            style="display: none"
+            (change)="onFileSelected($event)"
           />
-          <label for="chat-attachment-input" class="attachment-trigger" matTooltip="Attach Image or Video">
+          <label
+            for="chat-attachment-input"
+            class="attachment-trigger"
+            matTooltip="Attach Image or Video"
+          >
             <mat-icon *ngIf="!uploadingMedia">attach_file</mat-icon>
             <mat-spinner diameter="20" *ngIf="uploadingMedia"></mat-spinner>
           </label>
 
           <!-- Input Text Area -->
-          <textarea 
-            placeholder="Type a message..." 
-            [(ngModel)]="messageContent" 
+          <textarea
+            placeholder="Type a message..."
+            [(ngModel)]="messageContent"
             (keydown.enter)="$event.preventDefault(); sendMessage()"
             class="chat-text-input"
             maxlength="2000"
@@ -212,11 +307,13 @@
           ></textarea>
 
           <!-- Send Action Button -->
-          <button 
-            mat-icon-button 
+          <button
+            mat-icon-button
             class="send-message-btn"
             [class.active-send]="messageContent.trim() || attachedMediaUrl"
-            [disabled]="(!messageContent.trim() && !attachedMediaUrl) || uploadingMedia || sendingMessage"
+            [disabled]="
+              (!messageContent.trim() && !attachedMediaUrl) || uploadingMedia || sendingMessage
+            "
             (click)="sendMessage()"
             matTooltip="Send message"
           >
