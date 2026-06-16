@@ -84,8 +84,8 @@ public class MessageService {
         MessageResponse response = toResponse(saved);
         
         // Notify both parties in real-time to support instantaneous multi-client views updates
-        com.zero1blog.backend.config.GlobalWebSocketHandler.sendToUser(recipient.getPublicId(), "NEW_MESSAGE", response);
-        com.zero1blog.backend.config.GlobalWebSocketHandler.sendToUser(sender.getPublicId(), "NEW_MESSAGE", response);
+        com.zero1blog.backend.config.ChatWebSocketHandler.sendToUser(recipient.getPublicId(), "NEW_MESSAGE", response);
+        com.zero1blog.backend.config.ChatWebSocketHandler.sendToUser(sender.getPublicId(), "NEW_MESSAGE", response);
         return response;
     }
 

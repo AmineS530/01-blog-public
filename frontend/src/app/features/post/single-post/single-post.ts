@@ -118,21 +118,7 @@ export class SinglePostComponent implements OnInit, OnDestroy {
   }
 
   private setupRealtime(postId: number): void {
-    this.commentsSubscription = this.realtimeService.comments$.subscribe({
-      next: (payload) => {
-        if (payload.postId === postId) {
-          const newComment = payload.comment;
-          if (!this.comments.some((c) => c.id === newComment.id)) {
-            this.comments.push(newComment);
-            if (this.post) {
-              this.post.commentCount++;
-            }
-          }
-        }
-      },
-    });
-
-    // 2. Subscribe to like count updates
+    // 1. Subscribe to like count updates
     this.likesSubscription = this.realtimeService.likes$.subscribe({
       next: (event) => {
         if (event.type === 'POST_LIKE' && event.postId === postId) {

@@ -17,14 +17,11 @@ import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry
 public class WebSocketConfig implements WebSocketConfigurer {
 
     private final GlobalWebSocketHandler globalWebSocketHandler;
+    private final ChatWebSocketHandler chatWebSocketHandler;
 
-    /**
-     * Instantiates WebSocketConfig with the central event coordinator.
-     *
-     * @param globalWebSocketHandler the central session and broadcast handler.
-     */
-    public WebSocketConfig(GlobalWebSocketHandler globalWebSocketHandler) {
+    public WebSocketConfig(GlobalWebSocketHandler globalWebSocketHandler, ChatWebSocketHandler chatWebSocketHandler) {
         this.globalWebSocketHandler = globalWebSocketHandler;
+        this.chatWebSocketHandler = chatWebSocketHandler;
     }
 
     /**
@@ -40,6 +37,8 @@ public class WebSocketConfig implements WebSocketConfigurer {
     @Override
     public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
         registry.addHandler(globalWebSocketHandler, "/ws")
+                .setAllowedOrigins("*");
+        registry.addHandler(chatWebSocketHandler, "/ws/chat")
                 .setAllowedOrigins("*");
     }
 }

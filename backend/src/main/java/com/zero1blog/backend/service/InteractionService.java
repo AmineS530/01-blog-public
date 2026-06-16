@@ -97,7 +97,6 @@ public class InteractionService {
         );
 
         CommentResponse response = toCommentResponse(saved, userPublicId);
-        com.zero1blog.backend.config.GlobalWebSocketHandler.broadcast("NEW_COMMENT", java.util.Map.of("postId", postId, "comment", response));
         return response;
     }
 

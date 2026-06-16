@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
-import com.zero1blog.backend.config.GlobalWebSocketHandler;
+import com.zero1blog.backend.config.ChatWebSocketHandler;
 
 @RestController
 @RequestMapping("/api/messages")
@@ -53,6 +53,6 @@ public class MessageController {
 
     @GetMapping("/online")
     public ResponseEntity<List<String>> getOnlineUsers() {
-        return ResponseEntity.ok(List.copyOf(GlobalWebSocketHandler.getOnlineUsers()));
+        return ResponseEntity.ok(List.copyOf(ChatWebSocketHandler.getOnlineUsers()));
     }
 }
