@@ -18,18 +18,23 @@ export class AuthService {
 
   register(data: RegisterRequest): Observable<AuthResponse> {
     return this.http
-      .post<AuthResponse>(`${this.apiUrl}/register`, data)
+      .post<AuthResponse>(`${this.apiUrl}/register`, data, { withCredentials: true })
       .pipe(tap((res) => this.saveSession(res)));
   }
 
   login(data: LoginRequest): Observable<AuthResponse> {
     return this.http
-      .post<AuthResponse>(`${this.apiUrl}/login`, data)
+      .post<AuthResponse>(`${this.apiUrl}/login`, data, { withCredentials: true })
       .pipe(tap((res) => this.saveSession(res)));
   }
 
   logout(): void {
+    this.http.post(`${this.apiUrl}/logout`, {}, { withCredentials: true }).subscribe({
+      next: () => {},
+      error: () => {}
+    });
     localStorage.removeItem('token');
+    localStorage.removeItem('refreshToken');
     this.loggedInSubject.next(false);
   }
 
@@ -79,6 +84,16 @@ export class AuthService {
 
   getRole(): string | null {
     return this.getDecodedToken()?.role ?? null;
+  }
+
+  refreshToken(): Observable<AuthResponse> {
+    return this.http
+      .post<AuthResponse>(`${this.apiUrl}/refresh`, {}, { withCredentials: true })
+      .pipe(
+        tap((res) => {
+          localStorage.setItem('token', res.token);
+        })
+      );
   }
 
   private saveSession(res: AuthResponse): void {

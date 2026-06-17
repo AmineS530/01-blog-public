@@ -10,6 +10,7 @@ import com.zero1blog.backend.dto.RegisterRequest;
 import com.zero1blog.backend.model.User;
 import com.zero1blog.backend.model.UserCredentials;
 import com.zero1blog.backend.model.UserProfile;
+import com.zero1blog.backend.model.RefreshToken;
 import com.zero1blog.backend.repository.UserCredentialsRepository;
 import com.zero1blog.backend.repository.UserProfileRepository;
 import com.zero1blog.backend.repository.UserRepository;
@@ -27,6 +28,7 @@ public class AuthService {
     private final UserProfileRepository userProfileRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
+    private final RefreshTokenService refreshTokenService;
 
     public AuthResponse register(RegisterRequest request) {
         log.info("Registration attempt for username: {}", request.getUsername());
@@ -64,7 +66,14 @@ public class AuthService {
 
         log.info("User registered successfully: {}", user.getUsername());
         String token = jwtService.generateToken(user.getPublicId(), user.getRole().name(), user.getUsername());
-        return new AuthResponse(token, user.getUsername(), user.getRole().name());
+        RefreshToken refreshToken = refreshTokenService.createRefreshToken(user);
+
+        return AuthResponse.builder()
+                .token(token)
+                .refreshToken(refreshToken.getToken())
+                .username(user.getUsername())
+                .role(user.getRole().name())
+                .build();
     }
 
     public AuthResponse login(LoginRequest request) {
@@ -94,6 +103,31 @@ public class AuthService {
 
         log.info("User logged in successfully: {}", user.getUsername());
         String token = jwtService.generateToken(user.getPublicId(), user.getRole().name(), user.getUsername());
-        return new AuthResponse(token, user.getUsername(), user.getRole().name());
+        RefreshToken refreshToken = refreshTokenService.createRefreshToken(user);
+
+        return AuthResponse.builder()
+                .token(token)
+                .refreshToken(refreshToken.getToken())
+                .username(user.getUsername())
+                .role(user.getRole().name())
+                .build();
+    }
+
+    public AuthResponse refreshToken(com.zero1blog.backend.dto.RefreshTokenRequest request) {
+        log.info("Token refresh attempt");
+        RefreshToken refreshToken = refreshTokenService.findByToken(request.getRefreshToken());
+        refreshTokenService.verifyExpiration(refreshToken);
+
+        User user = refreshToken.getUser();
+        String accessToken = jwtService.generateToken(user.getPublicId(), user.getRole().name(), user.getUsername());
+        RefreshToken newRefreshToken = refreshTokenService.createRefreshToken(user);
+
+        log.info("Token refreshed successfully for user: {}", user.getUsername());
+        return AuthResponse.builder()
+                .token(accessToken)
+                .refreshToken(newRefreshToken.getToken())
+                .username(user.getUsername())
+                .role(user.getRole().name())
+                .build();
     }
 }
