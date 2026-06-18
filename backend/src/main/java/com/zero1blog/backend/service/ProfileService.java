@@ -182,29 +182,12 @@ public class ProfileService {
         User currentUser = userRepository.findByPublicId(currentUserPublicId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
-        Set<Long> followedIds = subscriptionRepository.findByFollower(currentUser)
-                .stream()
-                .map(sub -> sub.getFollowed().getId())
-                .collect(Collectors.toSet());
+        List<User> recommendedUsers = userRepository.findRecommendedUsers(
+                currentUser.getId(),
+                org.springframework.data.domain.PageRequest.of(0, 5)
+        );
 
-        Set<Long> blockedIds = userBlockRepository.findByBlocker(currentUser)
-                .stream()
-                .map(ub -> ub.getBlocked().getId())
-                .collect(Collectors.toSet());
-
-        Set<Long> blockingMeIds = userBlockRepository.findByBlocked(currentUser)
-                .stream()
-                .map(ub -> ub.getBlocker().getId())
-                .collect(Collectors.toSet());
-
-        List<User> allUsers = userRepository.findAll();
-
-        return allUsers.stream()
-                .filter(u -> !u.getId().equals(currentUser.getId()))
-                .filter(u -> !followedIds.contains(u.getId()))
-                .filter(u -> !blockedIds.contains(u.getId()))
-                .filter(u -> !blockingMeIds.contains(u.getId()))
-                .limit(5)
+        return recommendedUsers.stream()
                 .map(u -> getProfile(u.getUsername(), currentUserPublicId))
                 .collect(Collectors.toList());
     }

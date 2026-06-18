@@ -74,7 +74,7 @@ public class PostService {
         post.setAuthor(author);
 
         Post saved = postRepository.save(post);
-        PostResponse response = toResponse(saved, authorPublicId);
+        PostResponse response = toResponse(saved, author);
         com.zero1blog.backend.config.GlobalWebSocketHandler.broadcast("NEW_POST", response);
         return response;
     }
@@ -97,14 +97,17 @@ public class PostService {
     public List<PostResponse> getAllPosts(String currentUserPublicId, int page, int limit) {
         org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(page, limit, org.springframework.data.domain.Sort.by("createdAt").descending());
         
-        if (currentUserPublicId == null) {
-            return postRepository.findAll(pageable).stream().map(post -> toResponse(post, null)).collect(Collectors.toList());
+        User currentUser = null;
+        if (currentUserPublicId != null) {
+            currentUser = userRepository.findByPublicId(currentUserPublicId).orElse(null);
         }
 
-        User currentUser = userRepository.findByPublicId(currentUserPublicId)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        if (currentUser == null) {
+            return postRepository.findAll(pageable).stream().map(post -> toResponse(post, (User) null)).collect(Collectors.toList());
+        }
 
         // Retrieve mutual block IDs
+        final User finalCurrentUser = currentUser;
         Set<Long> blockedIds = userBlockRepository.findByBlocker(currentUser).stream()
                 .map(ub -> ub.getBlocked().getId()).collect(Collectors.toSet());
         Set<Long> blockingIds = userBlockRepository.findByBlocked(currentUser).stream()
@@ -122,7 +125,7 @@ public class PostService {
         }
 
         return postsPage.stream()
-                .map(post -> toResponse(post, currentUserPublicId))
+                .map(post -> toResponse(post, finalCurrentUser))
                 .collect(Collectors.toList());
     }
 
@@ -175,8 +178,9 @@ public class PostService {
 
         org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(page, limit, org.springframework.data.domain.Sort.by("createdAt").descending());
 
+        final User finalCurrentUser = currentUser;
         return postRepository.findByAuthorIdIn(allowedFollowedIds, pageable).stream()
-                .map(post -> toResponse(post, currentUserPublicId))
+                .map(post -> toResponse(post, finalCurrentUser))
                 .collect(Collectors.toList());
     }
 
@@ -188,8 +192,9 @@ public class PostService {
         User author = userRepository.findByUsername(username)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
+        User currentUser = null;
         if (currentUserPublicId != null) {
-            User currentUser = userRepository.findByPublicId(currentUserPublicId)
+            currentUser = userRepository.findByPublicId(currentUserPublicId)
                     .orElseThrow(() -> new ResourceNotFoundException("User not found"));
             
             if (userBlockRepository.existsByBlockerAndBlocked(currentUser, author) || 
@@ -200,9 +205,10 @@ public class PostService {
 
         org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(page, limit, org.springframework.data.domain.Sort.by("createdAt").descending());
 
+        final User finalCurrentUser = currentUser;
         return postRepository.findByAuthorId(author.getId(), pageable)
                 .stream()
-                .map(post -> toResponse(post, currentUserPublicId))
+                .map(post -> toResponse(post, finalCurrentUser))
                 .collect(Collectors.toList());
     }
 
@@ -214,8 +220,9 @@ public class PostService {
         Post post = postRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Post not found"));
 
+        User currentUser = null;
         if (currentUserPublicId != null) {
-            User currentUser = userRepository.findByPublicId(currentUserPublicId)
+            currentUser = userRepository.findByPublicId(currentUserPublicId)
                     .orElseThrow(() -> new ResourceNotFoundException("User not found"));
             
             if (userBlockRepository.existsByBlockerAndBlocked(currentUser, post.getAuthor()) || 
@@ -224,7 +231,7 @@ public class PostService {
             }
         }
 
-        return toResponse(post, currentUserPublicId);
+        return toResponse(post, currentUser);
     }
 
     /**
@@ -244,7 +251,7 @@ public class PostService {
         post.setMediaUrl(request.getMediaUrl());
 
         Post saved = postRepository.save(post);
-        return toResponse(saved, authorPublicId);
+        return toResponse(saved, post.getAuthor());
     }
 
     /**
@@ -293,15 +300,12 @@ public class PostService {
      * Maps an internal Post model to its structural response DTO.
      * Fetches associated comments count, likes count, and resolving the authenticated user's like state.
      */
-    private PostResponse toResponse(Post post, String currentUserPublicId) {
+    private PostResponse toResponse(Post post, User currentUser) {
         long commentCount = commentRepository.countByPostId(post.getId());
         long likeCount = postLikeRepository.countByPostId(post.getId());
         boolean isLiked = false;
-        if (currentUserPublicId != null) {
-            User user = userRepository.findByPublicId(currentUserPublicId).orElse(null);
-            if (user != null) {
-                isLiked = postLikeRepository.existsByPostIdAndUserId(post.getId(), user.getId());
-            }
+        if (currentUser != null) {
+            isLiked = postLikeRepository.existsByPostIdAndUserId(post.getId(), currentUser.getId());
         }
 
         return new PostResponse(

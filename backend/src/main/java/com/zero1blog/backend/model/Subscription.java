@@ -9,7 +9,9 @@ import lombok.Builder;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "subscriptions", uniqueConstraints = {@UniqueConstraint(columnNames = {"follower_id", "followed_id"})})
+@Table(name = "subscriptions", uniqueConstraints = {@UniqueConstraint(columnNames = {"follower_id", "followed_id"})}, indexes = {
+    @Index(name = "idx_subscriptions_followed_id", columnList = "followed_id")
+})
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
