@@ -132,11 +132,11 @@
         </div>
         
         <mat-card-content class="post-card-body">
+          <h3 class="post-title">{{ post.title }}</h3>
           <div class="post-media-container" *ngIf="post.mediaUrl" (click)="$event.stopPropagation()">
             <img *ngIf="post.mediaUrl.toLowerCase().match('\\.(jpg|jpeg|png|gif|webp)$')" [src]=" post.mediaUrl" alt="Media" />
             <video *ngIf="post.mediaUrl.toLowerCase().match('\\.(mp4|webm|ogg)$')" [src]=" post.mediaUrl" controls></video>
           </div>
-          <h3 class="post-title">{{ post.title }}</h3>
           <p class="preview-text" [innerHTML]="(post.content | slice:0:280) + (post.content.length > 280 ? '...' : '') | markdown"></p>
         </mat-card-content>
         
