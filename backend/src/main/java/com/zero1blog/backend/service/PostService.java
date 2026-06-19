@@ -40,6 +40,7 @@ import com.zero1blog.backend.exception.*;
 @Service
 public class PostService {
 
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(PostService.class);
     private static final int MAX_PAGE_SIZE = 100; // Fix #10: cap unbounded page sizes
 
     private final PostRepository postRepository;
@@ -297,8 +298,14 @@ public class PostService {
         if (post.getMediaUrl() != null && post.getMediaUrl().startsWith("/api/media/files/")) {
             try {
                 String fileName = post.getMediaUrl().substring("/api/media/files/".length());
-                Path filePath = Paths.get("uploads").resolve(fileName);
-                Files.deleteIfExists(filePath);
+                Path uploadsDir = Paths.get("uploads").toAbsolutePath().normalize();
+                Path filePath = uploadsDir.resolve(fileName).normalize();
+                
+                if (!filePath.startsWith(uploadsDir)) {
+                    log.warn("Attempted path traversal in deletePost: {}", fileName);
+                } else {
+                    Files.deleteIfExists(filePath);
+                }
             } catch (Exception e) {
                 // Log exception internally and proceed so database delete is not blocked on file system glitches
             }

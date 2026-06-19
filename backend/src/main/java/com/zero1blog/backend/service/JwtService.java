@@ -33,7 +33,7 @@ public class JwtService {
      * @return cryptographically secured HMAC SecretKey instance.
      */
     private javax.crypto.SecretKey getSigningKey() {
-        return Keys.hmacShaKeyFor(secret.getBytes());
+        return Keys.hmacShaKeyFor(secret.getBytes(java.nio.charset.StandardCharsets.UTF_8));
     }
 
     /**

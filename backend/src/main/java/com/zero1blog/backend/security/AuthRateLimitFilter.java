@@ -13,8 +13,10 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 import java.time.Duration;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
+import org.springframework.beans.factory.annotation.Value;
 
 /**
  * Fix #5 — Rate limiting on auth endpoints.
@@ -28,7 +30,14 @@ import java.util.concurrent.ConcurrentHashMap;
 public class AuthRateLimitFilter extends OncePerRequestFilter {
 
     private static final int REQUESTS_PER_MINUTE = 10;
-    private final Map<String, Bucket> buckets = new ConcurrentHashMap<>();
+
+    @Value("${app.trusted-proxy-header:false}")
+    private boolean trustForwardedFor;
+
+    private final Cache<String, Bucket> buckets = Caffeine.newBuilder()
+            .maximumSize(50_000)
+            .expireAfterAccess(Duration.ofMinutes(5))
+            .build();
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
@@ -43,7 +52,7 @@ public class AuthRateLimitFilter extends OncePerRequestFilter {
         }
 
         String ip = resolveClientIp(request);
-        Bucket bucket = buckets.computeIfAbsent(ip, k -> newBucket());
+        Bucket bucket = buckets.get(ip, k -> newBucket());
 
         if (bucket.tryConsume(1)) {
             filterChain.doFilter(request, response);
@@ -63,10 +72,11 @@ public class AuthRateLimitFilter extends OncePerRequestFilter {
     }
 
     private String resolveClientIp(HttpServletRequest request) {
-        // Respect X-Forwarded-For when behind a proxy/load balancer
-        String forwarded = request.getHeader("X-Forwarded-For");
-        if (forwarded != null && !forwarded.isBlank()) {
-            return forwarded.split(",")[0].trim();
+        if (trustForwardedFor) {
+            String forwarded = request.getHeader("X-Forwarded-For");
+            if (forwarded != null && !forwarded.isBlank()) {
+                return forwarded.split(",")[0].trim();
+            }
         }
         return request.getRemoteAddr();
     }

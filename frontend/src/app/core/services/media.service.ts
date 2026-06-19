@@ -23,7 +23,7 @@ export class MediaService {
         this.http.post<UploadResponse>(`${this.api}/upload`, {
           data: base64Data,
           fileName: file.name,
-          mediaType: file.type.startsWith('image') ? 'image' : 'video'
+          mediaType: file.type || (file.name.endsWith('.mp4') ? 'video/mp4' : 'image/jpeg')
         }).subscribe({
           next: (res) => observer.next(res),
           error: (err) => observer.error(err),

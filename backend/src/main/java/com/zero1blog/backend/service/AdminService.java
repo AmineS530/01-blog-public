@@ -22,6 +22,7 @@ import java.util.stream.Collectors;
 @Slf4j
 public class AdminService {
 
+    private static final int MAX_PAGE_SIZE = 100;
     private final UserRepository userRepository;
     private final PostRepository postRepository;
     private final CommentRepository commentRepository;
@@ -58,7 +59,8 @@ public class AdminService {
 
     @Transactional(readOnly = true)
     public List<ReportResponse> getReports(String status, int page, int limit) {
-        Page<Report> reports = reportRepository.findByStatus(status, PageRequest.of(page, limit));
+        int safeLimit = Math.min(limit, MAX_PAGE_SIZE);
+        Page<Report> reports = reportRepository.findByStatus(status, PageRequest.of(page, safeLimit));
         return reports.getContent().stream()
                 .map(reportService::toResponse)
                 .collect(Collectors.toList());
@@ -66,11 +68,12 @@ public class AdminService {
 
     @Transactional(readOnly = true)
     public Page<UserAdminResponse> getUsers(String query, int page, int limit) {
+        int safeLimit = Math.min(limit, MAX_PAGE_SIZE);
         Page<User> users;
         if (query != null && !query.isEmpty()) {
-            users = userRepository.findByUsernameContainingIgnoreCaseOrEmailContainingIgnoreCase(query, query, PageRequest.of(page, limit));
+            users = userRepository.findByUsernameContainingIgnoreCaseOrEmailContainingIgnoreCase(query, query, PageRequest.of(page, safeLimit));
         } else {
-            users = userRepository.findAll(PageRequest.of(page, limit));
+            users = userRepository.findAll(PageRequest.of(page, safeLimit));
         }
         return users.map(this::toUserAdminResponse);
     }

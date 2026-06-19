@@ -117,7 +117,7 @@ public class InteractionService {
         List<Comment> allComments = commentRepository.findByPostIdOrderByCreatedAtAsc(postId);
         
         if (userPublicId == null) {
-            return allComments.stream().map(c -> toCommentResponse(c, null)).collect(Collectors.toList());
+            return toCommentResponses(allComments, null);
         }
 
         User currentUser = userRepository.findByPublicId(userPublicId)
@@ -129,10 +129,11 @@ public class InteractionService {
         Set<Long> blockingIds = userBlockRepository.findByBlocked(currentUser).stream()
                 .map(ub -> ub.getBlocker().getId()).collect(Collectors.toSet());
 
-        return allComments.stream()
+        List<Comment> filtered = allComments.stream()
                 .filter(c -> !blockedIds.contains(c.getAuthor().getId()) && !blockingIds.contains(c.getAuthor().getId()))
-                .map(c -> toCommentResponse(c, userPublicId))
                 .collect(Collectors.toList());
+
+        return toCommentResponses(filtered, currentUser);
     }
 
     /**
@@ -267,5 +268,44 @@ public class InteractionService {
                 likeCount,
                 isLiked
         );
+    }
+
+    private List<CommentResponse> toCommentResponses(List<Comment> comments, User currentUser) {
+        if (comments.isEmpty()) {
+            return List.of();
+        }
+        List<Long> commentIds = comments.stream().map(Comment::getId).collect(Collectors.toList());
+
+        // Batch fetch comment like counts
+        java.util.Map<Long, Long> likeCounts = commentLikeRepository.countByCommentIdIn(commentIds).stream()
+                .collect(Collectors.toMap(
+                        arr -> (Long) arr[0],
+                        arr -> (Long) arr[1],
+                        (v1, v2) -> v1
+                ));
+
+        // Batch fetch if current user liked
+        Set<Long> likedCommentIds = new java.util.HashSet<>();
+        if (currentUser != null) {
+            likedCommentIds.addAll(commentLikeRepository.findLikedCommentIdsByUserIdAndCommentIdIn(currentUser.getId(), commentIds));
+        }
+
+        return comments.stream().map(comment -> {
+            long likeCount = likeCounts.getOrDefault(comment.getId(), 0L);
+            boolean isLiked = likedCommentIds.contains(comment.getId());
+
+            return new CommentResponse(
+                    comment.getId(),
+                    comment.getContent(),
+                    comment.getMediaUrl(),
+                    comment.getAuthor().getUsername(),
+                    comment.getAuthor().getDisplayName(),
+                    comment.getAuthor().getProfile() != null ? comment.getAuthor().getProfile().getAvatarUrl() : null,
+                    comment.getCreatedAt(),
+                    comment.getUpdatedAt(),
+                    likeCount,
+                    isLiked
+            );
+        }).collect(Collectors.toList());
     }
 }

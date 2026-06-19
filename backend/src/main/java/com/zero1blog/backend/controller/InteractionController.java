@@ -7,6 +7,8 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
+import jakarta.validation.Valid;
+
 import com.zero1blog.backend.dto.CommentRequest;
 import com.zero1blog.backend.dto.CommentResponse;
 import com.zero1blog.backend.service.InteractionService;
@@ -23,7 +25,7 @@ public class InteractionController {
 
     @PostMapping("/posts/{postId}/comments")
     public ResponseEntity<CommentResponse> addComment(@PathVariable Long postId,
-                                                      @RequestBody CommentRequest request,
+                                                      @Valid @RequestBody CommentRequest request,
                                                       @AuthenticationPrincipal UserDetails userDetails) {
         return ResponseEntity.ok(interactionService.addComment(postId, request, userDetails.getUsername()));
     }
@@ -36,7 +38,7 @@ public class InteractionController {
 
     @PutMapping("/comments/{commentId}")
     public ResponseEntity<CommentResponse> updateComment(@PathVariable Long commentId,
-                                                         @RequestBody CommentRequest request,
+                                                         @Valid @RequestBody CommentRequest request,
                                                          @AuthenticationPrincipal UserDetails userDetails) {
         return ResponseEntity.ok(interactionService.updateComment(commentId, request, userDetails.getUsername()));
     }

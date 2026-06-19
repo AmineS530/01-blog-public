@@ -33,8 +33,8 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<Map<String, Object>> handleRuntimeException(RuntimeException ex) {
-        log.error("Runtime exception occurred: ", ex);
-        return buildResponse(ex.getMessage() != null ? ex.getMessage() : "Internal Server Error", HttpStatus.INTERNAL_SERVER_ERROR);
+        log.error("Unhandled runtime exception", ex); // full trace in logs only
+        return buildResponse("An unexpected error occurred", HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     private ResponseEntity<Map<String, Object>> buildResponse(String message, HttpStatus status) {
