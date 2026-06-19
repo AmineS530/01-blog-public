@@ -4,6 +4,8 @@ import { Observable } from 'rxjs';
 
 export interface UploadResponse {
   url: string;
+  mediaType?: string;
+  size?: number;
 }
 
 @Injectable({ providedIn: 'root' })

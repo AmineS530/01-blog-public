@@ -1,5 +1,6 @@
 package com.zero1blog.backend.controller;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
@@ -11,8 +12,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.zero1blog.backend.dto.AuthResponse;
 import com.zero1blog.backend.dto.LoginRequest;
-import com.zero1blog.backend.dto.RegisterRequest;
 import com.zero1blog.backend.dto.RefreshTokenRequest;
+import com.zero1blog.backend.dto.RegisterRequest;
 import com.zero1blog.backend.service.AuthService;
 
 import jakarta.validation.Valid;
@@ -24,6 +25,9 @@ import lombok.RequiredArgsConstructor;
 public class AuthController {
 
     private final AuthService authService;
+
+    @Value("${cookie.secure:false}")
+    private boolean cookieSecure;
 
     @PostMapping("/register")
     public ResponseEntity<AuthResponse> register(@Valid @RequestBody RegisterRequest request) {
@@ -62,10 +66,15 @@ public class AuthController {
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<Void> logout() {
+    public ResponseEntity<Void> logout(
+            @CookieValue(name = "refreshToken", required = false) String refreshToken) {
+        // Fix #13: invalidate the server-side token so it can't be reused even if the cookie was captured
+        if (refreshToken != null && !refreshToken.isBlank()) {
+            authService.logout(refreshToken);
+        }
         ResponseCookie cookie = ResponseCookie.from("refreshToken", "")
                 .httpOnly(true)
-                .secure(false)
+                .secure(cookieSecure)
                 .path("/api/auth")
                 .maxAge(0)
                 .sameSite("Lax")
@@ -78,7 +87,7 @@ public class AuthController {
     private ResponseCookie createCookie(String token) {
         return ResponseCookie.from("refreshToken", token)
                 .httpOnly(true)
-                .secure(false)
+                .secure(cookieSecure)   // Fix #3: driven by config, true in production
                 .path("/api/auth")
                 .maxAge(604800) // 7 days
                 .sameSite("Lax")

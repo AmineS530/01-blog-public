@@ -2,21 +2,23 @@ package com.zero1blog.backend.service;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import lombok.extern.slf4j.Slf4j;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.zero1blog.backend.dto.AuthResponse;
 import com.zero1blog.backend.dto.LoginRequest;
 import com.zero1blog.backend.dto.RegisterRequest;
+import com.zero1blog.backend.exception.BadRequestException;
+import com.zero1blog.backend.exception.UnauthorizedActionException;
+import com.zero1blog.backend.model.RefreshToken;
 import com.zero1blog.backend.model.User;
 import com.zero1blog.backend.model.UserCredentials;
 import com.zero1blog.backend.model.UserProfile;
-import com.zero1blog.backend.model.RefreshToken;
 import com.zero1blog.backend.repository.UserCredentialsRepository;
 import com.zero1blog.backend.repository.UserProfileRepository;
 import com.zero1blog.backend.repository.UserRepository;
-import com.zero1blog.backend.exception.*;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Service
 @RequiredArgsConstructor
@@ -30,6 +32,7 @@ public class AuthService {
     private final JwtService jwtService;
     private final RefreshTokenService refreshTokenService;
 
+    @Transactional  // Fix #8: roll back all three saves if any step fails
     public AuthResponse register(RegisterRequest request) {
         log.info("Registration attempt for username: {}", request.getUsername());
         if (userRepository.existsByEmail(request.getEmail())) {
@@ -111,6 +114,18 @@ public class AuthService {
                 .username(user.getUsername())
                 .role(user.getRole().name())
                 .build();
+    }
+
+    public void logout(String rawRefreshToken) {
+        // Invalidate server-side token so it cannot be reused even if the cookie was captured before logout
+        try {
+            RefreshToken token = refreshTokenService.findByToken(rawRefreshToken);
+            refreshTokenService.deleteByUser(token.getUser());
+            log.info("User logged out, refresh token invalidated for user: {}", token.getUser().getUsername());
+        } catch (Exception e) {
+            // Token already expired or not found — safe to ignore, logout proceeds
+            log.warn("Logout called with unrecognised or already-expired refresh token");
+        }
     }
 
     public AuthResponse refreshToken(com.zero1blog.backend.dto.RefreshTokenRequest request) {

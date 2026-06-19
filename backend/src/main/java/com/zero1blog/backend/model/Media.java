@@ -29,6 +29,9 @@ public class Media {
     @Column(nullable = false)
     private String fileName;
 
+    @Column
+    private Long size;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "uploader_id", nullable = false)
     private User uploader;

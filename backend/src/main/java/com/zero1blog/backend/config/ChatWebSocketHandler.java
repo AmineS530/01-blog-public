@@ -1,19 +1,20 @@
 package com.zero1blog.backend.config;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArraySet;
+
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CopyOnWriteArraySet;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 /**
  * Dedicated event coordinator and WebSocket session manager for chats.
@@ -41,9 +42,14 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
         try {
             JsonNode node = objectMapper.readTree(message.getPayload());
             if (node.has("type") && "REGISTER".equals(node.get("type").asText())) {
-                String publicId = node.get("publicId").asText();
-                session.getAttributes().put("publicId", publicId);
-                
+                // Fix #2: use the publicId verified during handshake — never trust client-supplied identity
+                String publicId = (String) session.getAttributes().get("publicId");
+                if (publicId == null) {
+                    // Should not happen since the interceptor guards the handshake, but be defensive
+                    session.close(org.springframework.web.socket.CloseStatus.NOT_ACCEPTABLE);
+                    return;
+                }
+
                 boolean isFirstSession = false;
                 synchronized (chatUserSessions) {
                     CopyOnWriteArraySet<WebSocketSession> sessions = chatUserSessions.computeIfAbsent(publicId, k -> new CopyOnWriteArraySet<>());
@@ -52,7 +58,7 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
                     }
                     sessions.add(session);
                 }
-                
+
                 if (isFirstSession) {
                     broadcast("USER_ONLINE", Map.of("publicId", publicId));
                 }

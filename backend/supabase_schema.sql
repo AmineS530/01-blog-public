@@ -26,6 +26,7 @@
         file_name varchar(255) not null,
         media_type varchar(255) not null,
         url varchar(255) not null,
+        size bigint,
         primary key (id)
     );
 

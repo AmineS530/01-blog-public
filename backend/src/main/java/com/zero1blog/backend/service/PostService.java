@@ -4,11 +4,17 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
+import com.zero1blog.backend.config.PostCreatedEvent;
 import com.zero1blog.backend.dto.PostRequest;
 import com.zero1blog.backend.dto.PostResponse;
 import com.zero1blog.backend.model.Post;
@@ -34,22 +40,33 @@ import com.zero1blog.backend.exception.*;
 @Service
 public class PostService {
 
+    private static final int MAX_PAGE_SIZE = 100; // Fix #10: cap unbounded page sizes
+
     private final PostRepository postRepository;
     private final UserRepository userRepository;
     private final CommentRepository commentRepository;
     private final PostLikeRepository postLikeRepository;
     private final UserBlockRepository userBlockRepository;
     private final SubscriptionRepository subscriptionRepository;
+    private final ApplicationEventPublisher eventPublisher; // Fix #12: decouple transport from service
 
     public PostService(PostRepository postRepository, UserRepository userRepository,
                        CommentRepository commentRepository, PostLikeRepository postLikeRepository,
-                       UserBlockRepository userBlockRepository, SubscriptionRepository subscriptionRepository) {
+                       UserBlockRepository userBlockRepository, SubscriptionRepository subscriptionRepository,
+                       ApplicationEventPublisher eventPublisher) {
         this.postRepository = postRepository;
         this.userRepository = userRepository;
         this.commentRepository = commentRepository;
         this.postLikeRepository = postLikeRepository;
         this.userBlockRepository = userBlockRepository;
         this.subscriptionRepository = subscriptionRepository;
+        this.eventPublisher = eventPublisher;
+    }
+
+    /** Fix #10: single place to build a Pageable with a capped limit. */
+    private Pageable pageOf(int page, int limit) {
+        int safeLimit = Math.min(limit, MAX_PAGE_SIZE);
+        return PageRequest.of(page, safeLimit, Sort.by("createdAt").descending());
     }
 
     /**
@@ -75,7 +92,8 @@ public class PostService {
 
         Post saved = postRepository.save(post);
         PostResponse response = toResponse(saved, author);
-        com.zero1blog.backend.config.GlobalWebSocketHandler.broadcast("NEW_POST", response);
+        // Fix #12: publish a domain event; the WebSocket handler listens independently
+        eventPublisher.publishEvent(new PostCreatedEvent(this, response));
         return response;
     }
 
@@ -95,7 +113,7 @@ public class PostService {
      * @return list of visible post responses.
      */
     public List<PostResponse> getAllPosts(String currentUserPublicId, int page, int limit) {
-        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(page, limit, org.springframework.data.domain.Sort.by("createdAt").descending());
+        Pageable pageable = pageOf(page, limit); // Fix #10: capped, via helper
         
         User currentUser = null;
         if (currentUserPublicId != null) {
@@ -103,7 +121,7 @@ public class PostService {
         }
 
         if (currentUser == null) {
-            return postRepository.findAll(pageable).stream().map(post -> toResponse(post, (User) null)).collect(Collectors.toList());
+            return toResponses(postRepository.findAll(pageable).getContent(), null);
         }
 
         // Retrieve mutual block IDs
@@ -124,9 +142,7 @@ public class PostService {
             postsPage = postRepository.findByAuthorIdNotIn(new java.util.ArrayList<>(excludeAuthorIds), pageable);
         }
 
-        return postsPage.stream()
-                .map(post -> toResponse(post, finalCurrentUser))
-                .collect(Collectors.toList());
+        return toResponses(postsPage.getContent(), finalCurrentUser);
     }
 
     /**
@@ -176,12 +192,10 @@ public class PostService {
             return List.of();
         }
 
-        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(page, limit, org.springframework.data.domain.Sort.by("createdAt").descending());
+        Pageable pageable = pageOf(page, limit); // Fix #10: capped, via helper
 
         final User finalCurrentUser = currentUser;
-        return postRepository.findByAuthorIdIn(allowedFollowedIds, pageable).stream()
-                .map(post -> toResponse(post, finalCurrentUser))
-                .collect(Collectors.toList());
+        return toResponses(postRepository.findByAuthorIdIn(allowedFollowedIds, pageable).getContent(), finalCurrentUser);
     }
 
     /**
@@ -203,13 +217,10 @@ public class PostService {
             }
         }
 
-        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(page, limit, org.springframework.data.domain.Sort.by("createdAt").descending());
+        Pageable pageable = pageOf(page, limit); // Fix #10: capped, via helper
 
         final User finalCurrentUser = currentUser;
-        return postRepository.findByAuthorId(author.getId(), pageable)
-                .stream()
-                .map(post -> toResponse(post, finalCurrentUser))
-                .collect(Collectors.toList());
+        return toResponses(postRepository.findByAuthorId(author.getId(), pageable).getContent(), finalCurrentUser);
     }
 
     /**
@@ -321,5 +332,54 @@ public class PostService {
                 commentCount,
                 likeCount,
                 isLiked);
+    }
+
+    private List<PostResponse> toResponses(List<Post> posts, User currentUser) {
+        if (posts.isEmpty()) {
+            return List.of();
+        }
+        List<Long> postIds = posts.stream().map(Post::getId).collect(Collectors.toList());
+
+        // Batch fetch comment counts
+        Map<Long, Long> commentCounts = commentRepository.countByPostIdIn(postIds).stream()
+                .collect(Collectors.toMap(
+                        arr -> (Long) arr[0],
+                        arr -> (Long) arr[1],
+                        (v1, v2) -> v1
+                ));
+
+        // Batch fetch like counts
+        Map<Long, Long> likeCounts = postLikeRepository.countByPostIdIn(postIds).stream()
+                .collect(Collectors.toMap(
+                        arr -> (Long) arr[0],
+                        arr -> (Long) arr[1],
+                        (v1, v2) -> v1
+                ));
+
+        // Batch fetch if current user liked
+        Set<Long> likedPostIds = new java.util.HashSet<>();
+        if (currentUser != null) {
+            likedPostIds.addAll(postLikeRepository.findLikedPostIdsByUserIdAndPostIdIn(currentUser.getId(), postIds));
+        }
+
+        return posts.stream().map(post -> {
+            long commentCount = commentCounts.getOrDefault(post.getId(), 0L);
+            long likeCount = likeCounts.getOrDefault(post.getId(), 0L);
+            boolean isLiked = likedPostIds.contains(post.getId());
+
+            return new PostResponse(
+                    post.getId(),
+                    post.getTitle(),
+                    post.getContent(),
+                    post.getMediaUrl(),
+                    post.getAuthor().getUsername(),
+                    post.getAuthor().getDisplayName(),
+                    post.getAuthor().getProfile() != null ? post.getAuthor().getProfile().getAvatarUrl() : null,
+                    post.getCreatedAt(),
+                    post.getUpdatedAt(),
+                    commentCount,
+                    likeCount,
+                    isLiked);
+        }).collect(Collectors.toList());
     }
 }

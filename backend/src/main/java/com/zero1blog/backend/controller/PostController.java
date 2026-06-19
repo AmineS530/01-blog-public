@@ -19,6 +19,8 @@ import com.zero1blog.backend.dto.PostRequest;
 import com.zero1blog.backend.dto.PostResponse;
 import com.zero1blog.backend.service.PostService;
 
+import jakarta.validation.Valid;
+
 @RestController
 @RequestMapping("/api/posts")
 public class PostController {
@@ -31,7 +33,7 @@ public class PostController {
 
     @PostMapping
     public ResponseEntity<PostResponse> createPost(
-            @RequestBody PostRequest request,
+            @Valid @RequestBody PostRequest request,
             @AuthenticationPrincipal UserDetails userDetails) {
         return ResponseEntity.ok(postService.createPost(request, userDetails.getUsername()));
     }
@@ -69,7 +71,7 @@ public class PostController {
     @PutMapping("/{id}")
     public ResponseEntity<PostResponse> updatePost(
             @PathVariable Long id,
-            @RequestBody PostRequest request,
+            @Valid @RequestBody PostRequest request,
             @AuthenticationPrincipal UserDetails userDetails) {
         return ResponseEntity.ok(postService.updatePost(id, request, userDetails.getUsername()));
     }

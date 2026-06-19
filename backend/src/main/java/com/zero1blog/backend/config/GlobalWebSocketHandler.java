@@ -1,16 +1,18 @@
 package com.zero1blog.backend.config;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import java.util.Map;
+import java.util.concurrent.CopyOnWriteArraySet;
+
+import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 
-import java.util.Map;
-import java.util.concurrent.CopyOnWriteArraySet;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 /**
  * General event coordinator for public system-wide WebSocket broadcasts.
@@ -39,6 +41,12 @@ public class GlobalWebSocketHandler extends TextWebSocketHandler {
     @Override
     public void afterConnectionClosed(WebSocketSession session, CloseStatus status) throws Exception {
         activeSessions.remove(session);
+    }
+
+    /** Fix #12: listen for domain events and broadcast — PostService no longer calls this directly. */
+    @EventListener
+    public void onPostCreated(PostCreatedEvent event) {
+        broadcast("NEW_POST", event.getPost());
     }
 
     public static void broadcast(String type, Object data) {
