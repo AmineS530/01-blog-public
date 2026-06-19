@@ -1,5 +1,5 @@
 .agents
-.antigravitycli
+*.log
 target/
 *.class
 *.jar
