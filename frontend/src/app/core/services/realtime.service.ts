@@ -29,12 +29,14 @@ export class RealtimeService implements OnDestroy {
   private commentsSubject = new Subject<any>();
   private likesSubject = new Subject<any>();
   private messagesSubject = new Subject<any>();
+  private notificationsSubject = new Subject<any>();
   private onlineStatusSubject = new Subject<{ publicId: string; online: boolean }>();
 
   public posts$: Observable<any> = this.postsSubject.asObservable();
   public comments$: Observable<any> = this.commentsSubject.asObservable(); // Maintained for backward compatibility (no-op now)
   public likes$: Observable<any> = this.likesSubject.asObservable();
   public messages$: Observable<any> = this.messagesSubject.asObservable();
+  public notifications$: Observable<any> = this.notificationsSubject.asObservable();
   public onlineStatus$: Observable<{ publicId: string; online: boolean }> =
     this.onlineStatusSubject.asObservable();
 
@@ -91,6 +93,9 @@ export class RealtimeService implements OnDestroy {
               case 'POST_LIKE':
               case 'COMMENT_LIKE':
                 this.likesSubject.next({ type, ...data });
+                break;
+              case 'NOTIFICATION':
+                this.notificationsSubject.next(data);
                 break;
               default:
                 break;

@@ -1,6 +1,7 @@
 package com.zero1blog.backend.config;
 
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArraySet;
 
 import org.springframework.context.event.EventListener;
@@ -17,13 +18,16 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 /**
  * General event coordinator for public system-wide WebSocket broadcasts.
  * <p>
- * Handles publishing post releases and like triggers globally to all active client connections.
+ * Handles publishing post releases and like triggers globally to all active client connections,
+ * plus user-targeted pushes (e.g. notifications) to just the relevant session(s).
  * </p>
  */
 @Component
 public class GlobalWebSocketHandler extends TextWebSocketHandler {
 
     private static final CopyOnWriteArraySet<WebSocketSession> activeSessions = new CopyOnWriteArraySet<>();
+    // publicId -> sessions (a user may have multiple tabs/devices open)
+    private static final ConcurrentHashMap<String, CopyOnWriteArraySet<WebSocketSession>> userSessions = new ConcurrentHashMap<>();
     private static final ObjectMapper objectMapper = new ObjectMapper()
             .registerModule(new JavaTimeModule())
             .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
@@ -31,6 +35,11 @@ public class GlobalWebSocketHandler extends TextWebSocketHandler {
     @Override
     public void afterConnectionEstablished(WebSocketSession session) throws Exception {
         activeSessions.add(session);
+        // publicId is already verified by JwtHandshakeInterceptor during handshake
+        String publicId = (String) session.getAttributes().get("publicId");
+        if (publicId != null) {
+            userSessions.computeIfAbsent(publicId, k -> new CopyOnWriteArraySet<>()).add(session);
+        }
     }
 
     @Override
@@ -41,6 +50,16 @@ public class GlobalWebSocketHandler extends TextWebSocketHandler {
     @Override
     public void afterConnectionClosed(WebSocketSession session, CloseStatus status) throws Exception {
         activeSessions.remove(session);
+        String publicId = (String) session.getAttributes().get("publicId");
+        if (publicId != null) {
+            CopyOnWriteArraySet<WebSocketSession> sessions = userSessions.get(publicId);
+            if (sessions != null) {
+                sessions.remove(session);
+                if (sessions.isEmpty()) {
+                    userSessions.remove(publicId);
+                }
+            }
+        }
     }
 
     /** Fix #12: listen for domain events and broadcast — PostService no longer calls this directly. */
@@ -59,6 +78,27 @@ public class GlobalWebSocketHandler extends TextWebSocketHandler {
                     } catch (Exception e) {
                         // Suppress connection-specific transport failures
                     }
+                }
+            }
+        }
+    }
+
+    /** Sends a payload only to the given user's open session(s), e.g. for live notifications. */
+    public static void sendToUser(String publicId, String type, Object data) {
+        CopyOnWriteArraySet<WebSocketSession> sessions = userSessions.get(publicId);
+        if (sessions == null || sessions.isEmpty()) {
+            return;
+        }
+        String payload = createPayload(type, data);
+        if (payload == null) {
+            return;
+        }
+        for (WebSocketSession session : sessions) {
+            if (session.isOpen()) {
+                try {
+                    session.sendMessage(new TextMessage(payload));
+                } catch (Exception e) {
+                    // Suppress connection-specific transport failures
                 }
             }
         }

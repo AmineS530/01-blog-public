@@ -16,15 +16,6 @@ export class AuthService {
   constructor(private http: HttpClient) {
     this.loggedInSubject = new BehaviorSubject<boolean>(this.isLoggedIn());
     this.loggedIn$ = this.loggedInSubject.asObservable();
-
-    // rehydrate username on page refresh if token still valid
-    if (this.isLoggedIn()) {
-      this.http.get<{ username: string }>('http://localhost:8080/api/profiles/me')
-        .subscribe({
-          next: (res) => this.usernameSubject.next(res.username),
-          error: () => this.logout()
-        });
-    }
   }
 
   register(data: RegisterRequest): Observable<AuthResponse> {
@@ -98,6 +89,18 @@ export class AuthService {
     return this.http
       .post<AuthResponse>(`${this.apiUrl}/refresh`, {}, { withCredentials: true })
       .pipe(tap((res) => localStorage.setItem('token', res.token)));
+  }
+
+  /**
+   * Rehydrates the username after a page refresh by calling /me.
+   * Must be called from outside AuthService (e.g. app.ts ngOnInit) -
+   * calling it from this service's own constructor causes a circular
+   * DI error (NG0200) because the auth interceptor injects AuthService.
+   */
+  loadCurrentUser(): Observable<{ username: string }> {
+    return this.http.get<{ username: string }>('http://localhost:8080/api/profiles/me').pipe(
+      tap((res) => this.usernameSubject.next(res.username)),
+    );
   }
 
   private saveSession(res: AuthResponse): void {

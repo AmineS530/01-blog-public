@@ -1,17 +1,22 @@
 package com.zero1blog.backend.service;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.zero1blog.backend.config.GlobalWebSocketHandler;
 import com.zero1blog.backend.dto.NotificationResponse;
+import com.zero1blog.backend.exception.ResourceNotFoundException;
+import com.zero1blog.backend.exception.UnauthorizedActionException;
 import com.zero1blog.backend.model.Notification;
 import com.zero1blog.backend.model.Post;
 import com.zero1blog.backend.model.User;
 import com.zero1blog.backend.repository.NotificationRepository;
 import com.zero1blog.backend.repository.UserRepository;
-import com.zero1blog.backend.exception.*;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 public class NotificationService {
@@ -38,13 +43,18 @@ public class NotificationService {
                 .post(post)
                 .build();
         notificationRepository.save(notification);
+
+        // Push live to the recipient instead of waiting for them to open the panel.
+        GlobalWebSocketHandler.sendToUser(recipient.getPublicId(), "NOTIFICATION", toResponse(notification));
     }
 
     @Transactional(readOnly = true)
-    public List<NotificationResponse> getNotifications(String userPublicId) {
+    public List<NotificationResponse> getNotifications(String userPublicId, int page, int size) {
         User user = userRepository.findByPublicId(userPublicId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-        return notificationRepository.findByUserOrderByCreatedAtDesc(user).stream()
+        Page<Notification> result = notificationRepository.findByUserWithActorAndPost(
+                user, PageRequest.of(page, size));
+        return result.getContent().stream()
                 .map(this::toResponse)
                 .collect(Collectors.toList());
     }
@@ -60,7 +70,7 @@ public class NotificationService {
     public void markAsRead(Long id, String userPublicId) {
         Notification notification = notificationRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Notification not found"));
-        
+
         if (!notification.getUser().getPublicId().equals(userPublicId)) {
             throw new UnauthorizedActionException("Unauthorized");
         }

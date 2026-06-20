@@ -1,13 +1,19 @@
 package com.zero1blog.backend.controller;
 
-import com.zero1blog.backend.dto.NotificationResponse;
-import com.zero1blog.backend.service.NotificationService;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
-import org.springframework.web.bind.annotation.*;
-
 import java.util.List;
 import java.util.Map;
+
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.zero1blog.backend.dto.NotificationResponse;
+import com.zero1blog.backend.service.NotificationService;
 
 @RestController
 @RequestMapping("/api/notifications")
@@ -20,8 +26,11 @@ public class NotificationController {
     }
 
     @GetMapping
-    public ResponseEntity<List<NotificationResponse>> getNotifications(Authentication authentication) {
-        return ResponseEntity.ok(notificationService.getNotifications(authentication.getName()));
+    public ResponseEntity<List<NotificationResponse>> getNotifications(
+            Authentication authentication,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        return ResponseEntity.ok(notificationService.getNotifications(authentication.getName(), page, size));
     }
 
     @GetMapping("/unread-count")

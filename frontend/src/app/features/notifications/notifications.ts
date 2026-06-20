@@ -4,19 +4,16 @@ import { MatListModule } from '@angular/material/list';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDividerModule } from '@angular/material/divider';
-import { NotificationService, NotificationResponse } from '../../core/services/notification.service';
+import {
+  NotificationService,
+  NotificationResponse,
+} from '../../core/services/notification.service';
 import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-notifications',
   standalone: true,
-  imports: [
-    CommonModule,
-    MatListModule,
-    MatIconModule,
-    MatButtonModule,
-    MatDividerModule
-  ],
+  imports: [CommonModule, MatListModule, MatIconModule, MatButtonModule, MatDividerModule],
   template: `
     <div class="notifications-container">
       <div class="header">
@@ -34,7 +31,7 @@ import { Router } from '@angular/router';
           <mat-list-item [class.unread]="!n.isRead" (click)="onNotificationClick(n)">
             <mat-icon matListItemIcon color="accent">{{ getIcon(n.type) }}</mat-icon>
             <div matListItemTitle>{{ n.message }}</div>
-            <div matListItemLine>{{ n.createdAt | date:'short' }}</div>
+            <div matListItemLine>{{ n.createdAt | date: 'short' }}</div>
           </mat-list-item>
           <mat-divider></mat-divider>
         </div>
@@ -46,53 +43,55 @@ import { Router } from '@angular/router';
       </div>
     </div>
   `,
-  styles: [`
-    .notifications-container {
-      max-width: 600px;
-      margin: 20px auto;
-      background: var(--mat-sys-surface-container-low);
-      border-radius: 8px;
-      padding: 16px;
-      box-shadow: none;
-      border: 1px solid var(--mat-sys-outline-variant);
-    }
-    .header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 16px;
-    }
-    .header h1 {
-      margin: 0;
-      font-size: 24px;
-      font-weight: 700;
-      color: var(--mat-sys-on-surface);
-    }
-    .header-actions {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .close-btn {
-      color: var(--mat-sys-on-surface-variant);
-    }
-    .unread {
-      background-color: rgba(var(--mat-sys-primary-rgb), 0.04);
-      border-left: 3px solid var(--mat-sys-primary);
-    }
-    .empty-state {
-      text-align: center;
-      padding: 40px;
-      color: var(--mat-sys-on-surface-variant);
-    }
-    .empty-state mat-icon {
-      font-size: 48px;
-      width: 48px;
-      height: 48px;
-      margin-bottom: 8px;
-      opacity: 0.5;
-    }
-  `]
+  styles: [
+    `
+      .notifications-container {
+        max-width: 600px;
+        margin: 20px auto;
+        background: var(--mat-sys-surface-container-low);
+        border-radius: 8px;
+        padding: 16px;
+        box-shadow: none;
+        border: 1px solid var(--mat-sys-outline-variant);
+      }
+      .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 16px;
+      }
+      .header h1 {
+        margin: 0;
+        font-size: 24px;
+        font-weight: 700;
+        color: var(--mat-sys-on-surface);
+      }
+      .header-actions {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .close-btn {
+        color: var(--mat-sys-on-surface-variant);
+      }
+      .unread {
+        background-color: rgba(var(--mat-sys-primary-rgb), 0.04);
+        border-left: 3px solid var(--mat-sys-primary);
+      }
+      .empty-state {
+        text-align: center;
+        padding: 40px;
+        color: var(--mat-sys-on-surface-variant);
+      }
+      .empty-state mat-icon {
+        font-size: 48px;
+        width: 48px;
+        height: 48px;
+        margin-bottom: 8px;
+        opacity: 0.5;
+      }
+    `,
+  ],
 })
 export class NotificationsComponent implements OnInit {
   // ==========================================
@@ -107,7 +106,7 @@ export class NotificationsComponent implements OnInit {
 
   constructor(
     private notificationService: NotificationService,
-    private router: Router
+    private router: Router,
   ) {}
 
   // ==========================================
@@ -115,7 +114,9 @@ export class NotificationsComponent implements OnInit {
   // ==========================================
 
   ngOnInit(): void {
-    this.loadNotifications();
+    this.notificationService.notifications$.subscribe((res) => {
+      this.notifications = res;
+    });
   }
 
   // ==========================================
@@ -130,7 +131,7 @@ export class NotificationsComponent implements OnInit {
       next: (res) => {
         this.notifications = res;
       },
-      error: (err) => console.error('Failed to load notifications', err)
+      error: (err) => console.error('Failed to load notifications', err),
     });
   }
 
@@ -140,16 +141,16 @@ export class NotificationsComponent implements OnInit {
   markAllAsRead(): void {
     this.notificationService.markAllAsRead().subscribe({
       next: () => {
-        this.notifications.forEach(n => n.isRead = true);
+        this.notifications.forEach((n) => (n.isRead = true));
       },
-      error: (err) => console.error('Failed to mark all notifications as read', err)
+      error: (err) => console.error('Failed to mark all notifications as read', err),
     });
   }
 
   /**
    * Triggered upon selecting a notification row. Marks single item as read,
    * requests modal dismissal, and routes to associated post details if present.
-   * 
+   *
    * @param n Selected notification response payload.
    */
   onNotificationClick(n: NotificationResponse): void {
@@ -158,7 +159,7 @@ export class NotificationsComponent implements OnInit {
         next: () => {
           n.isRead = true;
         },
-        error: (err) => console.error(`Failed to mark notification ${n.id} as read`, err)
+        error: (err) => console.error(`Failed to mark notification ${n.id} as read`, err),
       });
     }
     this.close.emit();
@@ -169,15 +170,19 @@ export class NotificationsComponent implements OnInit {
 
   /**
    * Selects an appropriate Material Icon identifier based on notification action type.
-   * 
+   *
    * @param type Notification event type.
    */
   getIcon(type: string): string {
     switch (type) {
-      case 'FOLLOW': return 'person_add';
-      case 'LIKE': return 'favorite';
-      case 'COMMENT': return 'comment';
-      default: return 'notifications';
+      case 'FOLLOW':
+        return 'person_add';
+      case 'LIKE':
+        return 'favorite';
+      case 'COMMENT':
+        return 'comment';
+      default:
+        return 'notifications';
     }
   }
 }

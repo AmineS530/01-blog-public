@@ -80,9 +80,10 @@
     </div>
 
     <!-- Floating 'New Posts' indicator pill -->
+    <!-- todo: when same user click on it-->
     <div 
       class="new-posts-pill" 
-      *ngIf="newIncomingPosts.length > 0" 
+      *ngIf="newIncomingPosts.length > 0 " 
       (click)="applyNewPosts()"
     >
       <mat-icon>cached</mat-icon>

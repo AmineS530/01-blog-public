@@ -83,7 +83,15 @@ export class App implements OnInit, OnDestroy {
         this.fetchUnreadCount();
         this.fetchUnreadMessagesCount();
         this.setupRealtimeMessages();
-        this.fetchUserProfile();
+        if (this.authService.getUsername()) {
+          this.fetchUserProfile();
+        } else {
+          // Username isn't known yet right after a refresh (only set on login or here) - rehydrate it first.
+          this.authService.loadCurrentUser().subscribe({
+            next: () => this.fetchUserProfile(),
+            error: (err) => console.error('Failed to rehydrate current user', err),
+          });
+        }
       } else {
         this.unreadCount = 0;
         this.unreadMessagesCount = 0;

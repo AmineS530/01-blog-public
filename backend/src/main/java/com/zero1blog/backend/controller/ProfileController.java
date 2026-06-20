@@ -47,6 +47,9 @@ public class ProfileController {
     @GetMapping("/me")
     public ResponseEntity<ProfileResponse> getMyProfile(
             @AuthenticationPrincipal UserDetails userDetails) {
+        if (userDetails == null) {
+            return ResponseEntity.status(401).build();
+        }
         return ResponseEntity.ok(
                 profileService.getMyProfile(userDetails.getUsername()));
     }
