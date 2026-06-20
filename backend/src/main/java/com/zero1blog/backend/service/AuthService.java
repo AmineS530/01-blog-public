@@ -68,7 +68,7 @@ public class AuthService {
         userProfileRepository.save(profile);
 
         log.info("User registered successfully: {}", user.getUsername());
-        String token = jwtService.generateToken(user.getPublicId(), user.getRole().name(), user.getUsername());
+        String token = jwtService.generateToken(user.getPublicId(), user.getRole().name());
         RefreshToken refreshToken = refreshTokenService.createRefreshToken(user);
 
         return AuthResponse.builder()
@@ -105,7 +105,7 @@ public class AuthService {
         }
 
         log.info("User logged in successfully: {}", user.getUsername());
-        String token = jwtService.generateToken(user.getPublicId(), user.getRole().name(), user.getUsername());
+        String token = jwtService.generateToken(user.getPublicId(), user.getRole().name());
         RefreshToken refreshToken = refreshTokenService.createRefreshToken(user);
 
         return AuthResponse.builder()
@@ -134,7 +134,7 @@ public class AuthService {
         refreshTokenService.verifyExpiration(refreshToken);
 
         User user = refreshToken.getUser();
-        String accessToken = jwtService.generateToken(user.getPublicId(), user.getRole().name(), user.getUsername());
+        String accessToken = jwtService.generateToken(user.getPublicId(), user.getRole().name());
         RefreshToken newRefreshToken = refreshTokenService.createRefreshToken(user);
 
         log.info("Token refreshed successfully for user: {}", user.getUsername());

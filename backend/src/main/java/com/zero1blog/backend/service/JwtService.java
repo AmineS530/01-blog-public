@@ -44,11 +44,10 @@ public class JwtService {
      * @param username the user's display username.
      * @return the serialized JWT string.
      */
-    public String generateToken(String publicId, String role, String username) {
+    public String generateToken(String publicId, String role) {
         return Jwts.builder()
                 .subject(publicId)
                 .claim("role", role)
-                .claim("username",username)
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + expiration))
                 .signWith(getSigningKey())
