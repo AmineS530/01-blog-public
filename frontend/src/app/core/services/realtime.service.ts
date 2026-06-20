@@ -16,10 +16,10 @@ import { AuthService } from './auth.service';
 export class RealtimeService implements OnDestroy {
   private socket: WebSocket | null = null;
   private chatSocket: WebSocket | null = null;
-  
+
   private reconnectInterval = 3000;
   private chatReconnectInterval = 3000;
-  
+
   private shouldReconnect = true;
   private isConnected = false;
   private isChatConnected = false;
@@ -30,14 +30,18 @@ export class RealtimeService implements OnDestroy {
   private likesSubject = new Subject<any>();
   private messagesSubject = new Subject<any>();
   private onlineStatusSubject = new Subject<{ publicId: string; online: boolean }>();
-  
+
   public posts$: Observable<any> = this.postsSubject.asObservable();
   public comments$: Observable<any> = this.commentsSubject.asObservable(); // Maintained for backward compatibility (no-op now)
   public likes$: Observable<any> = this.likesSubject.asObservable();
   public messages$: Observable<any> = this.messagesSubject.asObservable();
-  public onlineStatus$: Observable<{ publicId: string; online: boolean }> = this.onlineStatusSubject.asObservable();
+  public onlineStatus$: Observable<{ publicId: string; online: boolean }> =
+    this.onlineStatusSubject.asObservable();
 
-  constructor(private authService: AuthService, private zone: NgZone) {
+  constructor(
+    private authService: AuthService,
+    private zone: NgZone,
+  ) {
     this.authService.loggedIn$.subscribe((isLoggedIn) => {
       if (isLoggedIn) {
         this.connect();
@@ -53,13 +57,18 @@ export class RealtimeService implements OnDestroy {
    * Establishes the general public WebSocket connection (/ws).
    */
   public connect(): void {
-    if (this.socket && (this.socket.readyState === WebSocket.OPEN || this.socket.readyState === WebSocket.CONNECTING)) {
+    if (
+      this.socket &&
+      (this.socket.readyState === WebSocket.OPEN || this.socket.readyState === WebSocket.CONNECTING)
+    ) {
       return;
     }
 
     this.shouldReconnect = true;
-    const wsUrl = 'ws://localhost:8080/ws';
-    
+    const token = this.authService.getToken();
+    if (!token) return;
+    const wsUrl = `ws://localhost:8080/ws?token=${token}`;
+
     try {
       this.socket = new WebSocket(wsUrl);
 
@@ -94,7 +103,7 @@ export class RealtimeService implements OnDestroy {
 
       this.socket.onclose = () => {
         this.isConnected = false;
-        
+
         if (this.shouldReconnect) {
           setTimeout(() => {
             this.reconnectInterval = Math.min(this.reconnectInterval * 1.5, 30000);
@@ -115,11 +124,17 @@ export class RealtimeService implements OnDestroy {
    * Establishes the chat-specific authenticated WebSocket connection (/ws/chat).
    */
   public connectChat(): void {
-    if (this.chatSocket && (this.chatSocket.readyState === WebSocket.OPEN || this.chatSocket.readyState === WebSocket.CONNECTING)) {
+    if (
+      this.chatSocket &&
+      (this.chatSocket.readyState === WebSocket.OPEN ||
+        this.chatSocket.readyState === WebSocket.CONNECTING)
+    ) {
       return;
     }
 
-    const wsUrl = 'ws://localhost:8080/ws/chat';
+    const token = this.authService.getToken();
+    if (!token) return;
+    const wsUrl = `ws://localhost:8080/ws/chat?token=${token}`;
 
     try {
       this.chatSocket = new WebSocket(wsUrl);
@@ -189,7 +204,7 @@ export class RealtimeService implements OnDestroy {
         JSON.stringify({
           type: 'REGISTER',
           publicId: publicId,
-        })
+        }),
       );
     }
   }

@@ -25,307 +25,318 @@ import com.zero1blog.backend.repository.UserRepository;
 @Service
 public class ProfileService {
 
-    private final UserRepository userRepository;
-    private final UserProfileRepository userProfileRepository;
-    private final SubscriptionRepository subscriptionRepository;
-    private final UserBlockRepository userBlockRepository;
-    private final NotificationService notificationService;
+        private final UserRepository userRepository;
+        private final UserProfileRepository userProfileRepository;
+        private final SubscriptionRepository subscriptionRepository;
+        private final UserBlockRepository userBlockRepository;
+        private final NotificationService notificationService;
 
-    public ProfileService(UserRepository userRepository, UserProfileRepository userProfileRepository,
-                          SubscriptionRepository subscriptionRepository, UserBlockRepository userBlockRepository,
-                          NotificationService notificationService) {
-        this.userRepository = userRepository;
-        this.userProfileRepository = userProfileRepository;
-        this.subscriptionRepository = subscriptionRepository;
-        this.userBlockRepository = userBlockRepository;
-        this.notificationService = notificationService;
-    }
-
-    public ProfileResponse getProfile(String targetUsername, String currentUserPublicId) {
-        User targetUser = userRepository.findByUsername(targetUsername)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-
-        UserProfile profile = userProfileRepository.findByUser(targetUser).orElse(new UserProfile());
-
-        long followerCount = subscriptionRepository.countByFollowed(targetUser);
-        long followingCount = subscriptionRepository.countByFollower(targetUser);
-
-        boolean isFollowing = false;
-        boolean isBlocked = false;
-        boolean isBlockingMe = false;
-
-        if (currentUserPublicId != null) {
-            User currentUser = userRepository.findByPublicId(currentUserPublicId).orElse(null);
-            if (currentUser != null) {
-                isFollowing = subscriptionRepository.existsByFollowerAndFollowed(currentUser, targetUser);
-                isBlocked = userBlockRepository.existsByBlockerAndBlocked(currentUser, targetUser);
-                isBlockingMe = userBlockRepository.existsByBlockerAndBlocked(targetUser, currentUser);
-            }
+        public ProfileService(UserRepository userRepository, UserProfileRepository userProfileRepository,
+                        SubscriptionRepository subscriptionRepository, UserBlockRepository userBlockRepository,
+                        NotificationService notificationService) {
+                this.userRepository = userRepository;
+                this.userProfileRepository = userProfileRepository;
+                this.subscriptionRepository = subscriptionRepository;
+                this.userBlockRepository = userBlockRepository;
+                this.notificationService = notificationService;
         }
 
-        return ProfileResponse.builder()
-                .id(targetUser.getId())
-                .publicId(targetUser.getPublicId())
-                .username(targetUser.getUsername())
-                .displayName(profile.getDisplayName())
-                .bio(profile.getBio())
-                .avatarUrl(profile.getAvatarUrl())
-                .followerCount(followerCount)
-                .followingCount(followingCount)
-                .isFollowing(isFollowing)
-                .isBlocked(isBlocked)
-                .isBlockingMe(isBlockingMe)
-                .build();
-    }
-
-    public ProfileResponse updateProfile(String currentUserPublicId, ProfileUpdateRequest request) {
-        User currentUser = userRepository.findByPublicId(currentUserPublicId)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-
-        UserProfile profile = userProfileRepository.findByUser(currentUser)
-                .orElse(UserProfile.builder().user(currentUser).build());
-
-        profile.setDisplayName(request.getDisplayName());
-        profile.setBio(request.getBio());
-        profile.setAvatarUrl(request.getAvatarUrl());
-
-        userProfileRepository.save(profile);
-
-        return getProfile(currentUser.getUsername(), currentUserPublicId);
-    }
-
-    public ProfileResponse updateProfileByUsername(String targetUsername, ProfileUpdateRequest request, String callerPublicId) {
-        User caller = userRepository.findByPublicId(callerPublicId)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-        User targetUser = userRepository.findByUsername(targetUsername)
-                .orElseThrow(() -> new ResourceNotFoundException("Target user not found"));
-
-        boolean isSelf = targetUser.getPublicId().equals(callerPublicId);
-        boolean isAdmin = caller.getRole() == User.Role.ADMIN || caller.getRole() == User.Role.SUPER_ADMIN;
-
-        if (!isSelf && !isAdmin) {
-            throw new UnauthorizedActionException("Not authorized to update this profile");
+        public ProfileResponse getMyProfile(String publicId) {
+                User user = userRepository.findByPublicId(publicId)
+                                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+                return getProfile(user.getUsername(), publicId);
         }
 
-        UserProfile profile = userProfileRepository.findByUser(targetUser)
-                .orElse(UserProfile.builder().user(targetUser).build());
+        public ProfileResponse getProfile(String targetUsername, String currentUserPublicId) {
+                User targetUser = userRepository.findByUsername(targetUsername)
+                                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
-        profile.setDisplayName(request.getDisplayName());
-        profile.setBio(request.getBio());
-        profile.setAvatarUrl(request.getAvatarUrl());
+                UserProfile profile = userProfileRepository.findByUser(targetUser).orElse(new UserProfile());
 
-        userProfileRepository.save(profile);
+                long followerCount = subscriptionRepository.countByFollowed(targetUser);
+                long followingCount = subscriptionRepository.countByFollower(targetUser);
 
-        return getProfile(targetUser.getUsername(), callerPublicId);
-    }
+                boolean isFollowing = false;
+                boolean isBlocked = false;
+                boolean isBlockingMe = false;
 
-    public void toggleFollow(String targetUsername, String currentUserPublicId) {
-        User currentUser = userRepository.findByPublicId(currentUserPublicId)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-        User targetUser = userRepository.findByUsername(targetUsername)
-                .orElseThrow(() -> new ResourceNotFoundException("Target user not found"));
+                if (currentUserPublicId != null) {
+                        User currentUser = userRepository.findByPublicId(currentUserPublicId).orElse(null);
+                        if (currentUser != null) {
+                                isFollowing = subscriptionRepository.existsByFollowerAndFollowed(currentUser,
+                                                targetUser);
+                                isBlocked = userBlockRepository.existsByBlockerAndBlocked(currentUser, targetUser);
+                                isBlockingMe = userBlockRepository.existsByBlockerAndBlocked(targetUser, currentUser);
+                        }
+                }
 
-        if (currentUser.getId().equals(targetUser.getId())) {
-            throw new BadRequestException("Cannot follow yourself");
-        }
-        
-        if (userBlockRepository.existsByBlockerAndBlocked(targetUser, currentUser)) {
-            throw new BadRequestException("You are blocked by this user");
-        }
-
-        Optional<Subscription> existing = subscriptionRepository.findByFollowerAndFollowed(currentUser, targetUser);
-        if (existing.isPresent()) {
-            subscriptionRepository.delete(existing.get());
-        } else {
-            Subscription sub = Subscription.builder()
-                    .follower(currentUser)
-                    .followed(targetUser)
-                    .build();
-            subscriptionRepository.save(sub);
-
-            notificationService.createNotification(
-                "FOLLOW",
-                currentUser.getUsername() + " started following you",
-                targetUser,
-                currentUser,
-                null
-            );
-        }
-    }
-
-    public void toggleBlock(String targetUsername, String currentUserPublicId) {
-        User currentUser = userRepository.findByPublicId(currentUserPublicId)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-        User targetUser = userRepository.findByUsername(targetUsername)
-                .orElseThrow(() -> new ResourceNotFoundException("Target user not found"));
-
-        if (currentUser.getId().equals(targetUser.getId())) {
-            throw new BadRequestException("Cannot block yourself");
+                return ProfileResponse.builder()
+                                .id(targetUser.getId())
+                                .publicId(targetUser.getPublicId())
+                                .username(targetUser.getUsername())
+                                .displayName(profile.getDisplayName())
+                                .bio(profile.getBio())
+                                .avatarUrl(profile.getAvatarUrl())
+                                .followerCount(followerCount)
+                                .followingCount(followingCount)
+                                .isFollowing(isFollowing)
+                                .isBlocked(isBlocked)
+                                .isBlockingMe(isBlockingMe)
+                                .build();
         }
 
-        Optional<UserBlock> existing = userBlockRepository.findByBlockerAndBlocked(currentUser, targetUser);
-        if (existing.isPresent()) {
-            userBlockRepository.delete(existing.get());
-        } else {
-            UserBlock block = UserBlock.builder()
-                    .blocker(currentUser)
-                    .blocked(targetUser)
-                    .build();
-            userBlockRepository.save(block);
-            
-            // Remove any follow relationships between them
-            subscriptionRepository.findByFollowerAndFollowed(currentUser, targetUser).ifPresent(subscriptionRepository::delete);
-            subscriptionRepository.findByFollowerAndFollowed(targetUser, currentUser).ifPresent(subscriptionRepository::delete);
-        }
-    }
+        public ProfileResponse updateProfile(String currentUserPublicId, ProfileUpdateRequest request) {
+                User currentUser = userRepository.findByPublicId(currentUserPublicId)
+                                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
-    public List<ProfileResponse> getRecommendedProfiles(String currentUserPublicId) {
-        User currentUser = userRepository.findByPublicId(currentUserPublicId)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+                UserProfile profile = userProfileRepository.findByUser(currentUser)
+                                .orElse(UserProfile.builder().user(currentUser).build());
 
-        List<User> recommendedUsers = userRepository.findRecommendedUsers(
-                currentUser.getId(),
-                org.springframework.data.domain.PageRequest.of(0, 5)
-        );
+                profile.setDisplayName(request.getDisplayName());
+                profile.setBio(request.getBio());
+                profile.setAvatarUrl(request.getAvatarUrl());
 
-        return getProfiles(recommendedUsers, currentUser);
-    }
+                userProfileRepository.save(profile);
 
-    public List<ProfileResponse> getFollowers(String username, String currentUserPublicId) {
-        User targetUser = userRepository.findByUsername(username)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-
-        User currentUser = null;
-        if (currentUserPublicId != null) {
-            currentUser = userRepository.findByPublicId(currentUserPublicId).orElse(null);
-            if (currentUser != null && (userBlockRepository.existsByBlockerAndBlocked(currentUser, targetUser) ||
-                    userBlockRepository.existsByBlockerAndBlocked(targetUser, currentUser))) {
-                return List.of();
-            }
+                return getProfile(currentUser.getUsername(), currentUserPublicId);
         }
 
-        List<Subscription> subs = subscriptionRepository.findByFollowed(targetUser);
-        List<User> followers = subs.stream().map(Subscription::getFollower).collect(Collectors.toList());
-        return getProfiles(followers, currentUser);
-    }
+        public ProfileResponse updateProfileByUsername(String targetUsername, ProfileUpdateRequest request,
+                        String callerPublicId) {
+                User caller = userRepository.findByPublicId(callerPublicId)
+                                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+                User targetUser = userRepository.findByUsername(targetUsername)
+                                .orElseThrow(() -> new ResourceNotFoundException("Target user not found"));
 
-    public List<ProfileResponse> getFollowing(String username, String currentUserPublicId) {
-        User targetUser = userRepository.findByUsername(username)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+                boolean isSelf = targetUser.getPublicId().equals(callerPublicId);
+                boolean isAdmin = caller.getRole() == User.Role.ADMIN || caller.getRole() == User.Role.SUPER_ADMIN;
 
-        User currentUser = null;
-        if (currentUserPublicId != null) {
-            currentUser = userRepository.findByPublicId(currentUserPublicId).orElse(null);
-            if (currentUser != null && (userBlockRepository.existsByBlockerAndBlocked(currentUser, targetUser) ||
-                    userBlockRepository.existsByBlockerAndBlocked(targetUser, currentUser))) {
-                return List.of();
-            }
+                if (!isSelf && !isAdmin) {
+                        throw new UnauthorizedActionException("Not authorized to update this profile");
+                }
+
+                UserProfile profile = userProfileRepository.findByUser(targetUser)
+                                .orElse(UserProfile.builder().user(targetUser).build());
+
+                profile.setDisplayName(request.getDisplayName());
+                profile.setBio(request.getBio());
+                profile.setAvatarUrl(request.getAvatarUrl());
+
+                userProfileRepository.save(profile);
+
+                return getProfile(targetUser.getUsername(), callerPublicId);
         }
 
-        List<Subscription> subs = subscriptionRepository.findByFollower(targetUser);
-        List<User> followed = subs.stream().map(Subscription::getFollowed).collect(Collectors.toList());
-        return getProfiles(followed, currentUser);
-    }
+        public void toggleFollow(String targetUsername, String currentUserPublicId) {
+                User currentUser = userRepository.findByPublicId(currentUserPublicId)
+                                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+                User targetUser = userRepository.findByUsername(targetUsername)
+                                .orElseThrow(() -> new ResourceNotFoundException("Target user not found"));
 
-    public List<ProfileResponse> searchProfiles(String query, String currentUserPublicId) {
-        if (query == null || query.trim().isEmpty()) {
-            return List.of();
+                if (currentUser.getId().equals(targetUser.getId())) {
+                        throw new BadRequestException("Cannot follow yourself");
+                }
+
+                if (userBlockRepository.existsByBlockerAndBlocked(targetUser, currentUser)) {
+                        throw new BadRequestException("You are blocked by this user");
+                }
+
+                Optional<Subscription> existing = subscriptionRepository.findByFollowerAndFollowed(currentUser,
+                                targetUser);
+                if (existing.isPresent()) {
+                        subscriptionRepository.delete(existing.get());
+                } else {
+                        Subscription sub = Subscription.builder()
+                                        .follower(currentUser)
+                                        .followed(targetUser)
+                                        .build();
+                        subscriptionRepository.save(sub);
+
+                        notificationService.createNotification(
+                                        "FOLLOW",
+                                        currentUser.getUsername() + " started following you",
+                                        targetUser,
+                                        currentUser,
+                                        null);
+                }
         }
 
-        User currentUser = userRepository.findByPublicId(currentUserPublicId)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        public void toggleBlock(String targetUsername, String currentUserPublicId) {
+                User currentUser = userRepository.findByPublicId(currentUserPublicId)
+                                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+                User targetUser = userRepository.findByUsername(targetUsername)
+                                .orElseThrow(() -> new ResourceNotFoundException("Target user not found"));
 
-        Set<Long> blockedIds = userBlockRepository.findByBlocker(currentUser)
-                .stream()
-                .map(ub -> ub.getBlocked().getId())
-                .collect(Collectors.toSet());
+                if (currentUser.getId().equals(targetUser.getId())) {
+                        throw new BadRequestException("Cannot block yourself");
+                }
 
-        Set<Long> blockingMeIds = userBlockRepository.findByBlocked(currentUser)
-                .stream()
-                .map(ub -> ub.getBlocker().getId())
-                .collect(Collectors.toSet());
+                Optional<UserBlock> existing = userBlockRepository.findByBlockerAndBlocked(currentUser, targetUser);
+                if (existing.isPresent()) {
+                        userBlockRepository.delete(existing.get());
+                } else {
+                        UserBlock block = UserBlock.builder()
+                                        .blocker(currentUser)
+                                        .blocked(targetUser)
+                                        .build();
+                        userBlockRepository.save(block);
 
-        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(0, 20);
-        org.springframework.data.domain.Page<User> usersPage = userRepository.findByUsernameContainingIgnoreCaseOrEmailContainingIgnoreCase(query, query, pageable);
-
-        List<User> matchedUsers = usersPage.stream()
-                .filter(u -> !u.getId().equals(currentUser.getId()))
-                .filter(u -> !u.isBanned())
-                .filter(u -> !blockedIds.contains(u.getId()))
-                .filter(u -> !blockingMeIds.contains(u.getId()))
-                .collect(Collectors.toList());
-
-        return getProfiles(matchedUsers, currentUser);
-    }
-
-    private List<ProfileResponse> getProfiles(List<User> targetUsers, User currentUser) {
-        if (targetUsers.isEmpty()) {
-            return List.of();
-        }
-        List<Long> targetUserIds = targetUsers.stream().map(User::getId).collect(Collectors.toList());
-
-        // Batch fetch UserProfiles
-        Map<Long, UserProfile> profilesMap = userProfileRepository.findByUserIdIn(targetUserIds).stream()
-                .collect(Collectors.toMap(
-                        p -> p.getUser().getId(),
-                        p -> p,
-                        (v1, v2) -> v1
-                ));
-
-        // Batch fetch follower counts
-        Map<Long, Long> followerCounts = subscriptionRepository.countFollowersByFollowedIds(targetUserIds).stream()
-                .collect(Collectors.toMap(
-                        arr -> (Long) arr[0],
-                        arr -> (Long) arr[1],
-                        (v1, v2) -> v1
-                ));
-
-        // Batch fetch following counts
-        Map<Long, Long> followingCounts = subscriptionRepository.countFollowingByFollowerIds(targetUserIds).stream()
-                .collect(Collectors.toMap(
-                        arr -> (Long) arr[0],
-                        arr -> (Long) arr[1],
-                        (v1, v2) -> v1
-                ));
-
-        // Batch fetch block and follow status
-        Set<Long> blockedIds = new java.util.HashSet<>();
-        Set<Long> blockingMeIds = new java.util.HashSet<>();
-        Set<Long> followingIds = new java.util.HashSet<>();
-
-        if (currentUser != null) {
-            blockedIds.addAll(userBlockRepository.findByBlocker(currentUser).stream()
-                    .map(ub -> ub.getBlocked().getId()).collect(Collectors.toSet()));
-
-            blockingMeIds.addAll(userBlockRepository.findByBlocked(currentUser).stream()
-                    .map(ub -> ub.getBlocker().getId()).collect(Collectors.toSet()));
-
-            followingIds.addAll(subscriptionRepository.findByFollower(currentUser).stream()
-                    .map(sub -> sub.getFollowed().getId()).collect(Collectors.toSet()));
+                        // Remove any follow relationships between them
+                        subscriptionRepository.findByFollowerAndFollowed(currentUser, targetUser)
+                                        .ifPresent(subscriptionRepository::delete);
+                        subscriptionRepository.findByFollowerAndFollowed(targetUser, currentUser)
+                                        .ifPresent(subscriptionRepository::delete);
+                }
         }
 
-        return targetUsers.stream().map(u -> {
-            UserProfile profile = profilesMap.getOrDefault(u.getId(), null);
-            long followerCount = followerCounts.getOrDefault(u.getId(), 0L);
-            long followingCount = followingCounts.getOrDefault(u.getId(), 0L);
-            boolean isFollowing = followingIds.contains(u.getId());
-            boolean isBlocked = blockedIds.contains(u.getId());
-            boolean isBlockingMe = blockingMeIds.contains(u.getId());
+        public List<ProfileResponse> getRecommendedProfiles(String currentUserPublicId) {
+                User currentUser = userRepository.findByPublicId(currentUserPublicId)
+                                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
-            return ProfileResponse.builder()
-                    .id(u.getId())
-                    .publicId(u.getPublicId())
-                    .username(u.getUsername())
-                    .displayName(profile != null ? profile.getDisplayName() : null)
-                    .bio(profile != null ? profile.getBio() : null)
-                    .avatarUrl(profile != null ? profile.getAvatarUrl() : null)
-                    .followerCount(followerCount)
-                    .followingCount(followingCount)
-                    .isFollowing(isFollowing)
-                    .isBlocked(isBlocked)
-                    .isBlockingMe(isBlockingMe)
-                    .build();
-        }).collect(Collectors.toList());
-    }
+                List<User> recommendedUsers = userRepository.findRecommendedUsers(
+                                currentUser.getId(),
+                                org.springframework.data.domain.PageRequest.of(0, 5));
+
+                return getProfiles(recommendedUsers, currentUser);
+        }
+
+        public List<ProfileResponse> getFollowers(String username, String currentUserPublicId) {
+                User targetUser = userRepository.findByUsername(username)
+                                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+                User currentUser = null;
+                if (currentUserPublicId != null) {
+                        currentUser = userRepository.findByPublicId(currentUserPublicId).orElse(null);
+                        if (currentUser != null && (userBlockRepository.existsByBlockerAndBlocked(currentUser,
+                                        targetUser) ||
+                                        userBlockRepository.existsByBlockerAndBlocked(targetUser, currentUser))) {
+                                return List.of();
+                        }
+                }
+
+                List<Subscription> subs = subscriptionRepository.findByFollowed(targetUser);
+                List<User> followers = subs.stream().map(Subscription::getFollower).collect(Collectors.toList());
+                return getProfiles(followers, currentUser);
+        }
+
+        public List<ProfileResponse> getFollowing(String username, String currentUserPublicId) {
+                User targetUser = userRepository.findByUsername(username)
+                                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+                User currentUser = null;
+                if (currentUserPublicId != null) {
+                        currentUser = userRepository.findByPublicId(currentUserPublicId).orElse(null);
+                        if (currentUser != null && (userBlockRepository.existsByBlockerAndBlocked(currentUser,
+                                        targetUser) ||
+                                        userBlockRepository.existsByBlockerAndBlocked(targetUser, currentUser))) {
+                                return List.of();
+                        }
+                }
+
+                List<Subscription> subs = subscriptionRepository.findByFollower(targetUser);
+                List<User> followed = subs.stream().map(Subscription::getFollowed).collect(Collectors.toList());
+                return getProfiles(followed, currentUser);
+        }
+
+        public List<ProfileResponse> searchProfiles(String query, String currentUserPublicId) {
+                if (query == null || query.trim().isEmpty()) {
+                        return List.of();
+                }
+
+                User currentUser = userRepository.findByPublicId(currentUserPublicId)
+                                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+                Set<Long> blockedIds = userBlockRepository.findByBlocker(currentUser)
+                                .stream()
+                                .map(ub -> ub.getBlocked().getId())
+                                .collect(Collectors.toSet());
+
+                Set<Long> blockingMeIds = userBlockRepository.findByBlocked(currentUser)
+                                .stream()
+                                .map(ub -> ub.getBlocker().getId())
+                                .collect(Collectors.toSet());
+
+                org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(0,
+                                20);
+                org.springframework.data.domain.Page<User> usersPage = userRepository
+                                .findByUsernameContainingIgnoreCaseOrEmailContainingIgnoreCase(query, query, pageable);
+
+                List<User> matchedUsers = usersPage.stream()
+                                .filter(u -> !u.getId().equals(currentUser.getId()))
+                                .filter(u -> !u.isBanned())
+                                .filter(u -> !blockedIds.contains(u.getId()))
+                                .filter(u -> !blockingMeIds.contains(u.getId()))
+                                .collect(Collectors.toList());
+
+                return getProfiles(matchedUsers, currentUser);
+        }
+
+        private List<ProfileResponse> getProfiles(List<User> targetUsers, User currentUser) {
+                if (targetUsers.isEmpty()) {
+                        return List.of();
+                }
+                List<Long> targetUserIds = targetUsers.stream().map(User::getId).collect(Collectors.toList());
+
+                // Batch fetch UserProfiles
+                Map<Long, UserProfile> profilesMap = userProfileRepository.findByUserIdIn(targetUserIds).stream()
+                                .collect(Collectors.toMap(
+                                                p -> p.getUser().getId(),
+                                                p -> p,
+                                                (v1, v2) -> v1));
+
+                // Batch fetch follower counts
+                Map<Long, Long> followerCounts = subscriptionRepository.countFollowersByFollowedIds(targetUserIds)
+                                .stream()
+                                .collect(Collectors.toMap(
+                                                arr -> (Long) arr[0],
+                                                arr -> (Long) arr[1],
+                                                (v1, v2) -> v1));
+
+                // Batch fetch following counts
+                Map<Long, Long> followingCounts = subscriptionRepository.countFollowingByFollowerIds(targetUserIds)
+                                .stream()
+                                .collect(Collectors.toMap(
+                                                arr -> (Long) arr[0],
+                                                arr -> (Long) arr[1],
+                                                (v1, v2) -> v1));
+
+                // Batch fetch block and follow status
+                Set<Long> blockedIds = new java.util.HashSet<>();
+                Set<Long> blockingMeIds = new java.util.HashSet<>();
+                Set<Long> followingIds = new java.util.HashSet<>();
+
+                if (currentUser != null) {
+                        blockedIds.addAll(userBlockRepository.findByBlocker(currentUser).stream()
+                                        .map(ub -> ub.getBlocked().getId()).collect(Collectors.toSet()));
+
+                        blockingMeIds.addAll(userBlockRepository.findByBlocked(currentUser).stream()
+                                        .map(ub -> ub.getBlocker().getId()).collect(Collectors.toSet()));
+
+                        followingIds.addAll(subscriptionRepository.findByFollower(currentUser).stream()
+                                        .map(sub -> sub.getFollowed().getId()).collect(Collectors.toSet()));
+                }
+
+                return targetUsers.stream().map(u -> {
+                        UserProfile profile = profilesMap.getOrDefault(u.getId(), null);
+                        long followerCount = followerCounts.getOrDefault(u.getId(), 0L);
+                        long followingCount = followingCounts.getOrDefault(u.getId(), 0L);
+                        boolean isFollowing = followingIds.contains(u.getId());
+                        boolean isBlocked = blockedIds.contains(u.getId());
+                        boolean isBlockingMe = blockingMeIds.contains(u.getId());
+
+                        return ProfileResponse.builder()
+                                        .id(u.getId())
+                                        .publicId(u.getPublicId())
+                                        .username(u.getUsername())
+                                        .displayName(profile != null ? profile.getDisplayName() : null)
+                                        .bio(profile != null ? profile.getBio() : null)
+                                        .avatarUrl(profile != null ? profile.getAvatarUrl() : null)
+                                        .followerCount(followerCount)
+                                        .followingCount(followingCount)
+                                        .isFollowing(isFollowing)
+                                        .isBlocked(isBlocked)
+                                        .isBlockingMe(isBlockingMe)
+                                        .build();
+                }).collect(Collectors.toList());
+        }
 }
-

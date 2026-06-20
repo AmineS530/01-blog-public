@@ -1,13 +1,22 @@
 package com.zero1blog.backend.controller;
 
-import com.zero1blog.backend.dto.ProfileResponse;
-import com.zero1blog.backend.dto.ProfileUpdateRequest;
-import com.zero1blog.backend.service.ProfileService;
 import java.util.List;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.zero1blog.backend.dto.ProfileResponse;
+import com.zero1blog.backend.dto.ProfileUpdateRequest;
+import com.zero1blog.backend.service.ProfileService;
 
 @RestController
 @RequestMapping("/api/profiles")
@@ -21,61 +30,71 @@ public class ProfileController {
 
     @GetMapping("/{username}")
     public ResponseEntity<ProfileResponse> getProfile(@PathVariable String username,
-                                                      @AuthenticationPrincipal UserDetails userDetails) {
-        String currentUserPublicId = userDetails != null ? userDetails.getUsername() : null; // In our JwtAuthFilter, we use publicId as the username field in UserDetails
+            @AuthenticationPrincipal UserDetails userDetails) {
+        String currentUserPublicId = userDetails != null ? userDetails.getUsername() : null; // In our JwtAuthFilter, we
+                                                                                             // use publicId as the
+                                                                                             // username field in
+                                                                                             // UserDetails
         return ResponseEntity.ok(profileService.getProfile(username, currentUserPublicId));
     }
 
     @PutMapping("/me")
     public ResponseEntity<ProfileResponse> updateProfile(@RequestBody ProfileUpdateRequest request,
-                                                         @AuthenticationPrincipal UserDetails userDetails) {
+            @AuthenticationPrincipal UserDetails userDetails) {
         return ResponseEntity.ok(profileService.updateProfile(userDetails.getUsername(), request));
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<ProfileResponse> getMyProfile(
+            @AuthenticationPrincipal UserDetails userDetails) {
+        return ResponseEntity.ok(
+                profileService.getMyProfile(userDetails.getUsername()));
     }
 
     @PutMapping("/{username}")
     public ResponseEntity<ProfileResponse> updateProfileByUsername(@PathVariable String username,
-                                                                   @RequestBody ProfileUpdateRequest request,
-                                                                   @AuthenticationPrincipal UserDetails userDetails) {
+            @RequestBody ProfileUpdateRequest request,
+            @AuthenticationPrincipal UserDetails userDetails) {
         return ResponseEntity.ok(profileService.updateProfileByUsername(username, request, userDetails.getUsername()));
     }
 
     @PostMapping("/{username}/follow")
     public ResponseEntity<Void> toggleFollow(@PathVariable String username,
-                                             @AuthenticationPrincipal UserDetails userDetails) {
+            @AuthenticationPrincipal UserDetails userDetails) {
         profileService.toggleFollow(username, userDetails.getUsername());
         return ResponseEntity.ok().build();
     }
 
     @PostMapping("/{username}/block")
     public ResponseEntity<Void> toggleBlock(@PathVariable String username,
-                                            @AuthenticationPrincipal UserDetails userDetails) {
+            @AuthenticationPrincipal UserDetails userDetails) {
         profileService.toggleBlock(username, userDetails.getUsername());
         return ResponseEntity.ok().build();
     }
 
     @GetMapping("/recommended")
-    public ResponseEntity<List<ProfileResponse>> getRecommendedProfiles(@AuthenticationPrincipal UserDetails userDetails) {
+    public ResponseEntity<List<ProfileResponse>> getRecommendedProfiles(
+            @AuthenticationPrincipal UserDetails userDetails) {
         return ResponseEntity.ok(profileService.getRecommendedProfiles(userDetails.getUsername()));
     }
 
     @GetMapping("/{username}/followers")
     public ResponseEntity<List<ProfileResponse>> getFollowers(@PathVariable String username,
-                                                              @AuthenticationPrincipal UserDetails userDetails) {
+            @AuthenticationPrincipal UserDetails userDetails) {
         String currentUserPublicId = userDetails != null ? userDetails.getUsername() : null;
         return ResponseEntity.ok(profileService.getFollowers(username, currentUserPublicId));
     }
 
     @GetMapping("/{username}/following")
     public ResponseEntity<List<ProfileResponse>> getFollowing(@PathVariable String username,
-                                                              @AuthenticationPrincipal UserDetails userDetails) {
+            @AuthenticationPrincipal UserDetails userDetails) {
         String currentUserPublicId = userDetails != null ? userDetails.getUsername() : null;
         return ResponseEntity.ok(profileService.getFollowing(username, currentUserPublicId));
     }
 
     @GetMapping("/search")
     public ResponseEntity<List<ProfileResponse>> searchProfiles(@RequestParam String query,
-                                                                @AuthenticationPrincipal UserDetails userDetails) {
+            @AuthenticationPrincipal UserDetails userDetails) {
         return ResponseEntity.ok(profileService.searchProfiles(query, userDetails.getUsername()));
     }
 }
-
