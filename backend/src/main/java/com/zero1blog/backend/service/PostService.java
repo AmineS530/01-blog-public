@@ -17,6 +17,9 @@ import org.springframework.stereotype.Service;
 import com.zero1blog.backend.config.PostCreatedEvent;
 import com.zero1blog.backend.dto.PostRequest;
 import com.zero1blog.backend.dto.PostResponse;
+import com.zero1blog.backend.exception.BadRequestException;
+import com.zero1blog.backend.exception.ResourceNotFoundException;
+import com.zero1blog.backend.exception.UnauthorizedActionException;
 import com.zero1blog.backend.model.Post;
 import com.zero1blog.backend.model.Subscription;
 import com.zero1blog.backend.model.User;
@@ -26,14 +29,16 @@ import com.zero1blog.backend.repository.PostRepository;
 import com.zero1blog.backend.repository.SubscriptionRepository;
 import com.zero1blog.backend.repository.UserBlockRepository;
 import com.zero1blog.backend.repository.UserRepository;
-import com.zero1blog.backend.exception.*;
 
 /**
  * Service managing the life cycle and feed aggregation of blog posts.
  * <p>
- * Handles creation, updates, and secure deletion of blog articles. It compiles global feeds
- * and custom following feeds, enforcing strict mutual block privacy rules to ensure users never see 
- * content authored by individuals they blocked, or who have blocked them. It also triggers
+ * Handles creation, updates, and secure deletion of blog articles. It compiles
+ * global feeds
+ * and custom following feeds, enforcing strict mutual block privacy rules to
+ * ensure users never see
+ * content authored by individuals they blocked, or who have blocked them. It
+ * also triggers
  * file deletions on disk to clean up physical media uploads on post removal.
  * </p>
  */
@@ -52,9 +57,9 @@ public class PostService {
     private final ApplicationEventPublisher eventPublisher; // Fix #12: decouple transport from service
 
     public PostService(PostRepository postRepository, UserRepository userRepository,
-                       CommentRepository commentRepository, PostLikeRepository postLikeRepository,
-                       UserBlockRepository userBlockRepository, SubscriptionRepository subscriptionRepository,
-                       ApplicationEventPublisher eventPublisher) {
+            CommentRepository commentRepository, PostLikeRepository postLikeRepository,
+            UserBlockRepository userBlockRepository, SubscriptionRepository subscriptionRepository,
+            ApplicationEventPublisher eventPublisher) {
         this.postRepository = postRepository;
         this.userRepository = userRepository;
         this.commentRepository = commentRepository;
@@ -73,7 +78,8 @@ public class PostService {
     /**
      * Publishes a new blog post.
      * <p>
-     * Saves the post details to the database and issues an instantaneous `NEW_POST` event 
+     * Saves the post details to the database and issues an instantaneous `NEW_POST`
+     * event
      * frame via WebSockets to synchronize active client feeds.
      * </p>
      *
@@ -83,7 +89,7 @@ public class PostService {
      */
     public PostResponse createPost(PostRequest request, String authorPublicId) {
         User author = userRepository.findByPublicId(authorPublicId)
-        .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         Post post = new Post();
         post.setTitle(request.getTitle());
@@ -102,20 +108,24 @@ public class PostService {
      * Compiles the global feed page of articles.
      * <p>
      * Privacy Filter Logic:
-     * If a caller is logged in, this method queries all block constraints. It collects the IDs of users 
-     * the caller has blocked and users who blocked the caller, combining them into an exclusion set.
-     * It then performs an optimized repository query (`findByAuthorIdNotIn`) to compile the feed page,
+     * If a caller is logged in, this method queries all block constraints. It
+     * collects the IDs of users
+     * the caller has blocked and users who blocked the caller, combining them into
+     * an exclusion set.
+     * It then performs an optimized repository query (`findByAuthorIdNotIn`) to
+     * compile the feed page,
      * completely excluding restricted articles.
      * </p>
      *
-     * @param currentUserPublicId the logged-in viewer's public ID (can be null for guests).
-     * @param page                 page index.
-     * @param limit                articles per page.
+     * @param currentUserPublicId the logged-in viewer's public ID (can be null for
+     *                            guests).
+     * @param page                page index.
+     * @param limit               articles per page.
      * @return list of visible post responses.
      */
     public List<PostResponse> getAllPosts(String currentUserPublicId, int page, int limit) {
         Pageable pageable = pageOf(page, limit); // Fix #10: capped, via helper
-        
+
         User currentUser = null;
         if (currentUserPublicId != null) {
             currentUser = userRepository.findByPublicId(currentUserPublicId).orElse(null);
@@ -147,18 +157,22 @@ public class PostService {
     }
 
     /**
-     * Compiles a personalized blog feed containing only articles written by users the caller follows.
+     * Compiles a personalized blog feed containing only articles written by users
+     * the caller follows.
      * <p>
      * Flow:
-     * 1. Resolves all authors the caller follows using the {@link SubscriptionRepository}.
-     * 2. Resolves mutual block lists and filters out any followed authors involved in active blocks.
-     * 3. Executes an optimized repository fetch for posts written by the remaining allowed author pool,
-     *    ordered chronologically.
+     * 1. Resolves all authors the caller follows using the
+     * {@link SubscriptionRepository}.
+     * 2. Resolves mutual block lists and filters out any followed authors involved
+     * in active blocks.
+     * 3. Executes an optimized repository fetch for posts written by the remaining
+     * allowed author pool,
+     * ordered chronologically.
      * </p>
      *
      * @param currentUserPublicId the logged-in viewer's public ID.
-     * @param page                 page index.
-     * @param limit                articles per page.
+     * @param page                page index.
+     * @param limit               articles per page.
      * @return collection of followed post responses.
      */
     public List<PostResponse> getFollowingFeed(String currentUserPublicId, int page, int limit) {
@@ -196,12 +210,14 @@ public class PostService {
         Pageable pageable = pageOf(page, limit); // Fix #10: capped, via helper
 
         final User finalCurrentUser = currentUser;
-        return toResponses(postRepository.findByAuthorIdIn(allowedFollowedIds, pageable).getContent(), finalCurrentUser);
+        return toResponses(postRepository.findByAuthorIdIn(allowedFollowedIds, pageable).getContent(),
+                finalCurrentUser);
     }
 
     /**
      * Compiles a page of articles authored by a specific user.
-     * Enforces bi-directional block assertions. If an active block exists, returns an empty list.
+     * Enforces bi-directional block assertions. If an active block exists, returns
+     * an empty list.
      */
     public List<PostResponse> getPostsByUsername(String username, String currentUserPublicId, int page, int limit) {
         User author = userRepository.findByUsername(username)
@@ -211,9 +227,9 @@ public class PostService {
         if (currentUserPublicId != null) {
             currentUser = userRepository.findByPublicId(currentUserPublicId)
                     .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-            
-            if (userBlockRepository.existsByBlockerAndBlocked(currentUser, author) || 
-                userBlockRepository.existsByBlockerAndBlocked(author, currentUser)) {
+
+            if (userBlockRepository.existsByBlockerAndBlocked(currentUser, author) ||
+                    userBlockRepository.existsByBlockerAndBlocked(author, currentUser)) {
                 return List.of(); // Empty response ensures block boundaries are secure
             }
         }
@@ -226,7 +242,8 @@ public class PostService {
 
     /**
      * Fetches a specific blog post by its database ID.
-     * Enforces mutual block assertions, throwing an exception if block conditions are met.
+     * Enforces mutual block assertions, throwing an exception if block conditions
+     * are met.
      */
     public PostResponse getPostById(Long id, String currentUserPublicId) {
         Post post = postRepository.findById(id)
@@ -236,9 +253,9 @@ public class PostService {
         if (currentUserPublicId != null) {
             currentUser = userRepository.findByPublicId(currentUserPublicId)
                     .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-            
-            if (userBlockRepository.existsByBlockerAndBlocked(currentUser, post.getAuthor()) || 
-                userBlockRepository.existsByBlockerAndBlocked(post.getAuthor(), currentUser)) {
+
+            if (userBlockRepository.existsByBlockerAndBlocked(currentUser, post.getAuthor()) ||
+                    userBlockRepository.existsByBlockerAndBlocked(post.getAuthor(), currentUser)) {
                 throw new BadRequestException("Post not available");
             }
         }
@@ -248,7 +265,8 @@ public class PostService {
 
     /**
      * Updates an existing blog post.
-     * Enforces strict authorization, throwing if the request sender is not the original post author.
+     * Enforces strict authorization, throwing if the request sender is not the
+     * original post author.
      */
     public PostResponse updatePost(Long id, PostRequest request, String authorPublicId) {
         Post post = postRepository.findById(id)
@@ -270,10 +288,13 @@ public class PostService {
      * Safely deletes a blog post and its associated resource assets.
      * <p>
      * Execution Steps:
-     * 1. Confirms post existence and verifies that the deletion request originates from the post author.
-     * 2. Checks if the post has a local media attachment. If it points to local physical storage
-     *    (e.g., "/api/media/files/"), it parses the filename, maps to the "uploads" directory, and deletes 
-     *    the physical file from disk to prevent storage leaks.
+     * 1. Confirms post existence and verifies that the deletion request originates
+     * from the post author.
+     * 2. Checks if the post has a local media attachment. If it points to local
+     * physical storage
+     * (e.g., "/api/media/files/"), it parses the filename, maps to the "uploads"
+     * directory, and deletes
+     * the physical file from disk to prevent storage leaks.
      * 3. Deletes the database post record.
      * </p>
      *
@@ -300,14 +321,15 @@ public class PostService {
                 String fileName = post.getMediaUrl().substring("/api/media/files/".length());
                 Path uploadsDir = Paths.get("uploads").toAbsolutePath().normalize();
                 Path filePath = uploadsDir.resolve(fileName).normalize();
-                
+
                 if (!filePath.startsWith(uploadsDir)) {
                     log.warn("Attempted path traversal in deletePost: {}", fileName);
                 } else {
                     Files.deleteIfExists(filePath);
                 }
             } catch (Exception e) {
-                // Log exception internally and proceed so database delete is not blocked on file system glitches
+                // Log exception internally and proceed so database delete is not blocked on
+                // file system glitches
             }
         }
 
@@ -316,7 +338,8 @@ public class PostService {
 
     /**
      * Maps an internal Post model to its structural response DTO.
-     * Fetches associated comments count, likes count, and resolving the authenticated user's like state.
+     * Fetches associated comments count, likes count, and resolving the
+     * authenticated user's like state.
      */
     private PostResponse toResponse(Post post, User currentUser) {
         long commentCount = commentRepository.countByPostId(post.getId());
@@ -334,6 +357,7 @@ public class PostService {
                 post.getAuthor().getUsername(),
                 post.getAuthor().getDisplayName(),
                 post.getAuthor().getProfile() != null ? post.getAuthor().getProfile().getAvatarUrl() : null,
+                post.getAuthor().getPublicId(),
                 post.getCreatedAt(),
                 post.getUpdatedAt(),
                 commentCount,
@@ -352,16 +376,14 @@ public class PostService {
                 .collect(Collectors.toMap(
                         arr -> (Long) arr[0],
                         arr -> (Long) arr[1],
-                        (v1, v2) -> v1
-                ));
+                        (v1, v2) -> v1));
 
         // Batch fetch like counts
         Map<Long, Long> likeCounts = postLikeRepository.countByPostIdIn(postIds).stream()
                 .collect(Collectors.toMap(
                         arr -> (Long) arr[0],
                         arr -> (Long) arr[1],
-                        (v1, v2) -> v1
-                ));
+                        (v1, v2) -> v1));
 
         // Batch fetch if current user liked
         Set<Long> likedPostIds = new java.util.HashSet<>();
@@ -382,6 +404,7 @@ public class PostService {
                     post.getAuthor().getUsername(),
                     post.getAuthor().getDisplayName(),
                     post.getAuthor().getProfile() != null ? post.getAuthor().getProfile().getAvatarUrl() : null,
+                    post.getAuthor().getPublicId(),
                     post.getCreatedAt(),
                     post.getUpdatedAt(),
                     commentCount,

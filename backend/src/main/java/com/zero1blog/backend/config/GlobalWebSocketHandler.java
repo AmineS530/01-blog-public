@@ -14,12 +14,15 @@ import org.springframework.web.socket.handler.TextWebSocketHandler;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.zero1blog.backend.dto.PostResponse;
 
 /**
  * General event coordinator for public system-wide WebSocket broadcasts.
  * <p>
- * Handles publishing post releases and like triggers globally to all active client connections,
- * plus user-targeted pushes (e.g. notifications) to just the relevant session(s).
+ * Handles publishing post releases and like triggers globally to all active
+ * client connections,
+ * plus user-targeted pushes (e.g. notifications) to just the relevant
+ * session(s).
  * </p>
  */
 @Component
@@ -44,7 +47,8 @@ public class GlobalWebSocketHandler extends TextWebSocketHandler {
 
     @Override
     protected void handleTextMessage(WebSocketSession session, TextMessage message) throws Exception {
-        // General socket handles broadcasts from server only, client sends no message frames here.
+        // General socket handles broadcasts from server only, client sends no message
+        // frames here.
     }
 
     @Override
@@ -62,28 +66,58 @@ public class GlobalWebSocketHandler extends TextWebSocketHandler {
         }
     }
 
-    /** Fix #12: listen for domain events and broadcast — PostService no longer calls this directly. */
+    /**
+     * Fix #12: listen for domain events and broadcast — PostService no longer calls
+     * this directly.
+     */
     @EventListener
     public void onPostCreated(PostCreatedEvent event) {
-        broadcast("NEW_POST", event.getPost());
+        PostResponse post = event.getPost();
+        broadcast("NEW_POST", post, post.getAuthorPublicId());
     }
 
-    public static void broadcast(String type, Object data) {
+    public static void broadcast(String type, Object data, String excludedPublicId) {
         String payload = createPayload(type, data);
+
         if (payload != null) {
             for (WebSocketSession session : activeSessions) {
-                if (session.isOpen()) {
+                String publicId = (String) session.getAttributes().get("publicId");
+
+                if (session.isOpen() &&
+                        !excludedPublicId.equals(publicId)) {
                     try {
                         session.sendMessage(new TextMessage(payload));
                     } catch (Exception e) {
-                        // Suppress connection-specific transport failures
+
                     }
                 }
             }
         }
     }
 
-    /** Sends a payload only to the given user's open session(s), e.g. for live notifications. */
+    public static void broadcast(String type, Object data) {
+        String payload = createPayload(type, data);
+
+        if (payload != null) {
+            for (WebSocketSession session : activeSessions) {
+                String publicId = (String) session.getAttributes().get("publicId");
+
+                if (session.isOpen()) {
+                    try {
+                        session.sendMessage(new TextMessage(payload));
+                    } catch (Exception e) {
+
+                    }
+                }
+            }
+        }
+
+    }
+
+    /**
+     * Sends a payload only to the given user's open session(s), e.g. for live
+     * notifications.
+     */
     public static void sendToUser(String publicId, String type, Object data) {
         CopyOnWriteArraySet<WebSocketSession> sessions = userSessions.get(publicId);
         if (sessions == null || sessions.isEmpty()) {
