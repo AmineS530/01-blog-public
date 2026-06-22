@@ -57,7 +57,7 @@ export class AuthService {
   }
 
   isLoggedIn(): boolean {
-    return !!this.getToken() && !this.isTokenExpired();
+    return !!this.getToken();
   }
 
   isTokenExpired(): boolean {
