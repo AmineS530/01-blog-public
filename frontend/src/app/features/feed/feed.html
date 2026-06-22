@@ -1,40 +1,40 @@
 <div class="feed-layout feed-container">
   <!-- Main Feed Stream -->
   <div class="feed-main">
-    
+
     <!-- Feed Tabs (Global vs Following) -->
-    <div class="feed-tabs-container glass-panel">
+    <div class="feed-tabs-container">
       <button class="feed-tab" [class.active]="activeTab === 'global'" (click)="switchTab('global')">
         <mat-icon>public</mat-icon>
         <span>Global Feed</span>
       </button>
       <button class="feed-tab" [class.active]="activeTab === 'following'" (click)="switchTab('following')">
         <mat-icon>auto_awesome</mat-icon>
-        <span>Following Feed</span>
+        <span>Following</span>
       </button>
       <div class="tab-indicator" [class.slide-right]="activeTab === 'following'"></div>
     </div>
 
     <!-- Quick Post Box -->
-    <div class="quick-post-card glass-panel">
+    <div class="quick-post-card">
       <div class="quick-post-header">
         <div class="user-avatar-small">
           <img *ngIf="currentUserAvatarUrl" [src]="currentUserAvatarUrl" alt="Avatar" />
           <span *ngIf="!currentUserAvatarUrl">{{ (currentUserDisplayName || currentUsername).charAt(0).toUpperCase() }}</span>
         </div>
-        <h3>Share something today</h3>
+        <h3>What's on your mind, {{ currentUserDisplayName || currentUsername }}?</h3>
       </div>
-      
+
       <div class="quick-post-body">
-        <input 
-          type="text" 
-          placeholder="Post Title..." 
-          class="quick-title-input" 
-          [(ngModel)]="quickPostTitle" 
-          maxlength="100" 
+        <input
+          type="text"
+          placeholder="Give your post a title..."
+          class="quick-title-input"
+          [(ngModel)]="quickPostTitle"
+          maxlength="100"
         />
-        <textarea 
-          placeholder="What's on your mind? (Markdown supported...)" 
+        <textarea
+          placeholder="Write something great... (Markdown supported)"
           class="quick-content-input"
           [(ngModel)]="quickPostContent"
           maxlength="5000"
@@ -52,23 +52,26 @@
 
       <div class="quick-post-footer">
         <div class="footer-left">
-          <input 
-            type="file" 
-            id="quick-media-input" 
-            accept="image/*,video/*" 
-            style="display: none;" 
-            (change)="onFileSelected($event)" 
+          <input
+            type="file"
+            id="quick-media-input"
+            accept="image/*,video/*"
+            style="display: none;"
+            (change)="onFileSelected($event)"
           />
           <label for="quick-media-input" class="media-upload-btn" matTooltip="Attach Image or Video">
             <mat-icon>image</mat-icon>
-            <span>Photo/Video</span>
+            <span>Photo / Video</span>
           </label>
-          <span class="uploading-text" *ngIf="uploadingMedia">Uploading...</span>
+          <span class="uploading-text" *ngIf="uploadingMedia">
+            <mat-icon style="font-size:14px;width:14px;height:14px;vertical-align:middle">hourglass_top</mat-icon>
+            Uploading...
+          </span>
         </div>
-        
-        <button 
-          mat-flat-button 
-          color="primary" 
+
+        <button
+          mat-flat-button
+          color="primary"
           class="publish-btn"
           [disabled]="!quickPostTitle.trim() || !quickPostContent.trim() || uploadingMedia || submittingPost"
           (click)="publishPost()"
@@ -80,34 +83,36 @@
     </div>
 
     <!-- Floating 'New Posts' indicator pill -->
-    <div 
-      class="new-posts-pill" 
-      *ngIf="newIncomingPosts.length > 0 " 
+    <div
+      class="new-posts-pill"
+      *ngIf="newIncomingPosts.length > 0"
       (click)="applyNewPosts()"
     >
       <mat-icon>cached</mat-icon>
-      <span>{{ newIncomingPosts.length }} new post{{ newIncomingPosts.length > 1 ? 's' : '' }} available. Click to view!</span>
+      <span>{{ newIncomingPosts.length }} new post{{ newIncomingPosts.length > 1 ? 's' : '' }} — tap to refresh</span>
     </div>
 
     <!-- Feed Content -->
     <div *ngIf="loading" class="centered loading-state">
-      <mat-spinner diameter="48"></mat-spinner>
+      <mat-spinner diameter="44"></mat-spinner>
       <p class="muted">Fetching amazing stories...</p>
     </div>
 
     <div *ngIf="error" class="centered error-state">
       <mat-icon color="warn">error_outline</mat-icon>
       <p>{{ error }}</p>
-      <button mat-stroked-button (click)="loadPosts()">Retry</button>
+      <button mat-stroked-button (click)="loadPosts()">Try Again</button>
     </div>
 
     <!-- Empty Feed States -->
-    <div *ngIf="!loading && !error && posts.length === 0" class="centered empty-state-container glass-panel">
+    <div *ngIf="!loading && !error && posts.length === 0" class="centered empty-state-container">
       <div class="empty-state">
         <mat-icon class="empty-icon">{{ activeTab === 'global' ? 'article' : 'people_outline' }}</mat-icon>
-        <h3>{{ activeTab === 'global' ? 'No posts yet' : 'Your Feed is Quiet' }}</h3>
+        <h3>{{ activeTab === 'global' ? 'No stories yet' : 'Your feed is quiet' }}</h3>
         <p class="muted">
-          {{ activeTab === 'global' ? 'Be the first to publish a high-quality post on Z1Spot!' : 'Follow creators from the sidebar on the right to see their updates here.' }}
+          {{ activeTab === 'global'
+            ? 'Be the first to publish something great on Z1Spot!'
+            : 'Follow creators from the sidebar to see their posts here.' }}
         </p>
         <button mat-flat-button color="primary" *ngIf="activeTab === 'global'" (click)="goToCreate()">
           <mat-icon>edit</mat-icon> Write a Post
@@ -118,6 +123,7 @@
     <!-- Posts Listing -->
     <div *ngIf="!loading && !error && posts.length > 0" class="posts-feed-list">
       <mat-card *ngFor="let post of posts" class="post-card" (click)="goToPost(post.id)">
+
         <div class="post-header">
           <div class="author-avatar" (click)="goToProfile($event, post.authorUsername)">
             <img *ngIf="post.authorAvatarUrl" [src]="post.authorAvatarUrl" alt="Avatar" />
@@ -127,53 +133,52 @@
             <a class="author-name" href="javascript:void(0)" (click)="goToProfile($event, post.authorUsername)">
               {{ post.authorDisplayName || post.authorUsername }}
             </a>
-            <span class="post-date">{{ post.createdAt | date:'MMM d, y, h:mm a' }}</span>
+            <span class="post-date">{{ post.createdAt | date:'MMM d · h:mm a' }}</span>
           </div>
         </div>
-        
+
         <mat-card-content class="post-card-body">
           <h3 class="post-title">{{ post.title }}</h3>
           <div class="post-media-container" *ngIf="post.mediaUrl" (click)="$event.stopPropagation()">
-            <img *ngIf="post.mediaUrl.toLowerCase().match('\\.(jpg|jpeg|png|gif|webp)$')" [src]=" post.mediaUrl" alt="Media" />
-            <video *ngIf="post.mediaUrl.toLowerCase().match('\\.(mp4|webm|ogg)$')" [src]=" post.mediaUrl" controls></video>
+            <img *ngIf="post.mediaUrl.toLowerCase().match('\\.(jpg|jpeg|png|gif|webp)$')" [src]="post.mediaUrl" alt="Media" />
+            <video *ngIf="post.mediaUrl.toLowerCase().match('\\.(mp4|webm|ogg)$')" [src]="post.mediaUrl" controls></video>
           </div>
-          <p class="preview-text" [innerHTML]="(post.content | slice:0:280) + (post.content.length > 280 ? '...' : '') | markdown"></p>
+          <p class="preview-text" [innerHTML]="(post.content | slice:0:260) + (post.content.length > 260 ? '...' : '') | markdown"></p>
         </mat-card-content>
-        
+
         <mat-card-actions class="post-actions" (click)="$event.stopPropagation()">
           <div class="actions-left">
             <button mat-icon-button (click)="toggleLike($event, post)" class="action-btn-like" [class.active-like]="post.isLikedByCurrentUser" matTooltip="Like">
               <mat-icon class="heart-icon">{{ post.isLikedByCurrentUser ? 'favorite' : 'favorite_border' }}</mat-icon>
             </button>
             <span class="action-count" [class.liked]="post.isLikedByCurrentUser">{{ post.likeCount }}</span>
-            
-            <button mat-icon-button (click)="goToPost(post.id)" class="action-btn-comment" matTooltip="Join Discussion">
+
+            <button mat-icon-button (click)="goToPost(post.id)" class="action-btn-comment" matTooltip="Comments">
               <mat-icon>chat_bubble_outline</mat-icon>
             </button>
             <span class="action-count">{{ post.commentCount }}</span>
           </div>
-          
-          <button mat-icon-button (click)="reportPost($event, post)" class="action-btn-flag" matTooltip="Flag post as inappropriate">
-            <mat-icon>flag</mat-icon>
+
+          <button mat-icon-button (click)="reportPost($event, post)" class="action-btn-flag" matTooltip="Report post">
+            <mat-icon>flag_outlined</mat-icon>
           </button>
         </mat-card-actions>
       </mat-card>
 
       <!-- Load More / Pagination Section -->
       <div class="pagination-container" *ngIf="hasMorePosts">
-        <button 
-          mat-flat-button 
-          color="primary" 
-          class="load-more-btn glass-panel" 
+        <button
+          mat-stroked-button
+          class="load-more-btn"
           [disabled]="loadingMore"
           (click)="loadNextPage()"
         >
           <span class="btn-content" *ngIf="!loadingMore">
             <mat-icon>expand_more</mat-icon>
-            <span>Show More Stories</span>
+            <span>Load More</span>
           </span>
           <span class="btn-spinner" *ngIf="loadingMore">
-            <mat-spinner diameter="24"></mat-spinner>
+            <mat-spinner diameter="20"></mat-spinner>
             <span>Loading...</span>
           </span>
         </button>
@@ -182,7 +187,7 @@
       <!-- No More Posts Footer -->
       <div class="no-more-posts" *ngIf="!hasMorePosts && posts.length > 0">
         <mat-icon>check_circle_outline</mat-icon>
-        <p>You've caught up with everything!</p>
+        <p>You're all caught up!</p>
       </div>
     </div>
 
@@ -190,26 +195,26 @@
 
   <!-- Sticky Sidebar Panel -->
   <div class="feed-sidebar">
-    <div class="sidebar-card glass-panel">
+    <div class="sidebar-card">
       <div class="sidebar-header">
         <mat-icon class="sparkle-icon">auto_awesome</mat-icon>
         <h3>Who to Follow</h3>
       </div>
-      
+
       <div class="sidebar-content">
         <div *ngIf="loadingRecommended" class="sidebar-loading">
-          <mat-spinner diameter="32"></mat-spinner>
+          <mat-spinner diameter="30"></mat-spinner>
         </div>
-        
+
         <div *ngIf="!loadingRecommended && recommendedUsers.length === 0" class="sidebar-empty">
-          <p class="muted">You are fully connected! No new creators to recommend right now.</p>
+          <p class="muted">You're connected with everyone! Check back later.</p>
         </div>
-        
+
         <div *ngIf="!loadingRecommended && recommendedUsers.length > 0" class="recommended-list">
           <div class="recommended-user-item" *ngFor="let user of recommendedUsers">
             <div class="user-info-group" (click)="goToProfile($event, user.username)">
               <div class="user-avatar-mid">
-                <img *ngIf="user.avatarUrl" [src]=" user.avatarUrl" alt="Avatar" />
+                <img *ngIf="user.avatarUrl" [src]="user.avatarUrl" alt="Avatar" />
                 <span *ngIf="!user.avatarUrl">{{ user.username.charAt(0).toUpperCase() }}</span>
               </div>
               <div class="user-meta-info">
@@ -217,13 +222,13 @@
                 <span class="followers-subtext">{{ user.followerCount }} followers</span>
               </div>
             </div>
-            
-            <button 
-              mat-flat-button 
-              [color]="user.isFollowing ? 'basic' : 'primary'" 
+
+            <button
+              mat-stroked-button
               class="follow-toggle-btn"
               [class.following]="user.isFollowing"
               (click)="toggleFollow($event, user)"
+              [matTooltip]="user.isFollowing ? 'Unfollow' : 'Follow'"
             >
               <span>{{ user.isFollowing ? 'Following' : 'Follow' }}</span>
             </button>
@@ -231,10 +236,11 @@
         </div>
       </div>
     </div>
-    
-    <!-- Premium Footer Credits -->
+
+    <!-- Footer Credits -->
     <div class="sidebar-footer-credits">
-      <p>© 2026 Z1Spot Inc</p>
+      <p>© 2026 Z1Spot</p>
     </div>
   </div>
+
 </div>

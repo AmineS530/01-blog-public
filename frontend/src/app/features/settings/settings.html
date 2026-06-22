@@ -1,25 +1,32 @@
 <div class="settings-container">
+
+  <!-- Page Header -->
   <div class="settings-header">
-    <mat-icon class="header-icon">settings</mat-icon>
+    <div class="header-icon-wrap">
+      <mat-icon>settings</mat-icon>
+    </div>
     <h1>Account Settings</h1>
-    <p>Manage your account credentials and username</p>
+    <p>Manage your username and password</p>
   </div>
 
-  <div class="settings-grid">
-    <!-- Username Card -->
-    <mat-card class="settings-card glass-card">
-      <mat-card-header>
-        <div mat-card-avatar class="card-avatar">
+  <div class="settings-sections">
+
+    <!-- ── USERNAME SECTION ───────────────────── -->
+    <div class="settings-section">
+      <div class="section-header">
+        <div class="section-icon username-icon">
           <mat-icon>badge</mat-icon>
         </div>
-        <mat-card-title>Change Username</mat-card-title>
-        <mat-card-subtitle>Update your handle across the platform</mat-card-subtitle>
-      </mat-card-header>
+        <div class="section-title-group">
+          <h2>Username</h2>
+          <p>Change how you appear across the platform</p>
+        </div>
+      </div>
 
-      <mat-card-content>
-        <div class="current-info-box">
-          <span class="info-label">Current Username:</span>
-          <span class="info-value">@{{ currentUsername }}</span>
+      <div class="section-body">
+        <div class="current-value-chip">
+          <mat-icon>alternate_email</mat-icon>
+          <span>{{ currentUsername }}</span>
         </div>
 
         <form (ngSubmit)="updateUsername()" #usernameForm="ngForm" class="settings-form">
@@ -31,44 +38,53 @@
               name="newUsername"
               [(ngModel)]="newUsername"
               required
+              minlength="3"
+              maxlength="30"
               placeholder="e.g. johndoe"
               #usernameInput="ngModel"
             />
-            <mat-icon matSuffix>alternate_email</mat-icon>
-            <mat-error *ngIf="usernameInput.invalid && (usernameInput.dirty || usernameInput.touched)">
-              New username is required
-            </mat-error>
+            <mat-icon matSuffix>person_outline</mat-icon>
+            <mat-hint align="end">{{ newUsername.length }}/30</mat-hint>
+            <mat-error *ngIf="usernameInput.errors?.['required']">Username is required</mat-error>
+            <mat-error *ngIf="usernameInput.errors?.['minlength']">At least 3 characters required</mat-error>
           </mat-form-field>
 
           <div class="form-actions">
             <button
               mat-flat-button
-              color="primary"
               type="submit"
+              class="save-btn username-btn"
               [disabled]="updatingUsername || usernameForm.invalid || newUsername.trim() === currentUsername"
-              class="submit-btn"
             >
-              <mat-icon *ngIf="!updatingUsername">save</mat-icon>
-              <span *ngIf="!updatingUsername">Save Username</span>
-              <span *ngIf="updatingUsername">Updating...</span>
+              <ng-container *ngIf="!updatingUsername">
+                <mat-icon>save</mat-icon>
+                <span>Save Username</span>
+              </ng-container>
+              <span *ngIf="updatingUsername" class="btn-spinner-inline">
+                <mat-spinner diameter="18"></mat-spinner>
+                Updating...
+              </span>
             </button>
           </div>
         </form>
-      </mat-card-content>
-    </mat-card>
+      </div>
+    </div>
 
-    <!-- Password Card -->
-    <mat-card class="settings-card glass-card">
-      <mat-card-header>
-        <div mat-card-avatar class="card-avatar">
+    <!-- ── PASSWORD SECTION ───────────────────── -->
+    <div class="settings-section">
+      <div class="section-header">
+        <div class="section-icon password-icon">
           <mat-icon>lock</mat-icon>
         </div>
-        <mat-card-title>Change Password</mat-card-title>
-        <mat-card-subtitle>Secure your account with a strong password</mat-card-subtitle>
-      </mat-card-header>
+        <div class="section-title-group">
+          <h2>Password</h2>
+          <p>Keep your account secure with a strong password</p>
+        </div>
+      </div>
 
-      <mat-card-content>
+      <div class="section-body">
         <form (ngSubmit)="updatePassword()" #passwordForm="ngForm" class="settings-form">
+
           <mat-form-field appearance="outline" class="full-width">
             <mat-label>Current Password</mat-label>
             <input
@@ -77,7 +93,7 @@
               name="currentPassword"
               [(ngModel)]="currentPassword"
               required
-              placeholder="Enter current password"
+              placeholder="Enter your current password"
               #currPassInput="ngModel"
             />
             <mat-icon matSuffix>vpn_key</mat-icon>
@@ -99,10 +115,32 @@
               #newPassInput="ngModel"
             />
             <mat-icon matSuffix>lock_open</mat-icon>
-            <mat-error *ngIf="newPassInput.invalid && (newPassInput.dirty || newPassInput.touched)">
+            <mat-error *ngIf="newPassInput.errors?.['required'] && (newPassInput.dirty || newPassInput.touched)">
+              New password is required
+            </mat-error>
+            <mat-error *ngIf="newPassInput.errors?.['minlength'] && (newPassInput.dirty || newPassInput.touched)">
               Password must be at least 6 characters
             </mat-error>
           </mat-form-field>
+
+          <!-- Password strength bar -->
+          <div class="password-strength-bar" *ngIf="newPassword.length > 0">
+            <div class="strength-segment"
+              [class.active]="newPassword.length >= 1"
+              [class.weak]="newPassword.length < 6"
+              [class.medium]="newPassword.length >= 6 && newPassword.length < 10"
+              [class.strong]="newPassword.length >= 10">
+            </div>
+            <div class="strength-segment"
+              [class.active]="newPassword.length >= 6"
+              [class.medium]="newPassword.length >= 6 && newPassword.length < 10"
+              [class.strong]="newPassword.length >= 10">
+            </div>
+            <div class="strength-segment"
+              [class.active]="newPassword.length >= 10"
+              [class.strong]="newPassword.length >= 10">
+            </div>
+          </div>
 
           <mat-form-field appearance="outline" class="full-width">
             <mat-label>Confirm New Password</mat-label>
@@ -112,10 +150,10 @@
               name="confirmPassword"
               [(ngModel)]="confirmPassword"
               required
-              placeholder="Confirm your new password"
+              placeholder="Re-enter your new password"
               #confPassInput="ngModel"
             />
-            <mat-icon matSuffix>lock</mat-icon>
+            <mat-icon matSuffix>{{ newPassword === confirmPassword && confirmPassword ? 'check_circle' : 'lock' }}</mat-icon>
             <mat-error *ngIf="newPassword !== confirmPassword && (confPassInput.dirty || confPassInput.touched)">
               Passwords do not match
             </mat-error>
@@ -124,18 +162,23 @@
           <div class="form-actions">
             <button
               mat-flat-button
-              color="primary"
               type="submit"
+              class="save-btn password-btn"
               [disabled]="updatingPassword || passwordForm.invalid || newPassword !== confirmPassword"
-              class="submit-btn"
             >
-              <mat-icon *ngIf="!updatingPassword">key</mat-icon>
-              <span *ngIf="!updatingPassword">Update Password</span>
-              <span *ngIf="updatingPassword">Updating...</span>
+              <ng-container *ngIf="!updatingPassword">
+                <mat-icon>key</mat-icon>
+                <span>Update Password</span>
+              </ng-container>
+              <span *ngIf="updatingPassword" class="btn-spinner-inline">
+                <mat-spinner diameter="18"></mat-spinner>
+                Updating...
+              </span>
             </button>
           </div>
         </form>
-      </mat-card-content>
-    </mat-card>
+      </div>
+    </div>
+
   </div>
 </div>
