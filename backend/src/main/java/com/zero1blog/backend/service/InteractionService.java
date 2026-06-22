@@ -8,6 +8,9 @@ import org.springframework.stereotype.Service;
 
 import com.zero1blog.backend.dto.CommentRequest;
 import com.zero1blog.backend.dto.CommentResponse;
+import com.zero1blog.backend.exception.BadRequestException;
+import com.zero1blog.backend.exception.ResourceNotFoundException;
+import com.zero1blog.backend.exception.UnauthorizedActionException;
 import com.zero1blog.backend.model.Comment;
 import com.zero1blog.backend.model.CommentLike;
 import com.zero1blog.backend.model.Post;
@@ -17,9 +20,8 @@ import com.zero1blog.backend.repository.CommentLikeRepository;
 import com.zero1blog.backend.repository.CommentRepository;
 import com.zero1blog.backend.repository.PostLikeRepository;
 import com.zero1blog.backend.repository.PostRepository;
-import com.zero1blog.backend.repository.UserRepository;
 import com.zero1blog.backend.repository.UserBlockRepository;
-import com.zero1blog.backend.exception.*;
+import com.zero1blog.backend.repository.UserRepository;
 
 /**
  * Service facilitating user engagement activities such as commenting and liking.
@@ -236,6 +238,14 @@ public class InteractionService {
                 like.setComment(comment);
                 like.setUser(user);
                 commentLikeRepository.save(like);
+
+                notificationService.createNotification(
+                    "LIKE",
+                    user.getUsername() + " liked your comment: " + comment.getContent(),
+                    comment.getAuthor(),
+                    user,
+                    comment.getPost()
+                );
             }
         );
 

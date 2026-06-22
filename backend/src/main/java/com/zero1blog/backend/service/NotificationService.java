@@ -47,7 +47,22 @@ public class NotificationService {
         // Push live to the recipient instead of waiting for them to open the panel.
         GlobalWebSocketHandler.sendToUser(recipient.getPublicId(), "NOTIFICATION", toResponse(notification));
     }
+//    public void createNotification(String type, String message, User recipient, User actor, Comment comment) {
+//         if (recipient.getId().equals(actor.getId())) {
+//             return;
+//         }
 
+//         Notification notification = Notification.builder()
+//                 .type(type)
+//                 .message(message)
+//                 .user(recipient)
+//                 .actor(actor)
+//                 .build();
+//         notificationRepository.save(notification);
+
+//         // Push live to the recipient instead of waiting for them to open the panel.
+//         GlobalWebSocketHandler.sendToUser(recipient.getPublicId(), "NOTIFICATION", toResponse(notification));
+//     }
     @Transactional(readOnly = true)
     public List<NotificationResponse> getNotifications(String userPublicId, int page, int size) {
         User user = userRepository.findByPublicId(userPublicId)
