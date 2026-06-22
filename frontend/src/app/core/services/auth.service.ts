@@ -91,6 +91,20 @@ export class AuthService {
       .pipe(tap((res) => localStorage.setItem('token', res.token)));
   }
 
+  changePassword(data: any): Observable<void> {
+    return this.http.post<void>(`${this.apiUrl}/change-password`, data, { withCredentials: true });
+  }
+
+  changeUsername(data: any): Observable<{ username: string }> {
+    return this.http
+      .post<{ username: string }>(`${this.apiUrl}/change-username`, data, { withCredentials: true })
+      .pipe(
+        tap((res) => {
+          this.usernameSubject.next(res.username);
+        })
+      );
+  }
+
   /**
    * Rehydrates the username after a page refresh by calling /me.
    * Must be called from outside AuthService (e.g. app.ts ngOnInit) -

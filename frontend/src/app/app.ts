@@ -61,6 +61,7 @@ export class App implements OnInit, OnDestroy {
 
   private authSubscription?: Subscription;
   private messageSubscription?: Subscription;
+  private usernameSubscription?: Subscription;
 
   constructor(
     public authService: AuthService,
@@ -103,11 +104,17 @@ export class App implements OnInit, OnDestroy {
         }
       }
     });
+    this.usernameSubscription = this.authService.username$.subscribe((username) => {
+      if (username) {
+        this.fetchUserProfile();
+      }
+    });
   }
 
   ngOnDestroy(): void {
     this.authSubscription?.unsubscribe();
     this.messageSubscription?.unsubscribe();
+    this.usernameSubscription?.unsubscribe();
   }
 
   fetchUserProfile(): void {
@@ -205,6 +212,11 @@ export class App implements OnInit, OnDestroy {
   goToChat(): void {
     this.router.navigate(['/chat']);
     this.unreadMessagesCount = 0;
+  }
+
+  /** Navigates to the settings view. */
+  goToSettings(): void {
+    this.router.navigate(['/settings']);
   }
 
   /** Terminates user session and redirects to the login screen. */

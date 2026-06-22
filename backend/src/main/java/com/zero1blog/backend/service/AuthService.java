@@ -20,6 +20,9 @@ import com.zero1blog.backend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+import com.zero1blog.backend.dto.ChangePasswordRequest;
+import com.zero1blog.backend.dto.ChangeUsernameRequest;
+
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -144,5 +147,39 @@ public class AuthService {
                 .username(user.getUsername())
                 .role(user.getRole().name())
                 .build();
+    }
+
+    @Transactional
+    public void changePassword(String publicId, ChangePasswordRequest request) {
+        User user = userRepository.findByPublicId(publicId)
+                .orElseThrow(() -> new BadRequestException("User not found"));
+
+        UserCredentials credentials = userCredentialsRepository.findByUser(user)
+                .orElseThrow(() -> new BadRequestException("Credentials not found"));
+
+        if (!passwordEncoder.matches(request.getCurrentPassword(), credentials.getPasswordHash())) {
+            throw new BadRequestException("Incorrect current password");
+        }
+
+        credentials.setPasswordHash(passwordEncoder.encode(request.getNewPassword()));
+        userCredentialsRepository.save(credentials);
+        log.info("Password changed successfully for user: {}", user.getUsername());
+    }
+
+    @Transactional
+    public String changeUsername(String publicId, ChangeUsernameRequest request) {
+        String newUsername = request.getNewUsername().trim();
+        if (userRepository.existsByUsername(newUsername)) {
+            throw new BadRequestException("Username already taken");
+        }
+
+        User user = userRepository.findByPublicId(publicId)
+                .orElseThrow(() -> new BadRequestException("User not found"));
+
+        String oldUsername = user.getUsername();
+        user.setUsername(newUsername);
+        userRepository.save(user);
+        log.info("Username changed successfully from {} to {} for user: {}", oldUsername, newUsername, publicId);
+        return newUsername;
     }
 }

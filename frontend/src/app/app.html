@@ -24,6 +24,10 @@
         <mat-icon>add_box</mat-icon>
       </button>
 
+      <button mat-icon-button (click)="goToSettings()" matTooltip="Settings">
+        <mat-icon>settings</mat-icon>
+      </button>
+
       <button mat-button class="profile-btn" [matMenuTriggerFor]="userMenu">
         <div class="nav-avatar-container">
           <img
@@ -58,6 +62,11 @@
         <button mat-menu-item (click)="themeService.toggleDarkMode()">
           <mat-icon>{{ themeService.isDarkMode() ? 'light_mode' : 'dark_mode' }}</mat-icon>
           <span>{{ themeService.isDarkMode() ? 'Light Mode' : 'Dark Mode' }}</span>
+        </button>
+
+        <button mat-menu-item (click)="goToSettings()">
+          <mat-icon>settings</mat-icon>
+          <span>Settings</span>
         </button>
 
         <mat-divider></mat-divider>

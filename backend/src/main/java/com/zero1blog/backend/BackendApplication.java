@@ -31,8 +31,8 @@ public class BackendApplication {
 			long userCount = userRepository.count();
 			logger.info("Startup: Total users in database: {}", userCount);
 
-			if (userCount > 0) {
-				var users = userRepository.findAll();
+			// if (userCount > 0) {
+				// var users = userRepository.findAll();
 				// I already have a superadmin so commenting this part for extra security
 				// User firstUser = users.get(0);
 				// if (firstUser.getRole() != User.Role.SUPER_ADMIN) {
@@ -40,8 +40,8 @@ public class BackendApplication {
 				// 	userRepository.save(firstUser);
 				// 	logger.info("Startup: Promoted first user '{}' (ID: {}) to SUPER_ADMIN", firstUser.getUsername(), firstUser.getId());
 				// }
-				users.forEach(u -> logger.info("User: {}, Role: {}, PublicId: {}", u.getUsername(), u.getRole(), u.getPublicId()));
-			}
+				// users.forEach(u -> logger.info("User: {}, Role: {}, PublicId: {}", u.getUsername(), u.getRole(), u.getPublicId()));
+			// }
 		};
 	}
 

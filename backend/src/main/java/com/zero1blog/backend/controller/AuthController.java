@@ -19,6 +19,11 @@ import com.zero1blog.backend.service.AuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
+import com.zero1blog.backend.dto.ChangePasswordRequest;
+import com.zero1blog.backend.dto.ChangeUsernameRequest;
+
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
@@ -82,6 +87,28 @@ public class AuthController {
         return ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, cookie.toString())
                 .build();
+    }
+
+    @PostMapping("/change-password")
+    public ResponseEntity<Void> changePassword(
+            @Valid @RequestBody ChangePasswordRequest request,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        if (userDetails == null) {
+            return ResponseEntity.status(401).build();
+        }
+        authService.changePassword(userDetails.getUsername(), request);
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/change-username")
+    public ResponseEntity<java.util.Map<String, String>> changeUsername(
+            @Valid @RequestBody ChangeUsernameRequest request,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        if (userDetails == null) {
+            return ResponseEntity.status(401).build();
+        }
+        String newUsername = authService.changeUsername(userDetails.getUsername(), request);
+        return ResponseEntity.ok(java.util.Map.of("username", newUsername));
     }
 
     private ResponseCookie createCookie(String token) {
