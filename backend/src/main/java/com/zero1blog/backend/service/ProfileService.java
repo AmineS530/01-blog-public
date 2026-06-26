@@ -217,10 +217,8 @@ public class ProfileService {
                 int safeSize = Math.min(Math.max(size, 1), 100);
                 org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(page,
                                 safeSize);
-                org.springframework.data.domain.Page<Subscription> subsPage = subscriptionRepository
-                                .findByFollowed(targetUser, pageable);
-                List<Long> followerIds = subsPage.stream().map(s -> s.getFollower().getId())
-                                .collect(Collectors.toList());
+                List<Long> followerIds = subscriptionRepository
+                                .findFollowerUserIdsByFollowedIdPaged(targetUser.getId(), pageable);
                 List<User> followers = userRepository.findAllById(followerIds);
                 return getProfiles(followers, currentUser);
         }
@@ -242,10 +240,8 @@ public class ProfileService {
                 int safeSize = Math.min(Math.max(size, 1), 100);
                 org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(page,
                                 safeSize);
-                org.springframework.data.domain.Page<Subscription> subsPage = subscriptionRepository
-                                .findByFollower(targetUser, pageable);
-                List<Long> followedIds = subsPage.stream().map(s -> s.getFollowed().getId())
-                                .collect(Collectors.toList());
+                List<Long> followedIds = subscriptionRepository
+                                .findFollowedUserIdsByFollowerIdPaged(targetUser.getId(), pageable);
                 List<User> followed = userRepository.findAllById(followedIds);
                 return getProfiles(followed, currentUser);
         }

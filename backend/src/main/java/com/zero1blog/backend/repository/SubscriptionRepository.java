@@ -24,10 +24,14 @@ public interface SubscriptionRepository extends JpaRepository<Subscription, Long
     @Query("SELECT s.follower.id FROM Subscription s WHERE s.followed.id = :followedId")
     List<Long> findFollowerUserIdsByFollowedId(@Param("followedId") Long followedId);
 
-    // Paginated entity variants for follower/following lists
-    org.springframework.data.domain.Page<Subscription> findByFollower(User follower,
+    // Paginated ID-only queries — single query returns just the IDs for the page,
+    // avoids loading Subscription entities then re-querying Users.
+    @Query("SELECT s.follower.id FROM Subscription s WHERE s.followed.id = :followedId ORDER BY s.createdAt DESC")
+    List<Long> findFollowerUserIdsByFollowedIdPaged(@Param("followedId") Long followedId,
                     org.springframework.data.domain.Pageable pageable);
-    org.springframework.data.domain.Page<Subscription> findByFollowed(User followed,
+
+    @Query("SELECT s.followed.id FROM Subscription s WHERE s.follower.id = :followerId ORDER BY s.createdAt DESC")
+    List<Long> findFollowedUserIdsByFollowerIdPaged(@Param("followerId") Long followerId,
                     org.springframework.data.domain.Pageable pageable);
 
     // Keep legacy entity-returning methods for toggleFollow which needs the entity
