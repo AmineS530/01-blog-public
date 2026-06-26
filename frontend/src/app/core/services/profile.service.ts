@@ -36,15 +36,15 @@ export class ProfileService {
     return this.http.post<void>(`${this.api}/${username}/block`, {});
   }
 
-  getFollowers(username: string): Observable<ProfileResponse[]> {
-    return this.http.get<ProfileResponse[]>(`${this.api}/${username}/followers`);
+  getFollowers(username: string, page: number = 0, size: number = 20): Observable<ProfileResponse[]> {
+    return this.http.get<ProfileResponse[]>(`${this.api}/${username}/followers?page=${page}&size=${size}`);
   }
 
-  getFollowing(username: string): Observable<ProfileResponse[]> {
-    return this.http.get<ProfileResponse[]>(`${this.api}/${username}/following`);
+  getFollowing(username: string, page: number = 0, size: number = 20): Observable<ProfileResponse[]> {
+    return this.http.get<ProfileResponse[]>(`${this.api}/${username}/following?page=${page}&size=${size}`);
   }
 
-  searchProfiles(query: string): Observable<ProfileResponse[]> {
-    return this.http.get<ProfileResponse[]>(`${this.api}/search`, { params: { query } });
+  searchProfiles(query: string, page: number = 0, size: number = 20): Observable<ProfileResponse[]> {
+    return this.http.get<ProfileResponse[]>(`${this.api}/search`, { params: { query, page: page.toString(), size: size.toString() } });
   }
 }

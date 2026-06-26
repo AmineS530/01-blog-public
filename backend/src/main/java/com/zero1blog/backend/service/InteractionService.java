@@ -115,9 +115,15 @@ public class InteractionService {
      * @param userPublicId the public ID of the requesting user (can be null for anonymous guests).
      * @return a list of active comment response structures.
      */
-    public List<CommentResponse> getCommentsForPost(String postPublicId, String userPublicId) {
+    public List<CommentResponse> getCommentsForPost(String postPublicId, String userPublicId, int page, int size) {
         Post post = postRepository.findByPublicId(postPublicId).orElseThrow(() -> new ResourceNotFoundException("Post not found"));
-        List<Comment> allComments = commentRepository.findByPostIdOrderByCreatedAtAsc(post.getId());
+
+        // Load paginated thread with JOIN FETCH on author/profile
+        int safeSize = Math.min(Math.max(size, 1), 100);
+        List<Comment> allComments = commentRepository.findByPostIdWithAuthor(
+                post.getId(),
+                org.springframework.data.domain.PageRequest.of(page, safeSize))
+                .getContent();
         
         if (userPublicId == null) {
             return toCommentResponses(allComments, null);
@@ -126,11 +132,9 @@ public class InteractionService {
         User currentUser = userRepository.findByPublicId(userPublicId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
-        // Compile block sets for the current user to enforce privacy boundaries
-        Set<Long> blockedIds = userBlockRepository.findByBlocker(currentUser).stream()
-                .map(ub -> ub.getBlocked().getId()).collect(Collectors.toSet());
-        Set<Long> blockingIds = userBlockRepository.findByBlocked(currentUser).stream()
-                .map(ub -> ub.getBlocker().getId()).collect(Collectors.toSet());
+        // Compile block sets for the current user (ID-only queries — no N+1)
+        Set<Long> blockedIds = new java.util.HashSet<>(userBlockRepository.findBlockedUserIdsByBlockerId(currentUser.getId()));
+        Set<Long> blockingIds = new java.util.HashSet<>(userBlockRepository.findBlockerUserIdsByBlockedId(currentUser.getId()));
 
         List<Comment> filtered = allComments.stream()
                 .filter(c -> !blockedIds.contains(c.getAuthor().getId()) && !blockingIds.contains(c.getAuthor().getId()))

@@ -193,14 +193,14 @@ public class ProfileService {
                 User currentUser = userRepository.findByPublicId(currentUserPublicId)
                                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
-                List<User> recommendedUsers = userRepository.findRecommendedUsers(
+                org.springframework.data.domain.Page<User> recommendedUsers = userRepository.findRecommendedUsers(
                                 currentUser.getId(),
                                 org.springframework.data.domain.PageRequest.of(0, 5));
 
-                return getProfiles(recommendedUsers, currentUser);
+                return getProfiles(recommendedUsers.getContent(), currentUser);
         }
 
-        public List<ProfileResponse> getFollowers(String username, String currentUserPublicId) {
+        public List<ProfileResponse> getFollowers(String username, String currentUserPublicId, int page, int size) {
                 User targetUser = userRepository.findByUsername(username)
                                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
@@ -214,12 +214,18 @@ public class ProfileService {
                         }
                 }
 
-                List<Subscription> subs = subscriptionRepository.findByFollowed(targetUser);
-                List<User> followers = subs.stream().map(Subscription::getFollower).collect(Collectors.toList());
+                int safeSize = Math.min(Math.max(size, 1), 100);
+                org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(page,
+                                safeSize);
+                org.springframework.data.domain.Page<Subscription> subsPage = subscriptionRepository
+                                .findByFollowed(targetUser, pageable);
+                List<Long> followerIds = subsPage.stream().map(s -> s.getFollower().getId())
+                                .collect(Collectors.toList());
+                List<User> followers = userRepository.findAllById(followerIds);
                 return getProfiles(followers, currentUser);
         }
 
-        public List<ProfileResponse> getFollowing(String username, String currentUserPublicId) {
+        public List<ProfileResponse> getFollowing(String username, String currentUserPublicId, int page, int size) {
                 User targetUser = userRepository.findByUsername(username)
                                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
@@ -233,12 +239,18 @@ public class ProfileService {
                         }
                 }
 
-                List<Subscription> subs = subscriptionRepository.findByFollower(targetUser);
-                List<User> followed = subs.stream().map(Subscription::getFollowed).collect(Collectors.toList());
+                int safeSize = Math.min(Math.max(size, 1), 100);
+                org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(page,
+                                safeSize);
+                org.springframework.data.domain.Page<Subscription> subsPage = subscriptionRepository
+                                .findByFollower(targetUser, pageable);
+                List<Long> followedIds = subsPage.stream().map(s -> s.getFollowed().getId())
+                                .collect(Collectors.toList());
+                List<User> followed = userRepository.findAllById(followedIds);
                 return getProfiles(followed, currentUser);
         }
 
-        public List<ProfileResponse> searchProfiles(String query, String currentUserPublicId) {
+        public List<ProfileResponse> searchProfiles(String query, String currentUserPublicId, int page, int size) {
                 if (query == null || query.trim().isEmpty()) {
                         return List.of();
                 }
@@ -246,18 +258,13 @@ public class ProfileService {
                 User currentUser = userRepository.findByPublicId(currentUserPublicId)
                                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
-                Set<Long> blockedIds = userBlockRepository.findByBlocker(currentUser)
-                                .stream()
-                                .map(ub -> ub.getBlocked().getId())
-                                .collect(Collectors.toSet());
+                Set<Long> blockedIds = new java.util.HashSet<>(userBlockRepository.findBlockedUserIdsByBlockerId(currentUser.getId()));
 
-                Set<Long> blockingMeIds = userBlockRepository.findByBlocked(currentUser)
-                                .stream()
-                                .map(ub -> ub.getBlocker().getId())
-                                .collect(Collectors.toSet());
+                Set<Long> blockingMeIds = new java.util.HashSet<>(userBlockRepository.findBlockerUserIdsByBlockedId(currentUser.getId()));
 
-                org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(0,
-                                20);
+                int safeSize = Math.min(Math.max(size, 1), 50);
+                org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(page,
+                                safeSize);
                 org.springframework.data.domain.Page<User> usersPage = userRepository
                                 .findByUsernameContainingIgnoreCaseOrEmailContainingIgnoreCase(query, query, pageable);
 
@@ -277,8 +284,8 @@ public class ProfileService {
                 }
                 List<Long> targetUserIds = targetUsers.stream().map(User::getId).collect(Collectors.toList());
 
-                // Batch fetch UserProfiles
-                Map<Long, UserProfile> profilesMap = userProfileRepository.findByUserIdIn(targetUserIds).stream()
+                // Batch fetch UserProfiles with JOIN FETCH on user to avoid N+1
+                Map<Long, UserProfile> profilesMap = userProfileRepository.findByUserIdInWithUser(targetUserIds).stream()
                                 .collect(Collectors.toMap(
                                                 p -> p.getUser().getId(),
                                                 p -> p,
@@ -306,14 +313,11 @@ public class ProfileService {
                 Set<Long> followingIds = new java.util.HashSet<>();
 
                 if (currentUser != null) {
-                        blockedIds.addAll(userBlockRepository.findByBlocker(currentUser).stream()
-                                        .map(ub -> ub.getBlocked().getId()).collect(Collectors.toSet()));
+                        blockedIds.addAll(userBlockRepository.findBlockedUserIdsByBlockerId(currentUser.getId()));
 
-                        blockingMeIds.addAll(userBlockRepository.findByBlocked(currentUser).stream()
-                                        .map(ub -> ub.getBlocker().getId()).collect(Collectors.toSet()));
+                        blockingMeIds.addAll(userBlockRepository.findBlockerUserIdsByBlockedId(currentUser.getId()));
 
-                        followingIds.addAll(subscriptionRepository.findByFollower(currentUser).stream()
-                                        .map(sub -> sub.getFollowed().getId()).collect(Collectors.toSet()));
+                        followingIds.addAll(subscriptionRepository.findFollowedUserIdsByFollowerId(currentUser.getId()));
                 }
 
                 return targetUsers.stream().map(u -> {

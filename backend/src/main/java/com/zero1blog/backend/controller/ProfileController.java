@@ -83,21 +83,27 @@ public class ProfileController {
 
     @GetMapping("/{username}/followers")
     public ResponseEntity<List<ProfileResponse>> getFollowers(@PathVariable String username,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
             @AuthenticationPrincipal UserDetails userDetails) {
         String currentUserPublicId = userDetails != null ? userDetails.getUsername() : null;
-        return ResponseEntity.ok(profileService.getFollowers(username, currentUserPublicId));
+        return ResponseEntity.ok(profileService.getFollowers(username, currentUserPublicId, page, size));
     }
 
     @GetMapping("/{username}/following")
     public ResponseEntity<List<ProfileResponse>> getFollowing(@PathVariable String username,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
             @AuthenticationPrincipal UserDetails userDetails) {
         String currentUserPublicId = userDetails != null ? userDetails.getUsername() : null;
-        return ResponseEntity.ok(profileService.getFollowing(username, currentUserPublicId));
+        return ResponseEntity.ok(profileService.getFollowing(username, currentUserPublicId, page, size));
     }
 
     @GetMapping("/search")
     public ResponseEntity<List<ProfileResponse>> searchProfiles(@RequestParam String query,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
             @AuthenticationPrincipal UserDetails userDetails) {
-        return ResponseEntity.ok(profileService.searchProfiles(query, userDetails.getUsername()));
+        return ResponseEntity.ok(profileService.searchProfiles(query, userDetails.getUsername(), page, size));
     }
 }

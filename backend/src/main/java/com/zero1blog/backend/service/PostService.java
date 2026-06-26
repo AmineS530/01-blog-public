@@ -21,7 +21,6 @@ import com.zero1blog.backend.exception.BadRequestException;
 import com.zero1blog.backend.exception.ResourceNotFoundException;
 import com.zero1blog.backend.exception.UnauthorizedActionException;
 import com.zero1blog.backend.model.Post;
-import com.zero1blog.backend.model.Subscription;
 import com.zero1blog.backend.model.User;
 import com.zero1blog.backend.repository.CommentRepository;
 import com.zero1blog.backend.repository.PostLikeRepository;
@@ -132,15 +131,13 @@ public class PostService {
         }
 
         if (currentUser == null) {
-            return toResponses(postRepository.findAll(pageable).getContent(), null);
+            return toResponses(postRepository.findAllWithAuthor(pageable).getContent(), null);
         }
 
-        // Retrieve mutual block IDs
+        // Retrieve mutual block IDs (ID-only queries — no N+1)
         final User finalCurrentUser = currentUser;
-        Set<Long> blockedIds = userBlockRepository.findByBlocker(currentUser).stream()
-                .map(ub -> ub.getBlocked().getId()).collect(Collectors.toSet());
-        Set<Long> blockingIds = userBlockRepository.findByBlocked(currentUser).stream()
-                .map(ub -> ub.getBlocker().getId()).collect(Collectors.toSet());
+        Set<Long> blockedIds = new java.util.HashSet<>(userBlockRepository.findBlockedUserIdsByBlockerId(currentUser.getId()));
+        Set<Long> blockingIds = new java.util.HashSet<>(userBlockRepository.findBlockerUserIdsByBlockedId(currentUser.getId()));
 
         Set<Long> excludeAuthorIds = new java.util.HashSet<>();
         excludeAuthorIds.addAll(blockedIds);
@@ -148,9 +145,9 @@ public class PostService {
 
         org.springframework.data.domain.Page<Post> postsPage;
         if (excludeAuthorIds.isEmpty()) {
-            postsPage = postRepository.findAll(pageable);
+            postsPage = postRepository.findAllWithAuthor(pageable);
         } else {
-            postsPage = postRepository.findByAuthorIdNotIn(new java.util.ArrayList<>(excludeAuthorIds), pageable);
+            postsPage = postRepository.findByAuthorIdNotInWithAuthor(new java.util.ArrayList<>(excludeAuthorIds), pageable);
         }
 
         return toResponses(postsPage.getContent(), finalCurrentUser);
@@ -183,20 +180,14 @@ public class PostService {
         User currentUser = userRepository.findByPublicId(currentUserPublicId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
-        List<User> followedUsers = subscriptionRepository.findByFollower(currentUser).stream()
-                .map(Subscription::getFollowed)
-                .collect(Collectors.toList());
+        List<Long> followedIds = subscriptionRepository.findFollowedUserIdsByFollowerId(currentUser.getId());
 
-        if (followedUsers.isEmpty()) {
+        if (followedIds.isEmpty()) {
             return List.of();
         }
 
-        List<Long> followedIds = followedUsers.stream().map(User::getId).collect(Collectors.toList());
-
-        Set<Long> blockedIds = userBlockRepository.findByBlocker(currentUser).stream()
-                .map(ub -> ub.getBlocked().getId()).collect(Collectors.toSet());
-        Set<Long> blockingIds = userBlockRepository.findByBlocked(currentUser).stream()
-                .map(ub -> ub.getBlocker().getId()).collect(Collectors.toSet());
+        Set<Long> blockedIds = new java.util.HashSet<>(userBlockRepository.findBlockedUserIdsByBlockerId(currentUser.getId()));
+        Set<Long> blockingIds = new java.util.HashSet<>(userBlockRepository.findBlockerUserIdsByBlockedId(currentUser.getId()));
 
         // Filter followed user IDs, discarding blocked users
         List<Long> allowedFollowedIds = followedIds.stream()
@@ -210,7 +201,7 @@ public class PostService {
         Pageable pageable = pageOf(page, limit); // Fix #10: capped, via helper
 
         final User finalCurrentUser = currentUser;
-        return toResponses(postRepository.findByAuthorIdIn(allowedFollowedIds, pageable).getContent(),
+        return toResponses(postRepository.findByAuthorIdInWithAuthor(allowedFollowedIds, pageable).getContent(),
                 finalCurrentUser);
     }
 
@@ -237,7 +228,7 @@ public class PostService {
         Pageable pageable = pageOf(page, limit); // Fix #10: capped, via helper
 
         final User finalCurrentUser = currentUser;
-        return toResponses(postRepository.findByAuthorId(author.getId(), pageable).getContent(), finalCurrentUser);
+        return toResponses(postRepository.findByAuthorIdWithAuthor(author.getId(), pageable).getContent(), finalCurrentUser);
     }
 
     /**
@@ -246,7 +237,7 @@ public class PostService {
      * are met.
      */
     public PostResponse getPostById(String publicId, String currentUserPublicId) {
-        Post post = postRepository.findByPublicId(publicId)
+        Post post = postRepository.findByPublicIdWithAuthor(publicId)
                 .orElseThrow(() -> new ResourceNotFoundException("Post not found"));
 
         User currentUser = null;
@@ -269,7 +260,7 @@ public class PostService {
      * original post author.
      */
     public PostResponse updatePost(String publicId, PostRequest request, String authorPublicId) {
-        Post post = postRepository.findByPublicId(publicId)
+        Post post = postRepository.findByPublicIdWithAuthor(publicId)
                 .orElseThrow(() -> new ResourceNotFoundException("Post not found"));
 
         if (!post.getAuthor().getPublicId().equals(authorPublicId)) {

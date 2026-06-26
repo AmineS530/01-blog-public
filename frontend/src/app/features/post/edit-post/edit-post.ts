@@ -66,8 +66,8 @@ export class EditPostComponent implements OnInit {
       next: (post) => {
         const currentUsername = this.authService.getUsername();
         if (!currentUsername || post.authorUsername !== currentUsername) {
-          this.feedback.showToast('You are not authorized to edit this post.', 'error');
           this.router.navigate(['/posts', this.publicId]);
+          this.feedback.showToast('You are not authorized to edit this post.', 'error');
           return;
         }
         this.postForm.patchValue({

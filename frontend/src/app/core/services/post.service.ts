@@ -42,8 +42,8 @@ export class PostService {
     return this.http.post<CommentResponse>(`${this.interactionApi}/posts/${publicId}/comments`, request);
   }
 
-  getComments(publicId: string): Observable<CommentResponse[]> {
-    return this.http.get<CommentResponse[]>(`${this.interactionApi}/posts/${publicId}/comments`);
+  getComments(publicId: string, page: number = 0, size: number = 20): Observable<CommentResponse[]> {
+    return this.http.get<CommentResponse[]>(`${this.interactionApi}/posts/${publicId}/comments?page=${page}&size=${size}`);
   }
 
   updateComment(commentId: number, request: CommentRequest): Observable<CommentResponse> {

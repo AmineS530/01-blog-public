@@ -36,12 +36,12 @@ export class MessageService {
     return this.http.post<MessageResponse>(this.apiUrl, request);
   }
 
-  getInbox(): Observable<MessageResponse[]> {
-    return this.http.get<MessageResponse[]>(`${this.apiUrl}/inbox`);
+  getInbox(page: number = 0, size: number = 20): Observable<MessageResponse[]> {
+    return this.http.get<MessageResponse[]>(`${this.apiUrl}/inbox?page=${page}&size=${size}`);
   }
 
-  getConversation(partnerPublicId: string): Observable<MessageResponse[]> {
-    return this.http.get<MessageResponse[]>(`${this.apiUrl}/thread/${partnerPublicId}`);
+  getConversation(partnerPublicId: string, page: number = 0, size: number = 50): Observable<MessageResponse[]> {
+    return this.http.get<MessageResponse[]>(`${this.apiUrl}/thread/${partnerPublicId}?page=${page}&size=${size}`);
   }
 
   markConversationAsRead(partnerPublicId: string): Observable<void> {

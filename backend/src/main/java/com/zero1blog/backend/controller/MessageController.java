@@ -29,14 +29,18 @@ public class MessageController {
     }
 
     @GetMapping("/inbox")
-    public ResponseEntity<List<MessageResponse>> getInbox(Authentication authentication) {
-        return ResponseEntity.ok(messageService.getInbox(authentication.getName()));
+    public ResponseEntity<List<MessageResponse>> getInbox(@RequestParam(defaultValue = "0") int page,
+                                                         @RequestParam(defaultValue = "20") int size,
+                                                         Authentication authentication) {
+        return ResponseEntity.ok(messageService.getInbox(authentication.getName(), page, size));
     }
 
     @GetMapping("/thread/{partnerPublicId}")
     public ResponseEntity<List<MessageResponse>> getConversation(@PathVariable String partnerPublicId,
+                                                                 @RequestParam(defaultValue = "0") int page,
+                                                                 @RequestParam(defaultValue = "50") int size,
                                                                  Authentication authentication) {
-        return ResponseEntity.ok(messageService.getConversation(authentication.getName(), partnerPublicId));
+        return ResponseEntity.ok(messageService.getConversation(authentication.getName(), partnerPublicId, page, size));
     }
 
     @PostMapping("/read-all/{partnerPublicId}")

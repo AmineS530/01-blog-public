@@ -14,11 +14,9 @@ import com.zero1blog.backend.model.User;
 @Repository
 public interface NotificationRepository extends JpaRepository<Notification, Long> {
 
-    // Fetch-joins actor and post so toResponse() doesn't trigger 2 lazy-load
-    // queries per row (was the main cause of the slow load: N+1 -> O(n) round
-    // trips).
+    // Fetch-joins actor (+ profile) and post so toResponse() doesn't trigger N+1 queries
     @Query("SELECT n FROM Notification n " +
-            "LEFT JOIN FETCH n.actor " +
+            "LEFT JOIN FETCH n.actor a LEFT JOIN FETCH a.profile " +
             "LEFT JOIN FETCH n.post " +
             "WHERE n.user = :user " +
             "ORDER BY n.createdAt DESC")

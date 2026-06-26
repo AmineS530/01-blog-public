@@ -98,13 +98,16 @@ public class MessageService {
      * @return chronologically sorted list of conversation message responses.
      */
     @Transactional(readOnly = true)
-    public List<MessageResponse> getConversation(String user1PublicId, String user2PublicId) {
+    public List<MessageResponse> getConversation(String user1PublicId, String user2PublicId, int page, int size) {
         User user1 = userRepository.findByPublicId(user1PublicId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
         User user2 = userRepository.findByPublicId(user2PublicId)
                 .orElseThrow(() -> new ResourceNotFoundException("Chat partner not found"));
 
-        return messageRepository.findConversation(user1.getId(), user2.getId()).stream()
+        int safeSize = Math.min(Math.max(size, 1), 100);
+        return messageRepository.findConversationWithUsers(user1.getId(), user2.getId(),
+                org.springframework.data.domain.PageRequest.of(page, safeSize))
+                .stream()
                 .map(this::toResponse)
                 .collect(Collectors.toList());
     }
@@ -117,11 +120,14 @@ public class MessageService {
      * @return collection of latest conversation snippets.
      */
     @Transactional(readOnly = true)
-    public List<MessageResponse> getInbox(String userPublicId) {
+    public List<MessageResponse> getInbox(String userPublicId, int page, int size) {
         User user = userRepository.findByPublicId(userPublicId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
-        return messageRepository.findInbox(user.getId()).stream()
+        int safeSize = Math.min(Math.max(size, 1), 50);
+        return messageRepository.findInboxWithUsers(user.getId(),
+                org.springframework.data.domain.PageRequest.of(page, safeSize))
+                .stream()
                 .map(this::toResponse)
                 .collect(Collectors.toList());
     }
@@ -161,17 +167,8 @@ public class MessageService {
         User partner = userRepository.findByPublicId(partnerId)
                 .orElseThrow(() -> new ResourceNotFoundException("Partner not found"));
 
-        List<Message> conversation = messageRepository.findConversation(me.getId(), partner.getId());
-        boolean changed = false;
-        for (Message m : conversation) {
-            if (m.getRecipient().getId().equals(me.getId()) && !m.isRead()) {
-                m.setRead(true);
-                changed = true;
-            }
-        }
-        if (changed) {
-            messageRepository.saveAll(conversation);
-        }
+        // Bulk UPDATE — no N+1, no loading all messages into memory
+        messageRepository.markAllFromSenderAsRead(partner.getId(), me.getId());
     }
 
     /**

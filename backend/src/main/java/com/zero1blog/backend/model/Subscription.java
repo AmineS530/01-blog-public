@@ -10,7 +10,8 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "subscriptions", uniqueConstraints = {@UniqueConstraint(columnNames = {"follower_id", "followed_id"})}, indexes = {
-    @Index(name = "idx_subscriptions_followed_id", columnList = "followed_id")
+    @Index(name = "idx_subscriptions_followed_id", columnList = "followed_id"),
+    @Index(name = "idx_subscriptions_follower_id", columnList = "follower_id")
 })
 @Data
 @NoArgsConstructor

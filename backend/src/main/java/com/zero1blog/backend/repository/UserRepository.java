@@ -31,10 +31,28 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     long countByCreatedAtAfter(java.time.LocalDateTime date);
 
-    @Query("SELECT u FROM User u WHERE u.id <> :currentUserId " +
+    // JOIN FETCH profile for admin user listing — avoids N+1 on user.profile
+    @Query(value = "SELECT u FROM User u LEFT JOIN FETCH u.profile",
+           countQuery = "SELECT COUNT(u) FROM User u")
+    Page<User> findAllWithProfile(Pageable pageable);
+
+    @Query(value = "SELECT u FROM User u LEFT JOIN FETCH u.profile " +
+                   "WHERE LOWER(u.username) LIKE LOWER(CONCAT('%', :username, '%')) " +
+                   "OR LOWER(u.email) LIKE LOWER(CONCAT('%', :email, '%'))",
+           countQuery = "SELECT COUNT(u) FROM User u WHERE LOWER(u.username) LIKE LOWER(CONCAT('%', :username, '%')) " +
+                   "OR LOWER(u.email) LIKE LOWER(CONCAT('%', :email, '%'))")
+    Page<User> findByUsernameOrEmailWithProfile(@Param("username") String username, @Param("email") String email, Pageable pageable);
+
+    // JOIN FETCH profile for recommended users — avoids N+1
+    @Query(value = "SELECT u FROM User u LEFT JOIN FETCH u.profile WHERE u.id <> :currentUserId " +
+            "AND u.isBanned = false " +
+            "AND u.id NOT IN (SELECT s.followed.id FROM Subscription s WHERE s.follower.id = :currentUserId) " +
+            "AND u.id NOT IN (SELECT ub.blocked.id FROM UserBlock ub WHERE ub.blocker.id = :currentUserId) " +
+            "AND u.id NOT IN (SELECT ub.blocker.id FROM UserBlock ub WHERE ub.blocked.id = :currentUserId)",
+           countQuery = "SELECT COUNT(u) FROM User u WHERE u.id <> :currentUserId " +
             "AND u.isBanned = false " +
             "AND u.id NOT IN (SELECT s.followed.id FROM Subscription s WHERE s.follower.id = :currentUserId) " +
             "AND u.id NOT IN (SELECT ub.blocked.id FROM UserBlock ub WHERE ub.blocker.id = :currentUserId) " +
             "AND u.id NOT IN (SELECT ub.blocker.id FROM UserBlock ub WHERE ub.blocked.id = :currentUserId)")
-    List<User> findRecommendedUsers(@Param("currentUserId") Long currentUserId, Pageable pageable);
+    Page<User> findRecommendedUsers(@Param("currentUserId") Long currentUserId, Pageable pageable);
 }

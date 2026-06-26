@@ -32,8 +32,10 @@ public class InteractionController {
 
     @GetMapping("/posts/{publicId}/comments")
     public ResponseEntity<List<CommentResponse>> getComments(@PathVariable String publicId,
+                                                             @RequestParam(defaultValue = "0") int page,
+                                                             @RequestParam(defaultValue = "20") int size,
                                                              @AuthenticationPrincipal UserDetails userDetails) {
-        return ResponseEntity.ok(interactionService.getCommentsForPost(publicId, userDetails != null ? userDetails.getUsername() : null));
+        return ResponseEntity.ok(interactionService.getCommentsForPost(publicId, userDetails != null ? userDetails.getUsername() : null, page, size));
     }
 
     @PutMapping("/comments/{commentId}")

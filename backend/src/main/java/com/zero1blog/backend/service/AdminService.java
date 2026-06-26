@@ -60,7 +60,7 @@ public class AdminService {
     @Transactional(readOnly = true)
     public List<ReportResponse> getReports(String status, int page, int limit) {
         int safeLimit = Math.min(limit, MAX_PAGE_SIZE);
-        Page<Report> reports = reportRepository.findByStatus(status, PageRequest.of(page, safeLimit));
+        Page<Report> reports = reportRepository.findByStatusWithTargets(status, PageRequest.of(page, safeLimit));
         return reports.getContent().stream()
                 .map(reportService::toResponse)
                 .collect(Collectors.toList());
@@ -71,9 +71,9 @@ public class AdminService {
         int safeLimit = Math.min(limit, MAX_PAGE_SIZE);
         Page<User> users;
         if (query != null && !query.isEmpty()) {
-            users = userRepository.findByUsernameContainingIgnoreCaseOrEmailContainingIgnoreCase(query, query, PageRequest.of(page, safeLimit));
+            users = userRepository.findByUsernameOrEmailWithProfile(query, query, PageRequest.of(page, safeLimit));
         } else {
-            users = userRepository.findAll(PageRequest.of(page, safeLimit));
+            users = userRepository.findAllWithProfile(PageRequest.of(page, safeLimit));
         }
         return users.map(this::toUserAdminResponse);
     }
