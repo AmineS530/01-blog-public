@@ -63,24 +63,24 @@ public class PostController {
         return ResponseEntity.ok(postService.getPostsByUsername(username, userDetails != null ? userDetails.getUsername() : null, page, limit));
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<PostResponse> getPostById(@PathVariable Long id, @AuthenticationPrincipal UserDetails userDetails) {
-        return ResponseEntity.ok(postService.getPostById(id, userDetails != null ? userDetails.getUsername() : null));
+    @GetMapping("/{publicId}")
+    public ResponseEntity<PostResponse> getPostById(@PathVariable String publicId, @AuthenticationPrincipal UserDetails userDetails) {
+        return ResponseEntity.ok(postService.getPostById(publicId, userDetails != null ? userDetails.getUsername() : null));
     }
 
-    @PutMapping("/{id}")
+    @PutMapping("/{publicId}")
     public ResponseEntity<PostResponse> updatePost(
-            @PathVariable Long id,
+            @PathVariable String publicId,
             @Valid @RequestBody PostRequest request,
             @AuthenticationPrincipal UserDetails userDetails) {
-        return ResponseEntity.ok(postService.updatePost(id, request, userDetails.getUsername()));
+        return ResponseEntity.ok(postService.updatePost(publicId, request, userDetails.getUsername()));
     }
 
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/{publicId}")
     public ResponseEntity<Void> deletePost(
-            @PathVariable Long id,
+            @PathVariable String publicId,
             @AuthenticationPrincipal UserDetails userDetails) {
-        postService.deletePost(id, userDetails.getUsername());
+        postService.deletePost(publicId, userDetails.getUsername());
         return ResponseEntity.noContent().build();
     }
 }

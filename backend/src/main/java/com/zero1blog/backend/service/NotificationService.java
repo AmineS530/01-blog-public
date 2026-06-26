@@ -108,7 +108,7 @@ public class NotificationService {
                 .message(n.getMessage())
                 .isRead(n.isRead())
                 .actorUsername(n.getActor() != null ? n.getActor().getUsername() : null)
-                .postId(n.getPost() != null ? n.getPost().getId() : null)
+                .postId(n.getPost() != null ? n.getPost().getPublicId() : null)
                 .createdAt(n.getCreatedAt())
                 .build();
     }

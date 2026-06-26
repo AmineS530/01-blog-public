@@ -5,7 +5,7 @@ import java.time.LocalDateTime;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class PostResponse {
-    private Long id;
+    private String publicId;
     private String title;
     private String content;
     private String mediaUrl;
@@ -21,11 +21,11 @@ public class PostResponse {
     @JsonProperty("isLikedByCurrentUser")
     private boolean isLikedByCurrentUser;
 
-    public PostResponse(Long id, String title, String content, String mediaUrl,
+    public PostResponse(String publicId, String title, String content, String mediaUrl,
             String authorUsername, String authorDisplayName, String authorAvatarUrl, String authorPublicId, LocalDateTime createdAt,
             LocalDateTime updatedAt,
             long commentCount, long likeCount, boolean isLikedByCurrentUser) {
-        this.id = id;
+        this.publicId = publicId;
         this.title = title;
         this.content = content;
         this.mediaUrl = mediaUrl;
@@ -40,8 +40,8 @@ public class PostResponse {
         this.isLikedByCurrentUser = isLikedByCurrentUser;
     }
 
-    public Long getId() {
-        return id;
+    public String getPublicId() {
+        return publicId;
     }
 
     public String getTitle() {

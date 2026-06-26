@@ -94,21 +94,21 @@ export class SinglePostComponent implements OnInit, OnDestroy {
       });
     }
 
-    const id = Number(this.route.snapshot.paramMap.get('id'));
-    if (isNaN(id)) {
+    const publicId = this.route.snapshot.paramMap.get('publicId') ?? '';
+    if (!publicId) {
       this.router.navigate(['/feed']);
       return;
     }
 
-    this.postService.getById(id).subscribe({
+    this.postService.getById(publicId).subscribe({
       next: (post) => {
         this.post = post;
         this.isAuthor = this.currentUsername === post.authorUsername;
         const role = this.authService.getRole();
         this.isAdminOrSuperAdmin = role === 'ADMIN' || role === 'SUPER_ADMIN';
-        this.loadComments(id);
+        this.loadComments(publicId);
         this.loading = false;
-        this.setupRealtime(id);
+        this.setupRealtime(publicId);
       },
       error: () => {
         this.error = 'Post not found.';
@@ -117,7 +117,7 @@ export class SinglePostComponent implements OnInit, OnDestroy {
     });
   }
 
-  private setupRealtime(postId: number): void {
+  private setupRealtime(postId: string): void {
     // 1. Subscribe to like count updates
     this.likesSubscription = this.realtimeService.likes$.subscribe({
       next: (event) => {
@@ -135,7 +135,7 @@ export class SinglePostComponent implements OnInit, OnDestroy {
     });
   }
 
-  loadComments(postId: number): void {
+  loadComments(postId: string): void {
     this.postService.getComments(postId).subscribe((comments) => {
       this.comments = comments;
     });
@@ -172,7 +172,7 @@ export class SinglePostComponent implements OnInit, OnDestroy {
       mediaUrl: this.commentMediaUrl,
     };
 
-    this.postService.addComment(this.post.id, request).subscribe({
+    this.postService.addComment(this.post.publicId, request).subscribe({
       next: (comment) => {
         this.comments.push(comment);
         this.post!.commentCount++;
@@ -231,7 +231,7 @@ export class SinglePostComponent implements OnInit, OnDestroy {
     if (!this.post) return;
     this.post.isLikedByCurrentUser = !this.post.isLikedByCurrentUser;
     this.post.likeCount += this.post.isLikedByCurrentUser ? 1 : -1;
-    this.postService.togglePostLike(this.post.id).subscribe({
+    this.postService.togglePostLike(this.post.publicId).subscribe({
       error: () => {
         this.post!.isLikedByCurrentUser = !this.post!.isLikedByCurrentUser;
         this.post!.likeCount += this.post!.isLikedByCurrentUser ? 1 : -1;
@@ -260,7 +260,7 @@ export class SinglePostComponent implements OnInit, OnDestroy {
       placeholder: 'Reason for reporting',
       confirmText: 'Report',
       onConfirm: (reason) => {
-        this.reportService.reportPost(this.post!.id, reason).subscribe({
+        this.reportService.reportPost(this.post!.publicId, reason).subscribe({
           next: () => this.feedback.showToast('Post reported successfully.', 'success'),
           error: () => this.feedback.showToast('Failed to report post.', 'error'),
         });
@@ -284,7 +284,7 @@ export class SinglePostComponent implements OnInit, OnDestroy {
   }
 
   edit(): void {
-    this.router.navigate(['/posts', this.post!.id, 'edit']);
+    this.router.navigate(['/posts', this.post!.publicId, 'edit']);
   }
 
   goToProfile(username: string): void {
@@ -298,7 +298,7 @@ export class SinglePostComponent implements OnInit, OnDestroy {
         'Delete this post? This action cannot be undone and will permanently remove associated media files.',
       confirmText: 'Delete',
       onConfirm: () => {
-        this.postService.delete(this.post!.id).subscribe({
+        this.postService.delete(this.post!.publicId).subscribe({
           next: () => {
             this.feedback.showToast('Post deleted successfully!', 'success');
             this.router.navigate(['/feed']);

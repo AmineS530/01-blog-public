@@ -17,7 +17,7 @@ public class ReportResponse {
     private String status;
     private String reporterUsername;
     private String targetUsername;
-    private Long targetPostId;
+    private String targetPostId;
     private Long targetCommentId;
     private String targetType; // 'USER', 'POST', 'COMMENT'
     private Long targetId; // the ID corresponding to the targetType (could be userId, postId, commentId)

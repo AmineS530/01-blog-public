@@ -6,6 +6,6 @@ import lombok.Data;
 public class ReportRequest {
     private String reason;
     private Long targetUserId;
-    private Long targetPostId;
+    private String targetPostId;
     private Long targetCommentId;
 }

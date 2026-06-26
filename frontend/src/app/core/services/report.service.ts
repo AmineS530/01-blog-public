@@ -5,7 +5,7 @@ import { Observable } from 'rxjs';
 export interface ReportRequest {
   reason: string;
   targetUserId?: number;
-  targetPostId?: number;
+  targetPostId?: string;
   targetCommentId?: number;
 }
 
@@ -21,7 +21,7 @@ export class ReportService {
     return this.http.post(this.apiUrl, { targetUserId: userId, reason });
   }
 
-  reportPost(postId: number, reason: string): Observable<any> {
+  reportPost(postId: string, reason: string): Observable<any> {
     return this.http.post(this.apiUrl, { targetPostId: postId, reason });
   }
 

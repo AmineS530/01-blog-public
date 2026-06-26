@@ -156,16 +156,16 @@ public class AdminService {
     }
 
     @Transactional
-    public void deletePost(Long postId) {
-        log.warn("Admin DELETING post ID: {}", postId);
-        postRepository.findById(postId).ifPresent(post -> {
+    public void deletePost(String publicId) {
+        log.warn("Admin DELETING post Public ID: {}", publicId);
+        postRepository.findByPublicId(publicId).ifPresent(post -> {
             if (post.getMediaUrl() != null && post.getMediaUrl().startsWith("/api/media/files/")) {
                 try {
                     String fileName = post.getMediaUrl().substring("/api/media/files/".length());
                     java.nio.file.Path filePath = java.nio.file.Paths.get("uploads").resolve(fileName);
                     java.nio.file.Files.deleteIfExists(filePath);
                 } catch (Exception e) {
-                    log.error("Failed to delete media file for post " + postId, e);
+                    log.error("Failed to delete media file for post " + publicId, e);
                 }
             }
             postRepository.delete(post);

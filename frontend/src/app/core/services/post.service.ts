@@ -18,8 +18,8 @@ export class PostService {
     return this.http.get<PostResponse[]>(`${this.api}/following?page=${page}&limit=${limit}`);
   }
 
-  getById(id: number): Observable<PostResponse> {
-    return this.http.get<PostResponse>(`${this.api}/${id}`);
+  getById(publicId: string): Observable<PostResponse> {
+    return this.http.get<PostResponse>(`${this.api}/${publicId}`);
   }
 
   getByUsername(username: string, page: number = 0, limit: number = 10): Observable<PostResponse[]> {
@@ -30,20 +30,20 @@ export class PostService {
     return this.http.post<PostResponse>(this.api, post);
   }
 
-  update(id: number, post: PostRequest): Observable<PostResponse> {
-    return this.http.put<PostResponse>(`${this.api}/${id}`, post);
+  update(publicId: string, post: PostRequest): Observable<PostResponse> {
+    return this.http.put<PostResponse>(`${this.api}/${publicId}`, post);
   }
 
-  delete(id: number): Observable<void> {
-    return this.http.delete<void>(`${this.api}/${id}`);
+  delete(publicId: string): Observable<void> {
+    return this.http.delete<void>(`${this.api}/${publicId}`);
   }
 
-  addComment(postId: number, request: CommentRequest): Observable<CommentResponse> {
-    return this.http.post<CommentResponse>(`${this.interactionApi}/posts/${postId}/comments`, request);
+  addComment(publicId: string, request: CommentRequest): Observable<CommentResponse> {
+    return this.http.post<CommentResponse>(`${this.interactionApi}/posts/${publicId}/comments`, request);
   }
 
-  getComments(postId: number): Observable<CommentResponse[]> {
-    return this.http.get<CommentResponse[]>(`${this.interactionApi}/posts/${postId}/comments`);
+  getComments(publicId: string): Observable<CommentResponse[]> {
+    return this.http.get<CommentResponse[]>(`${this.interactionApi}/posts/${publicId}/comments`);
   }
 
   updateComment(commentId: number, request: CommentRequest): Observable<CommentResponse> {
@@ -54,8 +54,8 @@ export class PostService {
     return this.http.delete<void>(`${this.interactionApi}/comments/${commentId}`);
   }
 
-  togglePostLike(postId: number): Observable<void> {
-    return this.http.post<void>(`${this.interactionApi}/posts/${postId}/likes`, {});
+  togglePostLike(publicId: string): Observable<void> {
+    return this.http.post<void>(`${this.interactionApi}/posts/${publicId}/likes`, {});
   }
 
   toggleCommentLike(commentId: number): Observable<void> {

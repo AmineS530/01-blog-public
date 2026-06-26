@@ -106,8 +106,8 @@ export class FeedComponent implements OnInit, OnDestroy {
           (this.activeTab === 'following' && (isFromFollowed || isAuthor))
         ) {
           if (
-            !this.posts.some((p) => p.id === newPost.id) &&
-            !this.newIncomingPosts.some((p) => p.id === newPost.id)
+            !this.posts.some((p) => p.publicId === newPost.publicId) &&
+            !this.newIncomingPosts.some((p) => p.publicId === newPost.publicId)
           ) {
             this.newIncomingPosts = [newPost, ...this.newIncomingPosts];
           }
@@ -155,7 +155,7 @@ export class FeedComponent implements OnInit, OnDestroy {
         if (posts.length > 0) {
           // Filter out any posts we already have to prevent duplicates (e.g. from live updates)
           const newPosts = posts.filter(
-            (p) => !this.posts.some((existing) => existing.id === p.id),
+            (p) => !this.posts.some((existing) => existing.publicId === p.publicId),
           );
           this.posts = [...this.posts, ...newPosts];
           this.currentPage = nextPage;
@@ -272,8 +272,8 @@ export class FeedComponent implements OnInit, OnDestroy {
     this.router.navigate(['/posts/create']);
   }
 
-  goToPost(id: number): void {
-    this.router.navigate(['/posts', id]);
+  goToPost(publicId: string): void {
+    this.router.navigate(['/posts', publicId]);
   }
 
   goToProfile(event: Event, username: string): void {
@@ -285,7 +285,7 @@ export class FeedComponent implements OnInit, OnDestroy {
     event.stopPropagation();
     post.isLikedByCurrentUser = !post.isLikedByCurrentUser;
     post.likeCount += post.isLikedByCurrentUser ? 1 : -1;
-    this.postService.togglePostLike(post.id).subscribe({
+    this.postService.togglePostLike(post.publicId).subscribe({
       error: () => {
         post.isLikedByCurrentUser = !post.isLikedByCurrentUser;
         post.likeCount += post.isLikedByCurrentUser ? 1 : -1;
@@ -302,7 +302,7 @@ export class FeedComponent implements OnInit, OnDestroy {
       placeholder: 'Reason for reporting',
       confirmText: 'Report',
       onConfirm: (reason) => {
-        this.reportService.reportPost(post.id, reason).subscribe({
+        this.reportService.reportPost(post.publicId, reason).subscribe({
           next: () => this.feedback.showToast('Post reported successfully.', 'success'),
           error: () => this.feedback.showToast('Failed to report post.', 'error'),
         });

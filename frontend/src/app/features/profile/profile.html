@@ -138,7 +138,7 @@
           </div>
         </div>
         
-        <mat-card *ngFor="let post of posts" class="post-card" (click)="goToPost(post.id)">
+        <mat-card *ngFor="let post of posts" class="post-card" (click)="goToPost(post.publicId)">
           <div class="post-header">
             <div class="author-avatar">
               <img *ngIf="post.authorAvatarUrl" [src]="post.authorAvatarUrl" alt="Avatar" class="avatar-img" />

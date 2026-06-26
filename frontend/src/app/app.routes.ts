@@ -33,13 +33,13 @@ export const routes: Routes = [
       import('./features/post/create-post/create-post').then((m) => m.CreatePostComponent),
   },
   {
-    path: 'posts/:id',
+    path: 'posts/:publicId',
     canActivate: [authGuard],
     loadComponent: () =>
       import('./features/post/single-post/single-post').then((m) => m.SinglePostComponent),
   },
   {
-    path: 'posts/:id/edit',
+    path: 'posts/:publicId/edit',
     canActivate: [authGuard],
     loadComponent: () =>
       import('./features/post/edit-post/edit-post').then((m) => m.EditPostComponent),

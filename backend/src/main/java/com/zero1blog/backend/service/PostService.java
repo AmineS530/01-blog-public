@@ -241,12 +241,12 @@ public class PostService {
     }
 
     /**
-     * Fetches a specific blog post by its database ID.
+     * Fetches a specific blog post by its public ID.
      * Enforces mutual block assertions, throwing an exception if block conditions
      * are met.
      */
-    public PostResponse getPostById(Long id, String currentUserPublicId) {
-        Post post = postRepository.findById(id)
+    public PostResponse getPostById(String publicId, String currentUserPublicId) {
+        Post post = postRepository.findByPublicId(publicId)
                 .orElseThrow(() -> new ResourceNotFoundException("Post not found"));
 
         User currentUser = null;
@@ -264,12 +264,12 @@ public class PostService {
     }
 
     /**
-     * Updates an existing blog post.
+     * Updates an existing blog post by its public ID.
      * Enforces strict authorization, throwing if the request sender is not the
      * original post author.
      */
-    public PostResponse updatePost(Long id, PostRequest request, String authorPublicId) {
-        Post post = postRepository.findById(id)
+    public PostResponse updatePost(String publicId, PostRequest request, String authorPublicId) {
+        Post post = postRepository.findByPublicId(publicId)
                 .orElseThrow(() -> new ResourceNotFoundException("Post not found"));
 
         if (!post.getAuthor().getPublicId().equals(authorPublicId)) {
@@ -285,7 +285,7 @@ public class PostService {
     }
 
     /**
-     * Safely deletes a blog post and its associated resource assets.
+     * Safely deletes a blog post by its public ID and its associated resource assets.
      * <p>
      * Execution Steps:
      * 1. Confirms post existence and verifies that the deletion request originates
@@ -298,11 +298,11 @@ public class PostService {
      * 3. Deletes the database post record.
      * </p>
      *
-     * @param id             ID of the target blog post to delete.
+     * @param publicId       public ID of the target blog post to delete.
      * @param authorPublicId public ID of the post author requesting deletion.
      */
-    public void deletePost(Long id, String requesterPublicId) {
-        Post post = postRepository.findById(id)
+    public void deletePost(String publicId, String requesterPublicId) {
+        Post post = postRepository.findByPublicId(publicId)
                 .orElseThrow(() -> new ResourceNotFoundException("Post not found"));
 
         User requester = userRepository.findByPublicId(requesterPublicId)
@@ -350,7 +350,7 @@ public class PostService {
         }
 
         return new PostResponse(
-                post.getId(),
+                post.getPublicId(),
                 post.getTitle(),
                 post.getContent(),
                 post.getMediaUrl(),
@@ -397,7 +397,7 @@ public class PostService {
             boolean isLiked = likedPostIds.contains(post.getId());
 
             return new PostResponse(
-                    post.getId(),
+                    post.getPublicId(),
                     post.getTitle(),
                     post.getContent(),
                     post.getMediaUrl(),

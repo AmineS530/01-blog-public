@@ -75,9 +75,9 @@ public class AdminController {
         return ResponseEntity.ok().build();
     }
 
-    @DeleteMapping("/posts/{id}")
-    public ResponseEntity<Void> deletePost(@PathVariable Long id) {
-        adminService.deletePost(id);
+    @DeleteMapping("/posts/{publicId}")
+    public ResponseEntity<Void> deletePost(@PathVariable String publicId) {
+        adminService.deletePost(publicId);
         return ResponseEntity.ok().build();
     }
 

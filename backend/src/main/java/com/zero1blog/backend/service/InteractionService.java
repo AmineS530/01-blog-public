@@ -68,14 +68,14 @@ public class InteractionService {
      * 3. Broadcasts a `NEW_COMMENT` real-time event frame to sync all open client web browsers.
      * </p>
      *
-     * @param postId       the ID of the target blog post.
+     * @param postPublicId the public ID of the target blog post.
      * @param request      the content of the comment.
      * @param userPublicId the public ID of the authoring commenter.
      * @return structured CommentResponse mapping the published comment.
      */
-    public CommentResponse addComment(Long postId, CommentRequest request, String userPublicId) {
+    public CommentResponse addComment(String postPublicId, CommentRequest request, String userPublicId) {
         User user = userRepository.findByPublicId(userPublicId).orElseThrow(() -> new ResourceNotFoundException("User not found"));
-        Post post = postRepository.findById(postId).orElseThrow(() -> new ResourceNotFoundException("Post not found"));
+        Post post = postRepository.findByPublicId(postPublicId).orElseThrow(() -> new ResourceNotFoundException("Post not found"));
         
         if (userBlockRepository.existsByBlockerAndBlocked(post.getAuthor(), user) || 
             userBlockRepository.existsByBlockerAndBlocked(user, post.getAuthor())) {
@@ -111,12 +111,13 @@ public class InteractionService {
      * privacy barriers.
      * </p>
      *
-     * @param postId       the target blog post ID.
+     * @param postPublicId the target blog post public ID.
      * @param userPublicId the public ID of the requesting user (can be null for anonymous guests).
      * @return a list of active comment response structures.
      */
-    public List<CommentResponse> getCommentsForPost(Long postId, String userPublicId) {
-        List<Comment> allComments = commentRepository.findByPostIdOrderByCreatedAtAsc(postId);
+    public List<CommentResponse> getCommentsForPost(String postPublicId, String userPublicId) {
+        Post post = postRepository.findByPublicId(postPublicId).orElseThrow(() -> new ResourceNotFoundException("Post not found"));
+        List<Comment> allComments = commentRepository.findByPostIdOrderByCreatedAtAsc(post.getId());
         
         if (userPublicId == null) {
             return toCommentResponses(allComments, null);
@@ -178,12 +179,12 @@ public class InteractionService {
      * In either case, the updated aggregate post likes count is broadcasted to all active browsers.
      * </p>
      *
-     * @param postId       the target blog post ID.
+     * @param postPublicId the target blog post public ID.
      * @param userPublicId the public ID of the toggling user.
      */
-    public void togglePostLike(Long postId, String userPublicId) {
+    public void togglePostLike(String postPublicId, String userPublicId) {
         User user = userRepository.findByPublicId(userPublicId).orElseThrow(() -> new ResourceNotFoundException("User not found"));
-        Post post = postRepository.findById(postId).orElseThrow(() -> new ResourceNotFoundException("Post not found"));
+        Post post = postRepository.findByPublicId(postPublicId).orElseThrow(() -> new ResourceNotFoundException("Post not found"));
 
         if (userBlockRepository.existsByBlockerAndBlocked(post.getAuthor(), user) || 
             userBlockRepository.existsByBlockerAndBlocked(user, post.getAuthor())) {
@@ -209,7 +210,7 @@ public class InteractionService {
         );
 
         long likeCount = postLikeRepository.countByPostId(post.getId());
-        com.zero1blog.backend.config.GlobalWebSocketHandler.broadcast("POST_LIKE", java.util.Map.of("postId", postId, "likeCount", likeCount));
+        com.zero1blog.backend.config.GlobalWebSocketHandler.broadcast("POST_LIKE", java.util.Map.of("postId", post.getPublicId(), "likeCount", likeCount));
     }
 
     /**
@@ -250,7 +251,7 @@ public class InteractionService {
         );
 
         long likeCount = commentLikeRepository.countByCommentId(comment.getId());
-        com.zero1blog.backend.config.GlobalWebSocketHandler.broadcast("COMMENT_LIKE", java.util.Map.of("commentId", commentId, "postId", comment.getPost().getId(), "likeCount", likeCount));
+        com.zero1blog.backend.config.GlobalWebSocketHandler.broadcast("COMMENT_LIKE", java.util.Map.of("commentId", commentId, "postId", comment.getPost().getPublicId(), "likeCount", likeCount));
     }
 
     /**

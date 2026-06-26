@@ -2,6 +2,8 @@ package com.zero1blog.backend.model;
 
 import java.time.LocalDateTime;
 
+import com.aventrix.jnanoid.jnanoid.NanoIdUtils;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -36,6 +38,9 @@ public class Post {
     @EqualsAndHashCode.Include
     private Long id;
 
+    @Column(name = "public_id", unique = true, nullable = false, updatable = false)
+    private String publicId;
+
     @Column(nullable = false)
     private String title;
 
@@ -57,6 +62,13 @@ public class Post {
 
     @PrePersist
     protected void onCreate() {
+        if (this.publicId == null) {
+            this.publicId = NanoIdUtils.randomNanoId(
+                NanoIdUtils.DEFAULT_NUMBER_GENERATOR,
+                "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789".toCharArray(),
+                8
+            );
+        }
         createdAt = LocalDateTime.now();
         updatedAt = LocalDateTime.now();
     }

@@ -63,7 +63,7 @@ public class ReportService {
         }
 
         if (request.getTargetPostId() != null) {
-            Post targetPost = postRepository.findById(request.getTargetPostId())
+            Post targetPost = postRepository.findByPublicId(request.getTargetPostId())
                     .orElseThrow(() -> new ResourceNotFoundException("Target post not found"));
             
             if (targetPost.getAuthor().getId().equals(reporter.getId())) {
@@ -90,7 +90,7 @@ public class ReportService {
         String targetType = null;
         Long targetId = null;
         String targetUsername = null;
-        Long targetPostId = null;
+        String targetPostId = null;
         Long targetCommentId = null;
 
         if (report.getTargetUser() != null) {
@@ -101,13 +101,13 @@ public class ReportService {
             targetType = "POST";
             targetId = report.getTargetPost().getId();
             targetUsername = report.getTargetPost().getAuthor().getUsername();
-            targetPostId = report.getTargetPost().getId();
+            targetPostId = report.getTargetPost().getPublicId();
         } else if (report.getTargetComment() != null) {
             targetType = "COMMENT";
             targetId = report.getTargetComment().getId();
             targetUsername = report.getTargetComment().getAuthor().getUsername();
             targetCommentId = report.getTargetComment().getId();
-            targetPostId = report.getTargetComment().getPost().getId();
+            targetPostId = report.getTargetComment().getPost().getPublicId();
         }
 
         return ReportResponse.builder()

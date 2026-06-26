@@ -11,6 +11,8 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { PostService } from '../../../core/services/post.service';
 import { MediaService } from '../../../core/services/media.service';
+import { AuthService } from '../../../core/services/auth.service';
+import { FeedbackService } from '../../../core/services/feedback.service';
 
 @Component({
   selector: 'app-edit-post',
@@ -24,10 +26,10 @@ import { MediaService } from '../../../core/services/media.service';
     MatButtonModule,
     MatToolbarModule,
     MatIconModule,
-    MatProgressSpinnerModule
+    MatProgressSpinnerModule,
   ],
   templateUrl: './edit-post.html',
-  styleUrl: './edit-post.css'
+  styleUrl: './edit-post.css',
 })
 export class EditPostComponent implements OnInit {
   postForm: FormGroup;
@@ -35,34 +37,42 @@ export class EditPostComponent implements OnInit {
   submitting = false;
   uploadingMedia = false;
   error = '';
-  postId!: number;
+  publicId!: string;
   mediaUrl: string | null = null;
-
+  
   constructor(
     private fb: FormBuilder,
     private route: ActivatedRoute,
     private router: Router,
     private postService: PostService,
-    private mediaService: MediaService
+    private mediaService: MediaService,
+    private authService: AuthService,
+    private feedback: FeedbackService
   ) {
     this.postForm = this.fb.group({
       title: ['', [Validators.required, Validators.maxLength(100)]],
-      content: ['', [Validators.required, Validators.maxLength(5000)]]
+      content: ['', [Validators.required, Validators.maxLength(5000)]],
     });
   }
 
   ngOnInit(): void {
-    this.postId = Number(this.route.snapshot.paramMap.get('id'));
-    if (isNaN(this.postId)) {
+    this.publicId = this.route.snapshot.paramMap.get('publicId') ?? '';
+    if (!this.publicId) {
       this.router.navigate(['/feed']);
       return;
     }
 
-    this.postService.getById(this.postId).subscribe({
+    this.postService.getById(this.publicId).subscribe({
       next: (post) => {
+        const currentUsername = this.authService.getUsername();
+        if (!currentUsername || post.authorUsername !== currentUsername) {
+          this.feedback.showToast('You are not authorized to edit this post.', 'error');
+          this.router.navigate(['/posts', this.publicId]);
+          return;
+        }
         this.postForm.patchValue({
           title: post.title,
-          content: post.content
+          content: post.content,
         });
         this.mediaUrl = post.mediaUrl || null;
         this.loading = false;
@@ -70,7 +80,7 @@ export class EditPostComponent implements OnInit {
       error: () => {
         this.error = 'Failed to load post.';
         this.loading = false;
-      }
+      },
     });
   }
 
@@ -89,7 +99,7 @@ export class EditPostComponent implements OnInit {
       error: () => {
         this.error = 'Failed to upload media. Please try again.';
         this.uploadingMedia = false;
-      }
+      },
     });
   }
 
@@ -105,19 +115,19 @@ export class EditPostComponent implements OnInit {
 
     const postData = {
       ...this.postForm.value,
-      mediaUrl: this.mediaUrl
+      mediaUrl: this.mediaUrl,
     };
 
-    this.postService.update(this.postId, postData).subscribe({
-      next: () => this.router.navigate(['/posts', this.postId]),
+    this.postService.update(this.publicId, postData).subscribe({
+      next: () => this.router.navigate(['/posts', this.publicId]),
       error: () => {
         this.error = 'Failed to update post. Please try again.';
         this.submitting = false;
-      }
+      },
     });
   }
 
   cancel(): void {
-    this.router.navigate(['/posts', this.postId]);
+    this.router.navigate(['/posts', this.publicId]);
   }
 }

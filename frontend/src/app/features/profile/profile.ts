@@ -136,7 +136,7 @@ export class ProfileComponent implements OnInit {
       next: (posts) => {
         if (posts.length > 0) {
           const newPosts = posts.filter(
-            (p) => !this.posts.some((existing) => existing.id === p.id),
+            (p) => !this.posts.some((existing) => existing.publicId === p.publicId),
           );
           this.posts = [...this.posts, ...newPosts];
           this.currentPage = nextPage;
@@ -194,7 +194,7 @@ export class ProfileComponent implements OnInit {
     event.stopPropagation();
     post.isLikedByCurrentUser = !post.isLikedByCurrentUser;
     post.likeCount += post.isLikedByCurrentUser ? 1 : -1;
-    this.postService.togglePostLike(post.id).subscribe({
+    this.postService.togglePostLike(post.publicId).subscribe({
       error: () => {
         post.isLikedByCurrentUser = !post.isLikedByCurrentUser;
         post.likeCount += post.isLikedByCurrentUser ? 1 : -1;
@@ -226,7 +226,7 @@ export class ProfileComponent implements OnInit {
       placeholder: 'Reason for reporting',
       confirmText: 'Report',
       onConfirm: (reason) => {
-        this.reportService.reportPost(post.id, reason).subscribe({
+        this.reportService.reportPost(post.publicId, reason).subscribe({
           next: () => this.feedback.showToast('Post reported successfully.', 'success'),
           error: () => this.feedback.showToast('Failed to report post.', 'error'),
         });
@@ -234,8 +234,8 @@ export class ProfileComponent implements OnInit {
     });
   }
 
-  goToPost(id: number): void {
-    this.router.navigate(['/posts', id]);
+  goToPost(publicId: string): void {
+    this.router.navigate(['/posts', publicId]);
   }
 
   back(): void {

@@ -17,6 +17,6 @@ public class NotificationResponse {
     private String message;
     private boolean isRead;
     private String actorUsername;
-    private Long postId;
+    private String postId;
     private LocalDateTime createdAt;
 }

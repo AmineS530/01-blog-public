@@ -193,7 +193,7 @@
                 <th mat-header-cell *matHeaderCellDef>Title</th>
                 <td mat-cell *matCellDef="let p">
                   <div class="post-cell">
-                    <span class="post-title-link" (click)="viewPost(p.id)">{{ p.title }}</span>
+                    <span class="post-title-link" (click)="viewPost(p.publicId)">{{ p.title }}</span>
                     <span class="post-content-preview muted"
                       >{{ p.content | slice: 0 : 80 }}{{ p.content.length > 80 ? '...' : '' }}</span
                     >
@@ -226,7 +226,7 @@
                     <button
                       mat-icon-button
                       color="primary"
-                      (click)="viewPost(p.id)"
+                      (click)="viewPost(p.publicId)"
                       matTooltip="View Post"
                       class="btn-hover-glow"
                     >

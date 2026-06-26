@@ -5,7 +5,7 @@ export interface PostRequest {
 }
 
 export interface PostResponse {
-  id: number;
+  publicId: string;
   title: string;
   content: string;
   mediaUrl?: string;

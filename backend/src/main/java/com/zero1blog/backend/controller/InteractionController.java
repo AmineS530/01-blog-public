@@ -23,17 +23,17 @@ public class InteractionController {
         this.interactionService = interactionService;
     }
 
-    @PostMapping("/posts/{postId}/comments")
-    public ResponseEntity<CommentResponse> addComment(@PathVariable Long postId,
+    @PostMapping("/posts/{publicId}/comments")
+    public ResponseEntity<CommentResponse> addComment(@PathVariable String publicId,
                                                       @Valid @RequestBody CommentRequest request,
                                                       @AuthenticationPrincipal UserDetails userDetails) {
-        return ResponseEntity.ok(interactionService.addComment(postId, request, userDetails.getUsername()));
+        return ResponseEntity.ok(interactionService.addComment(publicId, request, userDetails.getUsername()));
     }
 
-    @GetMapping("/posts/{postId}/comments")
-    public ResponseEntity<List<CommentResponse>> getComments(@PathVariable Long postId,
+    @GetMapping("/posts/{publicId}/comments")
+    public ResponseEntity<List<CommentResponse>> getComments(@PathVariable String publicId,
                                                              @AuthenticationPrincipal UserDetails userDetails) {
-        return ResponseEntity.ok(interactionService.getCommentsForPost(postId, userDetails != null ? userDetails.getUsername() : null));
+        return ResponseEntity.ok(interactionService.getCommentsForPost(publicId, userDetails != null ? userDetails.getUsername() : null));
     }
 
     @PutMapping("/comments/{commentId}")
@@ -50,10 +50,10 @@ public class InteractionController {
         return ResponseEntity.noContent().build();
     }
 
-    @PostMapping("/posts/{postId}/likes")
-    public ResponseEntity<Void> togglePostLike(@PathVariable Long postId,
+    @PostMapping("/posts/{publicId}/likes")
+    public ResponseEntity<Void> togglePostLike(@PathVariable String publicId,
                                                @AuthenticationPrincipal UserDetails userDetails) {
-        interactionService.togglePostLike(postId, userDetails.getUsername());
+        interactionService.togglePostLike(publicId, userDetails.getUsername());
         return ResponseEntity.ok().build();
     }
 

@@ -406,9 +406,9 @@ export class AdminComponent implements OnInit {
       message: `Are you sure you want to delete post "${post.title}" by ${post.authorUsername}? This is permanent and removes associated media files from physical disk.`,
       confirmText: 'Delete',
       onConfirm: () => {
-        this.http.delete(`http://localhost:8080/api/admin/posts/${post.id}`).subscribe({
+        this.http.delete(`http://localhost:8080/api/admin/posts/${post.publicId}`).subscribe({
           next: () => {
-            this.posts = this.posts.filter((p) => p.id !== post.id);
+            this.posts = this.posts.filter((p) => p.publicId !== post.publicId);
             this.filterPostsLocal();
             this.feedback.showToast(
               'Post deleted and disk media cleaned up successfully!',
@@ -558,8 +558,8 @@ export class AdminComponent implements OnInit {
   // ==========================================
 
   /** Navigates to a single post display view. */
-  viewPost(postId: number): void {
-    this.router.navigate(['/posts', postId]);
+  viewPost(publicId: string): void {
+    this.router.navigate(['/posts', publicId]);
   }
 
   /** Navigates to a user's personal profile view. */
