@@ -12,7 +12,6 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { PostService } from '../../../core/services/post.service';
 import { MediaService } from '../../../core/services/media.service';
 import { AuthService } from '../../../core/services/auth.service';
-import { ProfileService } from '../../../core/services/profile.service';
 
 @Component({
   selector: 'app-create-post',
@@ -46,7 +45,6 @@ export class CreatePostComponent implements OnInit {
     private mediaService: MediaService,
     private router: Router,
     private authService: AuthService,
-    private profileService: ProfileService
   ) {
     this.postForm = this.fb.group({
       title: ['', [Validators.required, Validators.maxLength(100)]],
@@ -55,16 +53,18 @@ export class CreatePostComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    const username = this.authService.getUsername();
-    if (username) {
-      this.profileService.getProfile(username).subscribe({
-        next: (profile) => {
+    // Reuse the cached profile populated by AuthService — works for cold
+    // starts too (post-refresh the JWT already proves identity, even when
+    // getUsername() returns null until the profile fetch resolves).
+    this.authService.ensureProfileLoaded().subscribe({
+      next: (profile) => {
+        if (profile) {
           this.currentUserAvatarUrl = profile.avatarUrl;
           this.currentUserDisplayName = profile.displayName || profile.username;
-        },
-        error: (err) => console.error('Failed to load profile for creator avatar', err)
-      });
-    }
+        }
+      },
+      error: (err) => console.error('Failed to load profile for creator avatar', err)
+    });
   }
 
   onFileSelected(event: Event): void {

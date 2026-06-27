@@ -71,7 +71,6 @@ public class ProfileService {
                 }
 
                 return ProfileResponse.builder()
-                                .id(targetUser.getId())
                                 .publicId(targetUser.getPublicId())
                                 .username(targetUser.getUsername())
                                 .displayName(profile.getDisplayName())
@@ -207,11 +206,6 @@ public class ProfileService {
                 User currentUser = null;
                 if (currentUserPublicId != null) {
                         currentUser = userRepository.findByPublicId(currentUserPublicId).orElse(null);
-                        if (currentUser != null && (userBlockRepository.existsByBlockerAndBlocked(currentUser,
-                                        targetUser) ||
-                                        userBlockRepository.existsByBlockerAndBlocked(targetUser, currentUser))) {
-                                return List.of();
-                        }
                 }
 
                 int safeSize = Math.min(Math.max(size, 1), 100);
@@ -219,6 +213,8 @@ public class ProfileService {
                                 safeSize);
                 List<Long> followerIds = subscriptionRepository
                                 .findFollowerUserIdsByFollowedIdPaged(targetUser.getId(), pageable);
+                // Per-user block status (isBlocked / isBlockingMe) is computed below in
+                // getProfiles — listing your followers is unconditional.
                 List<User> followers = userRepository.findAllById(followerIds);
                 return getProfiles(followers, currentUser);
         }
@@ -230,11 +226,6 @@ public class ProfileService {
                 User currentUser = null;
                 if (currentUserPublicId != null) {
                         currentUser = userRepository.findByPublicId(currentUserPublicId).orElse(null);
-                        if (currentUser != null && (userBlockRepository.existsByBlockerAndBlocked(currentUser,
-                                        targetUser) ||
-                                        userBlockRepository.existsByBlockerAndBlocked(targetUser, currentUser))) {
-                                return List.of();
-                        }
                 }
 
                 int safeSize = Math.min(Math.max(size, 1), 100);
@@ -242,6 +233,7 @@ public class ProfileService {
                                 safeSize);
                 List<Long> followedIds = subscriptionRepository
                                 .findFollowedUserIdsByFollowerIdPaged(targetUser.getId(), pageable);
+                // Per-user block status is computed in getProfiles below.
                 List<User> followed = userRepository.findAllById(followedIds);
                 return getProfiles(followed, currentUser);
         }
@@ -325,7 +317,6 @@ public class ProfileService {
                         boolean isBlockingMe = blockingMeIds.contains(u.getId());
 
                         return ProfileResponse.builder()
-                                        .id(u.getId())
                                         .publicId(u.getPublicId())
                                         .username(u.getUsername())
                                         .displayName(profile != null ? profile.getDisplayName() : null)

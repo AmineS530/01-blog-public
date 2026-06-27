@@ -1,7 +1,8 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, BehaviorSubject, tap } from 'rxjs';
+import { Observable, BehaviorSubject, of, tap, shareReplay, throwError } from 'rxjs';
 import { RegisterRequest, LoginRequest, AuthResponse } from '../../shared/models/auth.models';
+import { ProfileResponse } from '../../shared/models/profile.models';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
@@ -12,6 +13,17 @@ export class AuthService {
 
   private usernameSubject = new BehaviorSubject<string | null>(null);
   public username$ = this.usernameSubject.asObservable();
+
+  // Cached ProfileResponse for the current user, populated exactly once
+  // per session (refresh, login, or after register). Reset on logout.
+  // All consumers with the same role should read from this rather than
+  // calling /api/profiles/{username} — it's the same payload either way.
+  private profileSubject = new BehaviorSubject<ProfileResponse | null>(null);
+  public profile$ = this.profileSubject.asObservable();
+
+  // In-flight request, if any, shareReplay'd so concurrent subscribers don't
+  // kick off duplicate HTTP calls for the same user.
+  private profileFetch$?: Observable<ProfileResponse>;
 
   constructor(private http: HttpClient) {
     this.loggedInSubject = new BehaviorSubject<boolean>(this.isLoggedIn());
@@ -106,20 +118,111 @@ export class AuthService {
   }
 
   /**
-   * Rehydrates the username after a page refresh by calling /me.
-   * Must be called from outside AuthService (e.g. app.ts ngOnInit) -
-   * calling it from this service's own constructor causes a circular
-   * DI error (NG0200) because the auth interceptor injects AuthService.
+   * Rehydrates the current user's profile after a page refresh / navigation
+   * by calling /api/profiles/me. The endpoint derives identity purely from
+   * the JWT (its `sub` claim holds the publicId), so we don't need to know
+   * the username up front — that comes back in the response and is then
+   * mirrored to usernameSubject.
+   *
+   * Must be called from outside AuthService (e.g. app.ts ngOnInit) — calling
+   * it from this service's own constructor causes a circular DI error
+   * (NG0200) because the auth interceptor injects AuthService.
+   *
+   * Concurrent callers share the same in-flight HTTP request (shareReplay in
+   * fetchMyProfile), so even if 3 subscribers attach "simultaneously", only
+   * one HTTP call goes out.
    */
-  loadCurrentUser(): Observable<{ username: string }> {
-    return this.http.get<{ username: string }>('http://localhost:8080/api/profiles/me').pipe(
-      tap((res) => this.usernameSubject.next(res.username)),
+  loadCurrentUser(): Observable<ProfileResponse> {
+    if (!this.isLoggedIn() || this.isTokenExpired()) {
+      // Defensive: log out if the token is gone or expired so cached state
+      // doesn't drift. Callers should also drive initial load off isLoggedIn.
+      this.loggedInSubject.next(false);
+      return throwError(() => new Error('Cannot rehydrate: not logged in'));
+    }
+    return this.fetchMyProfile().pipe(
+      tap((profile) => {
+        this.usernameSubject.next(profile.username);
+        this.profileSubject.next(profile);
+      }),
     );
+  }
+
+  /**
+   * Fetches the current user's ProfileResponse, cached so concurrent
+   * subscribers share a single HTTP call. Used for cold-start rehydration
+   * (post page refresh / navigation), where we only have the JWT-derived
+   * publicId and not the username.
+   *
+   * The endpoint is /api/profiles/me, which the backend resolves via the
+   * authenticated principal — so no {username} segment is required up front.
+   */
+  private fetchMyProfile(): Observable<ProfileResponse> {
+    // In-flight request — shareReplay ensures all subscribers get the same
+    // response and one HTTP call goes out, not N.
+    if (this.profileFetch$) {
+      return this.profileFetch$;
+    }
+    const req = this.http.get<ProfileResponse>(`${this.apiUrl.replace('/auth', '/profiles')}/me`);
+    // shareReplay: subsequent subscribers get the cached result without a
+    // new HTTP call. refCount:false so the slot stays hot while a request is
+    // pending even if the first subscriber retires mid-flight.
+    const shared = req.pipe(shareReplay({ bufferSize: 1, refCount: false }));
+    this.profileFetch$ = shared;
+    // Clear the in-flight slot when the request settles (success or error)
+    shared.subscribe({
+      complete: () => (this.profileFetch$ = undefined),
+      error: () => (this.profileFetch$ = undefined),
+    });
+    return shared;
+  }
+
+  /** Synchronous read of the cached profile (null if not yet loaded). */
+  getCachedProfile(): ProfileResponse | null {
+    return this.profileSubject.getValue();
+  }
+
+  /**
+   * Components call this when they want the current user's profile but don't
+   * want to be the one responsible for caching it. Behavior:
+   *   - Cache hit → emit cached value, no HTTP call.
+   *   - Cache miss, logged in → fire one /api/profiles/me, cache, emit.
+   *   - Cache miss, logged out → emit null.
+   *
+   * Uses /api/profiles/me (not /api/profiles/{username}) because we don't
+   * necessarily know the username yet on a cold page-load — only the
+   * JWT-derived publicId is available. Concurrent callers share the same
+   * in-flight HTTP request (shareReplay in fetchMyProfile).
+   */
+  ensureProfileLoaded(): Observable<ProfileResponse | null> {
+    const cached = this.profileSubject.getValue();
+    if (cached) {
+      return of(cached);
+    }
+    if (!this.isLoggedIn()) {
+      return of(null);
+    }
+    // fetchMyProfile → /api/profiles/me; no username needed up front.
+    // Mirror to profileSubject on success so future calls are cache hits.
+    return this.fetchMyProfile().pipe(
+      tap((p) => {
+        this.profileSubject.next(p);
+        if (!this.getUsername()) {
+          this.usernameSubject.next(p.username);
+        }
+      }),
+    );
+  }
+
+  /** Invalidate the cached profile (call after mutations that change profile fields). */
+  invalidateProfileCache(): void {
+    this.profileSubject.next(null);
+    this.profileFetch$ = undefined;
   }
 
   private saveSession(res: AuthResponse): void {
     localStorage.setItem('token', res.token);
     this.usernameSubject.next(res.username);
     this.loggedInSubject.next(true);
+    // Profile will be lazily fetched by the first component that needs it.
   }
 }

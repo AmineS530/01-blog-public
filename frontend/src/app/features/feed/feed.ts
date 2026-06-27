@@ -79,16 +79,19 @@ export class FeedComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
-    this.currentUsername = this.authService.getUsername() ?? '';
-    if (this.currentUsername) {
-      this.profileService.getProfile(this.currentUsername).subscribe({
-        next: (profile) => {
+    // Reuse the cached profile populated by AuthService. The result also
+    // gives us the username, which components elsewhere still read via
+    // authService.getUsername() — we mirror it locally for this view's
+    // isAuthor checks.
+    this.authService.ensureProfileLoaded().subscribe({
+      next: (profile) => {
+        if (profile) {
+          this.currentUsername = profile.username;
           this.currentUserAvatarUrl = profile.avatarUrl;
           this.currentUserDisplayName = profile.displayName || profile.username;
-        },
-        error: (err) => console.error('Failed to load profile for quick post avatar', err),
-      });
-    }
+        }
+      },
+    });
 
     this.loadPosts();
     this.loadRecommendedUsers();

@@ -16,7 +16,6 @@ import { MediaService } from '../../../core/services/media.service';
 import { ReportService } from '../../../core/services/report.service';
 import { FeedbackService } from '../../../core/services/feedback.service';
 import { RealtimeService } from '../../../core/services/realtime.service';
-import { ProfileService } from '../../../core/services/profile.service';
 import { PostResponse, CommentResponse } from '../../../shared/models/post.models';
 import { MarkdownPipe } from '../../../shared/pipes/markdown.pipe';
 import { Subscription } from 'rxjs';
@@ -72,7 +71,6 @@ export class SinglePostComponent implements OnInit, OnDestroy {
     private fb: FormBuilder,
     private feedback: FeedbackService,
     private realtimeService: RealtimeService,
-    private profileService: ProfileService,
   ) {
     this.commentForm = this.fb.group({
       content: ['', [Validators.required, Validators.maxLength(1000)]],
@@ -83,16 +81,23 @@ export class SinglePostComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    this.currentUsername = this.authService.getUsername() ?? '';
-    if (this.currentUsername) {
-      this.profileService.getProfile(this.currentUsername).subscribe({
-        next: (profile) => {
+    // Reuse the cached profile populated by AuthService. The username is
+    // resolved from the fetched profile (not the JWT) since the JWT's `sub`
+    // claim holds the publicId, not the username.
+    this.authService.ensureProfileLoaded().subscribe({
+      next: (profile) => {
+        if (profile) {
+          this.currentUsername = profile.username;
           this.currentUserAvatarUrl = profile.avatarUrl;
           this.currentUserDisplayName = profile.displayName || profile.username;
-        },
-        error: (err) => console.error('Failed to load profile for commenter avatar', err),
-      });
-    }
+          // If the post landed before the profile did, recompute isAuthor.
+          // Without this, the edit/delete button stays hidden on cold-start.
+          if (this.post) {
+            this.isAuthor = profile.username === this.post.authorUsername;
+          }
+        }
+      },
+    });
 
     const publicId = this.route.snapshot.paramMap.get('publicId') ?? '';
     if (!publicId) {

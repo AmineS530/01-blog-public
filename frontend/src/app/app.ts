@@ -17,7 +17,6 @@ import { ThemeService } from './core/services/theme.service';
 import { FeedbackService } from './core/services/feedback.service';
 import { MessageService } from './core/services/message.service';
 import { RealtimeService } from './core/services/realtime.service';
-import { ProfileService } from './core/services/profile.service';
 import { NotificationsComponent } from './features/notifications/notifications';
 import { Subscription } from 'rxjs';
 
@@ -61,7 +60,7 @@ export class App implements OnInit, OnDestroy {
 
   private authSubscription?: Subscription;
   private messageSubscription?: Subscription;
-  private usernameSubscription?: Subscription;
+  private profileSubscription?: Subscription;
 
   constructor(
     public authService: AuthService,
@@ -71,7 +70,6 @@ export class App implements OnInit, OnDestroy {
     private messageService: MessageService,
     private realtimeService: RealtimeService,
     private router: Router,
-    private profileService: ProfileService,
   ) {}
 
   // ==========================================
@@ -79,17 +77,27 @@ export class App implements OnInit, OnDestroy {
   // ==========================================
 
   ngOnInit(): void {
+    // Mirror the cached current profile into the navbar view, reactively,
+    // without ever issuing a second HTTP call. Profile is loaded lazily by
+    // the only call site (state below) which kicks fetchMyProfile exactly once.
+    this.profileSubscription = this.authService.profile$.subscribe((profile) => {
+      this.currentUserAvatarUrl = profile?.avatarUrl ?? null;
+      this.currentUserDisplayName = profile?.displayName || profile?.username || '';
+    });
+
     this.authSubscription = this.authService.loggedIn$.subscribe((loggedIn) => {
       if (loggedIn) {
         this.fetchUnreadCount();
         this.fetchUnreadMessagesCount();
         this.setupRealtimeMessages();
-        if (this.authService.getUsername()) {
-          this.fetchUserProfile();
-        } else {
-          // Username isn't known yet right after a refresh (only set on login or here) - rehydrate it first.
+        // Make sure the cached profile is loaded exactly once. Will skip fetching
+        // if a previous load (e.g. another component calling it) already populated
+        // the cache. Either way: only one HTTP call to /api/profiles/me.
+        // Cold-start note: at this point getUsername() may still be null because
+        // the username only becomes known after /me resolves — that's fine,
+        // loadCurrentUser has its own guard.
+        if (!this.authService.getCachedProfile()) {
           this.authService.loadCurrentUser().subscribe({
-            next: () => this.fetchUserProfile(),
             error: (err) => console.error('Failed to rehydrate current user', err),
           });
         }
@@ -102,11 +110,7 @@ export class App implements OnInit, OnDestroy {
           this.messageSubscription.unsubscribe();
           this.messageSubscription = undefined;
         }
-      }
-    });
-    this.usernameSubscription = this.authService.username$.subscribe((username) => {
-      if (username) {
-        this.fetchUserProfile();
+        this.authService.invalidateProfileCache();
       }
     });
   }
@@ -114,20 +118,7 @@ export class App implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     this.authSubscription?.unsubscribe();
     this.messageSubscription?.unsubscribe();
-    this.usernameSubscription?.unsubscribe();
-  }
-
-  fetchUserProfile(): void {
-    const username = this.authService.getUsername();
-    if (username) {
-      this.profileService.getProfile(username).subscribe({
-        next: (profile) => {
-          this.currentUserAvatarUrl = profile.avatarUrl;
-          this.currentUserDisplayName = profile.displayName || profile.username;
-        },
-        error: (err) => console.error('Failed to load profile for navbar avatar', err),
-      });
-    }
+    this.profileSubscription?.unsubscribe();
   }
 
   // ==========================================
