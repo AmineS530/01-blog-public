@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, Location } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
@@ -45,6 +45,7 @@ export class CreatePostComponent implements OnInit {
     private mediaService: MediaService,
     private router: Router,
     private authService: AuthService,
+    private location: Location,
   ) {
     this.postForm = this.fb.group({
       title: ['', [Validators.required, Validators.maxLength(100)]],
@@ -116,6 +117,6 @@ export class CreatePostComponent implements OnInit {
   }
 
   cancel() {
-    this.router.navigate(['/feed']);
+    this.location.back();
   }
 }

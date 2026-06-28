@@ -80,10 +80,18 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                 return;
             }
 
+            com.zero1blog.backend.model.User dbUser = userOpt.get();
+            if (dbUser.getBannedUntil() != null && dbUser.getBannedUntil().isBefore(java.time.LocalDateTime.now())) {
+                dbUser.setBanned(false);
+                dbUser.setBanReason(null);
+                dbUser.setBannedUntil(null);
+                userRepository.save(dbUser);
+            }
+
             // Security constraint: Abort authenticated session mapping if the user has been banned
-            if (userOpt.get().isBanned()) {
+            if (dbUser.isBanned()) {
                 log.warn("Banned user attempted access: {}", publicId);
-                writeErrorResponse(response, "Your account has been banned", HttpServletResponse.SC_FORBIDDEN);
+                writeErrorResponse(response, "Your account has been banned: " + (dbUser.getBanReason() != null ? dbUser.getBanReason() : "No reason provided"), HttpServletResponse.SC_FORBIDDEN);
                 return;
             }
 

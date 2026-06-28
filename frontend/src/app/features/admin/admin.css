@@ -466,3 +466,97 @@
   width: 16px;
   height: 16px;
 }
+
+/* Custom Admin Edit Modal styling */
+.admin-edit-modal-card {
+  width: 100%;
+  max-width: 440px !important;
+  border-radius: 24px !important;
+  border: 1px solid var(--mat-sys-outline-variant) !important;
+  background: var(--mat-sys-surface-container) !important;
+  padding: 32px 28px !important;
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.15) !important;
+  animation: scaleUpModal 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+.admin-edit-modal-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.admin-edit-modal-header h2 {
+  font-size: 22px;
+  font-weight: 850;
+  letter-spacing: -0.5px;
+  color: var(--mat-sys-on-surface);
+  margin: 0;
+}
+
+.admin-edit-modal-body p {
+  font-size: 14.5px;
+  line-height: 1.6;
+  color: var(--mat-sys-on-surface-variant);
+  margin: 0 0 20px 0;
+}
+
+.admin-edit-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.admin-edit-modal-cancel-btn {
+  border-radius: 12px !important;
+  font-weight: 700 !important;
+  padding: 8px 20px !important;
+  color: var(--mat-sys-on-surface) !important;
+}
+
+.admin-edit-modal-confirm-btn {
+  border-radius: 12px !important;
+  font-weight: 700 !important;
+  padding: 8px 24px !important;
+  background: var(--mat-sys-primary) !important;
+  color: var(--mat-sys-on-primary) !important;
+}
+
+.admin-edit-modal-confirm-btn:disabled {
+  opacity: 0.5;
+}
+
+/* Modal Stacking Overlay Styles */
+.confirm-modal-overlay {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  background: rgba(0, 0, 0, 0.45) !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+  z-index: 99999 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 24px !important;
+  animation: fadeInModal 0.25s ease-out !important;
+}
+
+@keyframes fadeInModal {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes scaleUpModal {
+  from {
+    transform: scale(0.9) translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1) translateY(0);
+    opacity: 1;
+  }
+}

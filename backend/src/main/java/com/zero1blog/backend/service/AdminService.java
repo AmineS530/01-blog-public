@@ -67,13 +67,26 @@ public class AdminService {
     }
 
     @Transactional(readOnly = true)
-    public Page<UserAdminResponse> getUsers(String query, int page, int limit) {
+    public Page<UserAdminResponse> getUsers(String query, int page, int limit, String sortBy, String direction) {
         int safeLimit = Math.min(limit, MAX_PAGE_SIZE);
+        
+        String sortProperty = sortBy;
+        if ("displayName".equals(sortBy)) {
+            sortProperty = "profile.displayName";
+        } else if ("active".equals(sortBy)) {
+            sortProperty = "isBanned";
+        }
+        
+        org.springframework.data.domain.Sort sort = "desc".equalsIgnoreCase(direction) ?
+                org.springframework.data.domain.Sort.by(sortProperty).descending() :
+                org.springframework.data.domain.Sort.by(sortProperty).ascending();
+                
+        PageRequest pageRequest = PageRequest.of(page, safeLimit, sort);
         Page<User> users;
         if (query != null && !query.isEmpty()) {
-            users = userRepository.findByUsernameOrEmailWithProfile(query, query, PageRequest.of(page, safeLimit));
+            users = userRepository.findByUsernameOrEmailWithProfile(query, query, pageRequest);
         } else {
-            users = userRepository.findAllWithProfile(PageRequest.of(page, safeLimit));
+            users = userRepository.findAllWithProfile(pageRequest);
         }
         return users.map(this::toUserAdminResponse);
     }
@@ -119,6 +132,10 @@ public class AdminService {
         boolean newStatus = !user.isBanned();
         log.warn("Admin toggling ban for {}: {}", username, newStatus);
         user.setBanned(newStatus);
+        if (!newStatus) {
+            user.setBanReason(null);
+            user.setBannedUntil(null);
+        }
         userRepository.save(user);
     }
 
@@ -134,7 +151,7 @@ public class AdminService {
     }
 
     @Transactional
-    public void banUser(String username, String adminPublicId) {
+    public void banUser(String username, String reason, Integer durationMinutes, String adminPublicId) {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
         User caller = userRepository.findByPublicId(adminPublicId)
@@ -150,8 +167,14 @@ public class AdminService {
             }
         }
 
-        log.warn("Admin BANNING user: {}", username);
+        log.warn("Admin BANNING user: {}. Reason: {}, Duration: {} mins", username, reason, durationMinutes);
         user.setBanned(true);
+        user.setBanReason(reason != null && !reason.isBlank() ? reason.trim() : "No reason provided");
+        if (durationMinutes != null && durationMinutes > 0) {
+            user.setBannedUntil(LocalDateTime.now().plusMinutes(durationMinutes));
+        } else {
+            user.setBannedUntil(null); // Permanent ban
+        }
         userRepository.save(user);
     }
 
@@ -186,6 +209,8 @@ public class AdminService {
                 .email(user.getEmail())
                 .role(user.getRole().name())
                 .isBanned(user.isBanned())
+                .banReason(user.getBanReason())
+                .bannedUntil(user.getBannedUntil())
                 .avatarUrl(user.getProfile() != null ? user.getProfile().getAvatarUrl() : null)
                 .displayName(user.getDisplayName())
                 .createdAt(user.getCreatedAt())
@@ -193,13 +218,58 @@ public class AdminService {
     }
 
     @Transactional
-    public void updateDisplayName(String username, String displayName, String callerUsername) {
-        log.info("Admin {} updating display name for user {}: {}", callerUsername, username, displayName);
+    public void updateDisplayName(String username, String displayName, String callerPublicId) {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        User caller = userRepository.findByPublicId(callerPublicId)
+                .orElseThrow(() -> new ResourceNotFoundException("Caller not found"));
+
+        if (user.getRole() == User.Role.ADMIN || user.getRole() == User.Role.SUPER_ADMIN) {
+            if (caller.getRole() != User.Role.SUPER_ADMIN) {
+                throw new UnauthorizedActionException("Only SUPER_ADMIN can modify administrator profiles.");
+            }
+        }
+
+        log.info("Admin {} updating display name for user {}: {}", caller.getUsername(), username, displayName);
         UserProfile profile = userProfileRepository.findByUser(user)
                 .orElse(UserProfile.builder().user(user).build());
         profile.setDisplayName(displayName);
         userProfileRepository.save(profile);
+    }
+
+    @Transactional
+    public void updateUsername(String oldUsername, String newUsername, String callerPublicId) {
+        User user = userRepository.findByUsername(oldUsername)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        User caller = userRepository.findByPublicId(callerPublicId)
+                .orElseThrow(() -> new ResourceNotFoundException("Caller not found"));
+
+        if (user.getRole() == User.Role.ADMIN || user.getRole() == User.Role.SUPER_ADMIN) {
+            if (caller.getRole() != User.Role.SUPER_ADMIN) {
+                throw new UnauthorizedActionException("Only SUPER_ADMIN can modify administrator profiles.");
+            }
+        }
+
+        log.info("Admin {} updating username for user {}: {}", caller.getUsername(), oldUsername, newUsername);
+        
+        if (newUsername == null || newUsername.isBlank()) {
+            throw new BadRequestException("Username cannot be empty");
+        }
+        
+        newUsername = newUsername.trim();
+        
+        if (newUsername.length() < 3 || newUsername.length() > 30) {
+            throw new BadRequestException("Username must be between 3 and 30 characters.");
+        }
+        if (!newUsername.matches("^[a-zA-Z0-9_-]+$")) {
+            throw new BadRequestException("Username can only contain letters, numbers, underscores, and hyphens.");
+        }
+        
+        if (!user.getUsername().equals(newUsername) && userRepository.existsByUsername(newUsername)) {
+            throw new BadRequestException("Username is already taken.");
+        }
+        
+        user.setUsername(newUsername);
+        userRepository.save(user);
     }
 }

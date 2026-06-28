@@ -14,6 +14,7 @@ import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatSortModule, Sort } from '@angular/material/sort';
 import { FeedbackService } from '../../core/services/feedback.service';
 import { AuthService } from '../../core/services/auth.service';
 
@@ -39,6 +40,7 @@ import { AuthService } from '../../core/services/auth.service';
     MatChipsModule,
     MatTooltipModule,
     MatProgressSpinnerModule,
+    MatSortModule,
   ],
   templateUrl: './admin.html',
   styleUrl: './admin.css'
@@ -84,6 +86,28 @@ export class AdminComponent implements OnInit {
 
   /** String query utilized to filter posts locally by title, author or content. */
   postSearchQuery = '';
+
+  // Sorting properties
+  userSortBy = 'username';
+  userSortDirection = 'asc';
+
+  // Custom edit modal states
+  showEditModal = false;
+  editModalTitle = '';
+  editModalDescription = '';
+  editModalLabel = '';
+  editModalPlaceholder = '';
+  editModalValue = '';
+  editModalError = '';
+  editModalMode: 'username' | 'displayName' = 'username';
+  editingUser: any = null;
+
+  // Custom ban modal states
+  showBanModal = false;
+  banningUser: any = null;
+  banReason = '';
+  banValue = 1;
+  banUnit = 'days';
 
   constructor(
     private http: HttpClient,
@@ -165,7 +189,7 @@ export class AdminComponent implements OnInit {
    * Integrates search filters if userSearchQuery is defined.
    */
   fetchUsers(): void {
-    let url = `http://localhost:8080/api/admin/users?page=${this.pageIndex}&limit=${this.pageSize}`;
+    let url = `http://localhost:8080/api/admin/users?page=${this.pageIndex}&limit=${this.pageSize}&sortBy=${this.userSortBy}&direction=${this.userSortDirection}`;
     if (this.userSearchQuery) {
       url += `&query=${this.userSearchQuery}`;
     }
@@ -176,6 +200,13 @@ export class AdminComponent implements OnInit {
       },
       error: (err) => console.error('Failed to fetch users', err),
     });
+  }
+
+  onSortChange(sort: Sort): void {
+    this.userSortBy = sort.active;
+    this.userSortDirection = sort.direction || 'asc';
+    this.pageIndex = 0; // Reset pagination when sorting changes
+    this.fetchUsers();
   }
 
   /**
@@ -248,33 +279,91 @@ export class AdminComponent implements OnInit {
    * @param user Target user object containing username and status.
    */
   toggleBan(user: any): void {
-    const action = user.isBanned ? 'unban' : 'ban';
-    this.feedback.askConfirmation({
-      title: `${action.toUpperCase()} USER`,
-      message: `Are you sure you want to ${action} user "${user.username}"?`,
-      confirmText: action.toUpperCase(),
-      onConfirm: () => {
-        this.http
-          .post(`http://localhost:8080/api/admin/users/${user.username}/toggle-ban`, {})
-          .subscribe({
-            next: () => {
-              user.isBanned = !user.isBanned;
-              this.feedback.showToast(
-                `User ${user.username} has been ${action}ned successfully!`,
-                'success',
-              );
-              this.fetchStats();
-            },
-            error: (err) => {
-              this.feedback.showToast(
-                'Failed to update ban status. Note: You cannot ban yourself.',
-                'error',
-              );
-              console.error(err);
-            },
-          });
-      },
-    });
+    if (user.isBanned) {
+      // Unban flow: simple confirmation
+      this.feedback.askConfirmation({
+        title: 'UNBAN USER',
+        message: `Are you sure you want to unban user "${user.username}"?`,
+        confirmText: 'UNBAN',
+        onConfirm: () => {
+          this.http
+            .post(`http://localhost:8080/api/admin/users/${user.username}/toggle-ban`, {})
+            .subscribe({
+              next: () => {
+                user.isBanned = false;
+                user.banReason = null;
+                user.bannedUntil = null;
+                this.feedback.showToast(
+                  `User ${user.username} has been unbanned successfully!`,
+                  'success',
+                );
+                this.fetchStats();
+              },
+              error: (err) => {
+                this.feedback.showToast(
+                  'Failed to unban user.',
+                  'error',
+                );
+                console.error(err);
+              },
+            });
+        },
+      });
+    } else {
+      // Ban flow: open custom ban modal
+      this.banningUser = user;
+      this.banReason = '';
+      this.banValue = 1;
+      this.banUnit = 'days';
+      this.showBanModal = true;
+    }
+  }
+
+  closeBanModal(): void {
+    this.showBanModal = false;
+    this.banningUser = null;
+    this.banReason = '';
+    this.banValue = 1;
+    this.banUnit = 'days';
+  }
+
+  confirmBan(): void {
+    if (!this.banningUser) return;
+    const trimmedReason = this.banReason.trim();
+    if (!trimmedReason) {
+      this.feedback.showToast('Please specify a ban reason.', 'error');
+      return;
+    }
+
+    let durationMinutes = -1;
+    if (this.banUnit !== 'permanent') {
+      const val = Math.max(1, this.banValue);
+      if (this.banUnit === 'hours') {
+        durationMinutes = val * 60;
+      } else if (this.banUnit === 'days') {
+        durationMinutes = val * 60 * 24;
+      } else if (this.banUnit === 'months') {
+        durationMinutes = val * 60 * 24 * 30;
+      }
+    }
+
+    this.http
+      .post(`http://localhost:8080/api/admin/users/${this.banningUser.username}/ban`, {
+        reason: trimmedReason,
+        durationMinutes: durationMinutes
+      })
+      .subscribe({
+        next: () => {
+          this.feedback.showToast(`User ${this.banningUser.username} has been banned successfully!`, 'success');
+          this.refreshAll();
+          this.closeBanModal();
+        },
+        error: (err: any) => {
+          const errorMsg = err.error?.error || 'Failed to ban user. Note: You cannot ban yourself.';
+          this.feedback.showToast(errorMsg, 'error');
+          console.error('Failed to ban user', err);
+        }
+      });
   }
 
   /**
@@ -536,21 +625,98 @@ export class AdminComponent implements OnInit {
    * Prompts the administrator to edit a user's display name, updates it on the backend, and updates the local user object.
    */
   editDisplayName(user: any): void {
-    const newName = prompt(`Edit display name for ${user.username}:`, user.displayName || user.username);
-    if (newName === null) return; // Cancelled by user
-    
-    this.http
-      .post(`http://localhost:8080/api/admin/users/${user.username}/display-name`, { displayName: newName })
-      .subscribe({
-        next: () => {
-          user.displayName = newName;
-          this.feedback.showToast(`Display name updated successfully!`, 'success');
-        },
-        error: (err) => {
-          this.feedback.showToast('Failed to update display name.', 'error');
-          console.error('Failed to update display name', err);
-        },
-      });
+    this.editingUser = user;
+    this.editModalMode = 'displayName';
+    this.editModalTitle = 'Edit Display Name';
+    this.editModalDescription = `Enter a new display name for user ${user.username}.`;
+    this.editModalLabel = 'Display Name';
+    this.editModalPlaceholder = 'e.g. John Doe';
+    this.editModalValue = user.displayName || user.username || '';
+    this.editModalError = '';
+    this.showEditModal = true;
+  }
+
+  /**
+   * Prompts the administrator to edit a user's username, updates it on the backend, and refreshes the data.
+   */
+  editUsername(user: any): void {
+    this.editingUser = user;
+    this.editModalMode = 'username';
+    this.editModalTitle = 'Edit Username';
+    this.editModalDescription = `Enter a new username for user ${user.username}. This will update their login username.`;
+    this.editModalLabel = 'Username';
+    this.editModalPlaceholder = 'e.g. johndoe';
+    this.editModalValue = user.username || '';
+    this.editModalError = '';
+    this.showEditModal = true;
+  }
+
+  validateEditModalInput(): void {
+    const val = this.editModalValue.trim();
+    if (this.editModalMode === 'displayName') {
+      if (!val) {
+        this.editModalError = 'Display name cannot be empty.';
+      } else if (val.length > 50) {
+        this.editModalError = 'Display name cannot exceed 50 characters.';
+      } else {
+        this.editModalError = '';
+      }
+    } else {
+      if (!val) {
+        this.editModalError = 'Username cannot be empty.';
+      } else if (val.length < 3 || val.length > 30) {
+        this.editModalError = 'Username must be between 3 and 30 characters.';
+      } else if (!/^[a-zA-Z0-9_-]+$/.test(val)) {
+        this.editModalError = 'Username can only contain letters, numbers, underscores, and hyphens.';
+      } else {
+        this.editModalError = '';
+      }
+    }
+  }
+
+  closeEditModal(): void {
+    this.showEditModal = false;
+    this.editingUser = null;
+    this.editModalValue = '';
+    this.editModalError = '';
+  }
+
+  confirmEditModal(): void {
+    this.validateEditModalInput();
+    if (this.editModalError) return;
+
+    const val = this.editModalValue.trim();
+    if (this.editModalMode === 'displayName') {
+      this.http
+        .post(`http://localhost:8080/api/admin/users/${this.editingUser.username}/display-name`, { displayName: val })
+        .subscribe({
+          next: () => {
+            this.editingUser.displayName = val;
+            this.feedback.showToast(`Display name updated successfully!`, 'success');
+            this.closeEditModal();
+          },
+          error: (err: any) => {
+            const errorMsg = err.error?.error || 'Failed to update display name.';
+            this.feedback.showToast(errorMsg, 'error');
+            console.error('Failed to update display name', err);
+          },
+        });
+    } else {
+      this.http
+        .post(`http://localhost:8080/api/admin/users/${this.editingUser.username}/username`, { username: val })
+        .subscribe({
+          next: () => {
+            this.feedback.showToast(`Username updated successfully!`, 'success');
+            this.refreshAll();
+            this.closeEditModal();
+          },
+          error: (err: any) => {
+            const errorMsg = err.error?.error || 'Failed to update username.';
+            this.feedback.showToast(errorMsg, 'error');
+            console.error('Failed to update username', err);
+          },
+        });
+    }
   }
 
   // ==========================================

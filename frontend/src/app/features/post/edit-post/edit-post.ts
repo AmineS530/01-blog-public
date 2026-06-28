@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, Location } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
@@ -47,7 +47,8 @@ export class EditPostComponent implements OnInit {
     private postService: PostService,
     private mediaService: MediaService,
     private authService: AuthService,
-    private feedback: FeedbackService
+    private feedback: FeedbackService,
+    private location: Location
   ) {
     this.postForm = this.fb.group({
       title: ['', [Validators.required, Validators.maxLength(100)]],
@@ -128,6 +129,6 @@ export class EditPostComponent implements OnInit {
   }
 
   cancel(): void {
-    this.router.navigate(['/posts', this.publicId]);
+    this.location.back();
   }
 }

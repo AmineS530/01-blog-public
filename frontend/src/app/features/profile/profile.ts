@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, Location } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
@@ -76,6 +76,7 @@ export class ProfileComponent implements OnInit {
     private mediaService: MediaService,
     private reportService: ReportService,
     private feedback: FeedbackService,
+    private location: Location,
   ) {}
 
   ngOnInit(): void {
@@ -239,7 +240,7 @@ export class ProfileComponent implements OnInit {
   }
 
   back(): void {
-    this.router.navigate(['/feed']);
+    this.location.back();
   }
 
   navigateToProfile(username: string): void {

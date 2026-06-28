@@ -72,6 +72,22 @@ public class User {
     @Builder.Default
     private boolean isBanned = false;
 
+    @Column(name = "ban_reason")
+    private String banReason;
+
+    @Column(name = "banned_until")
+    private LocalDateTime bannedUntil;
+
+    public boolean isBanned() {
+        if (!isBanned) {
+            return false;
+        }
+        if (bannedUntil != null && bannedUntil.isBefore(LocalDateTime.now())) {
+            return false;
+        }
+        return true;
+    }
+
     /**
      * Timestamp of the last username change for this user. Null if the user has
      * never changed their username. Used to enforce a cooldown period between

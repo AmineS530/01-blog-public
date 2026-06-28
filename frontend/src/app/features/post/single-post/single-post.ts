@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, Location } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
@@ -71,6 +71,7 @@ export class SinglePostComponent implements OnInit, OnDestroy {
     private fb: FormBuilder,
     private feedback: FeedbackService,
     private realtimeService: RealtimeService,
+    private location: Location,
   ) {
     this.commentForm = this.fb.group({
       content: ['', [Validators.required, Validators.maxLength(1000)]],
@@ -318,7 +319,7 @@ export class SinglePostComponent implements OnInit, OnDestroy {
   }
 
   back(): void {
-    this.router.navigate(['/feed']);
+    this.location.back();
   }
 
   ngOnDestroy(): void {
