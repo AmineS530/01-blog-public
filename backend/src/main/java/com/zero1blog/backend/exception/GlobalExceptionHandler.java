@@ -31,6 +31,29 @@ public class GlobalExceptionHandler {
         return buildResponse(ex.getMessage(), HttpStatus.BAD_REQUEST);
     }
 
+    /**
+     * Username change cooldown violations. Returns 400 with an additional
+     * {@code nextAllowedAt} field so the UI can surface the exact instant
+     * the user becomes eligible again.
+     */
+    @ExceptionHandler(UsernameChangeCooldownException.class)
+    public ResponseEntity<Map<String, Object>> handleUsernameChangeCooldownException(UsernameChangeCooldownException ex) {
+        log.error("Username change cooldown exception: {}", ex.getMessage());
+        ResponseEntity<Map<String, Object>> base = buildResponse(ex.getMessage(), HttpStatus.BAD_REQUEST);
+        base.getBody().put("nextAllowedAt", ex.getNextAllowedAt().toString());
+        return base;
+    }
+
+    @ExceptionHandler(org.springframework.web.bind.MethodArgumentNotValidException.class)
+    public ResponseEntity<Map<String, Object>> handleValidationExceptions(org.springframework.web.bind.MethodArgumentNotValidException ex) {
+        String errorMessage = ex.getBindingResult().getFieldErrors().stream()
+                .map(org.springframework.validation.FieldError::getDefaultMessage)
+                .findFirst()
+                .orElse("Validation failed");
+        log.error("Validation error: {}", errorMessage);
+        return buildResponse(errorMessage, HttpStatus.BAD_REQUEST);
+    }
+
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<Map<String, Object>> handleRuntimeException(RuntimeException ex) {
         log.error("Unhandled runtime exception", ex); // full trace in logs only

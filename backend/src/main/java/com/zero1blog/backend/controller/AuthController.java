@@ -1,10 +1,15 @@
 package com.zero1blog.backend.controller;
 
+import java.time.LocalDateTime;
+import java.util.LinkedHashMap;
+import java.util.Map;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CookieValue;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -14,6 +19,9 @@ import com.zero1blog.backend.dto.AuthResponse;
 import com.zero1blog.backend.dto.LoginRequest;
 import com.zero1blog.backend.dto.RefreshTokenRequest;
 import com.zero1blog.backend.dto.RegisterRequest;
+import com.zero1blog.backend.exception.BadRequestException;
+import com.zero1blog.backend.model.User;
+import com.zero1blog.backend.repository.UserRepository;
 import com.zero1blog.backend.service.AuthService;
 
 import jakarta.validation.Valid;
@@ -30,6 +38,7 @@ import com.zero1blog.backend.dto.ChangeUsernameRequest;
 public class AuthController {
 
     private final AuthService authService;
+    private final UserRepository userRepository;
 
     @Value("${cookie.secure:false}")
     private boolean cookieSecure;
@@ -109,6 +118,37 @@ public class AuthController {
         }
         String newUsername = authService.changeUsername(userDetails.getUsername(), request);
         return ResponseEntity.ok(java.util.Map.of("username", newUsername));
+    }
+
+    /**
+     * Returns the configured username-change cooldown (in seconds) and the
+     * caller's next allowed change timestamp. Used by the settings UI to
+     * render a countdown and disable the submit button while the cooldown
+     * is active.
+     *
+     * LinkedHashMap preserves field order in the JSON response so the FE can
+     * rely on a stable shape during testing/devtools inspection.
+     */
+    @GetMapping("/username-cooldown")
+    public ResponseEntity<Map<String, Object>> usernameCooldown(
+            @AuthenticationPrincipal UserDetails userDetails) {
+        if (userDetails == null) {
+            return ResponseEntity.status(401).build();
+        }
+        User user = userRepository.findByPublicId(userDetails.getUsername())
+                .orElseThrow(() -> new BadRequestException("User not found"));
+
+        long cooldownSeconds = authService.getUsernameChangeCooldownSeconds();
+        LocalDateTime lastChangedAt = user.getUsernameChangedAt();
+        LocalDateTime nextAllowedAt = lastChangedAt != null
+                ? lastChangedAt.plusSeconds(cooldownSeconds)
+                : null;
+
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("cooldownSeconds", cooldownSeconds);
+        body.put("lastChangedAt", lastChangedAt != null ? lastChangedAt.toString() : null);
+        body.put("nextAllowedAt", nextAllowedAt != null ? nextAllowedAt.toString() : null);
+        return ResponseEntity.ok(body);
     }
 
     private ResponseCookie createCookie(String token) {

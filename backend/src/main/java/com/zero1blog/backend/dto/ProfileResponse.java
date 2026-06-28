@@ -32,4 +32,16 @@ public class ProfileResponse {
     // Should be treated identically to "this profile does not exist" for the caller
     // (return Not Found from /api/profiles/{username} when this flag is true).
     private boolean isBlockingMe;
+
+    /**
+     * Timestamp of the user's most recent username change, ISO-8601. Null if
+     * the user has never changed their username. The settings UI uses this
+     * together with the configured cooldown (returned by
+     * {@code GET /api/auth/username-cooldown}) to render a "you can change
+     * again in N days" countdown and to gate the username-change submit.
+     *
+     * Only meaningful for the caller's own profile; the field is nevertheless
+     * populated for any profile shape to keep the DTO uniform.
+     */
+    private String usernameChangedAt;
 }

@@ -34,7 +34,7 @@ public class SecurityConfig {
                 session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/ws/**").permitAll()
-                .requestMatchers("/api/auth/change-password", "/api/auth/change-username").authenticated()
+                .requestMatchers("/api/auth/change-password", "/api/auth/change-username", "/api/auth/username-cooldown").authenticated()
                 .requestMatchers("/api/auth/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/posts/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/profiles/me").authenticated()

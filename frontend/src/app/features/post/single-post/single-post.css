@@ -109,6 +109,8 @@
   color: var(--mat-sys-on-surface);
   line-height: 1.2;
   padding: 0 16px;
+  word-break: break-word;
+  overflow-wrap: break-word;
 }
 
 .content {
@@ -118,6 +120,8 @@
   margin: 0 0 16px 0;
   white-space: pre-wrap;
   padding: 0 16px;
+  word-break: break-word;
+  overflow-wrap: break-word;
 }
 
 .divider {
@@ -188,6 +192,8 @@
   font-size: 15px;
   margin: 0 0 8px 0;
   white-space: pre-wrap;
+  word-break: break-word;
+  overflow-wrap: break-word;
 }
 
 .comment-actions {

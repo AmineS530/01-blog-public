@@ -81,6 +81,9 @@ public class ProfileService {
                                 .isFollowing(isFollowing)
                                 .isBlocked(isBlocked)
                                 .isBlockingMe(isBlockingMe)
+                                .usernameChangedAt(targetUser.getUsernameChangedAt() != null
+                                                ? targetUser.getUsernameChangedAt().toString()
+                                                : null)
                                 .build();
         }
 
@@ -327,6 +330,7 @@ public class ProfileService {
                                         .isFollowing(isFollowing)
                                         .isBlocked(isBlocked)
                                         .isBlockingMe(isBlockingMe)
+                                        .usernameChangedAt(u.getUsernameChangedAt() != null ? u.getUsernameChangedAt().toString() : null)
                                         .build();
                 }).collect(Collectors.toList());
         }

@@ -1,5 +1,9 @@
 @use '@angular/material' as mat;
 
+* {
+  word-wrap: break-word;
+}
+
 html {
   height: 100%;
   @include mat.theme(

@@ -40,6 +40,7 @@
               required
               minlength="3"
               maxlength="30"
+              pattern="^[a-zA-Z0-9_-]+$"
               placeholder="e.g. johndoe"
               #usernameInput="ngModel"
             />
@@ -47,6 +48,7 @@
             <mat-hint align="end">{{ newUsername.length }}/30</mat-hint>
             <mat-error *ngIf="usernameInput.errors?.['required']">Username is required</mat-error>
             <mat-error *ngIf="usernameInput.errors?.['minlength']">At least 3 characters required</mat-error>
+            <mat-error *ngIf="usernameInput.errors?.['pattern']">Only letters, numbers, underscores, and hyphens allowed</mat-error>
           </mat-form-field>
 
           <div class="form-actions">

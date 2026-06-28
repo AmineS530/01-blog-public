@@ -9,6 +9,18 @@
           <mat-label>Username</mat-label>
           <input matInput formControlName="username" />
           <mat-icon matPrefix>person</mat-icon>
+          <mat-error *ngIf="registerForm.get('username')?.hasError('required')">
+            Username is required
+          </mat-error>
+          <mat-error *ngIf="registerForm.get('username')?.hasError('minlength')">
+            Username must be at least 3 characters
+          </mat-error>
+          <mat-error *ngIf="registerForm.get('username')?.hasError('maxlength')">
+            Username must not exceed 30 characters
+          </mat-error>
+          <mat-error *ngIf="registerForm.get('username')?.hasError('pattern')">
+            Only letters, numbers, underscores, and hyphens allowed
+          </mat-error>
         </mat-form-field>
         <mat-form-field appearance="outline" class="auth-field">
           <mat-label>Email</mat-label>

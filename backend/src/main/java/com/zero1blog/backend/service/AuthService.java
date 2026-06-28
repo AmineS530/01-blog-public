@@ -1,5 +1,9 @@
 package com.zero1blog.backend.service;
 
+import java.time.Duration;
+import java.time.LocalDateTime;
+
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -9,6 +13,7 @@ import com.zero1blog.backend.dto.LoginRequest;
 import com.zero1blog.backend.dto.RegisterRequest;
 import com.zero1blog.backend.exception.BadRequestException;
 import com.zero1blog.backend.exception.UnauthorizedActionException;
+import com.zero1blog.backend.exception.UsernameChangeCooldownException;
 import com.zero1blog.backend.model.RefreshToken;
 import com.zero1blog.backend.model.User;
 import com.zero1blog.backend.model.UserCredentials;
@@ -17,14 +22,12 @@ import com.zero1blog.backend.repository.UserCredentialsRepository;
 import com.zero1blog.backend.repository.UserProfileRepository;
 import com.zero1blog.backend.repository.UserRepository;
 
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import com.zero1blog.backend.dto.ChangePasswordRequest;
 import com.zero1blog.backend.dto.ChangeUsernameRequest;
 
 @Service
-@RequiredArgsConstructor
 @Slf4j
 public class AuthService {
 
@@ -35,9 +38,36 @@ public class AuthService {
     private final JwtService jwtService;
     private final RefreshTokenService refreshTokenService;
 
+    /**
+     * Minimum elapsed time between two consecutive username changes for any
+     * user. Configured via {@code app.username-change-cooldown} (in seconds).
+     * Default 14 days (1_209_600s). A user who has never changed their
+     * username ({@code usernameChangedAt == null}) is allowed to change it
+     * immediately; subsequent changes are gated by this cooldown.
+     */
+    private final Duration usernameChangeCooldown;
+
+    public AuthService(
+            UserRepository userRepository,
+            UserCredentialsRepository userCredentialsRepository,
+            UserProfileRepository userProfileRepository,
+            PasswordEncoder passwordEncoder,
+            JwtService jwtService,
+            RefreshTokenService refreshTokenService,
+            @Value("${app.username-change-cooldown:1209600}") long usernameChangeCooldownSeconds) {
+        this.userRepository = userRepository;
+        this.userCredentialsRepository = userCredentialsRepository;
+        this.userProfileRepository = userProfileRepository;
+        this.passwordEncoder = passwordEncoder;
+        this.jwtService = jwtService;
+        this.refreshTokenService = refreshTokenService;
+        this.usernameChangeCooldown = Duration.ofSeconds(usernameChangeCooldownSeconds);
+    }
+
     @Transactional  // Fix #8: roll back all three saves if any step fails
     public AuthResponse register(RegisterRequest request) {
         log.info("Registration attempt for username: {}", request.getUsername());
+        validateUsernamePolicy(request.getUsername());
         if (userRepository.existsByEmail(request.getEmail())) {
             log.warn("Registration failed: Email already in use: {}", request.getEmail());
             throw new BadRequestException("Email already in use");
@@ -169,17 +199,57 @@ public class AuthService {
     @Transactional
     public String changeUsername(String publicId, ChangeUsernameRequest request) {
         String newUsername = request.getNewUsername().trim();
-        if (userRepository.existsByUsername(newUsername)) {
-            throw new BadRequestException("Username already taken");
-        }
+        validateUsernamePolicy(newUsername);
 
         User user = userRepository.findByPublicId(publicId)
                 .orElseThrow(() -> new BadRequestException("User not found"));
 
+        // Cooldown policy: the configured minimum elapsed time between two
+        // consecutive username changes. Null usernameChangedAt means the user
+        // has never changed their username — they get one free first change.
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime lastChangedAt = user.getUsernameChangedAt();
+        if (lastChangedAt != null) {
+            LocalDateTime nextAllowedAt = lastChangedAt.plus(usernameChangeCooldown);
+            if (now.isBefore(nextAllowedAt)) {
+                long minutesRemaining = java.time.temporal.ChronoUnit.MINUTES.between(now, nextAllowedAt);
+                long daysRemaining = minutesRemaining / (60 * 24);
+                long hoursRemaining = (minutesRemaining / 60) % 24;
+                log.warn("Username change for user {} rejected: {} days {} hours until allowed",
+                        publicId, daysRemaining, hoursRemaining);
+                throw new UsernameChangeCooldownException(
+                        String.format(
+                                "You can change your username again in %d days, %d hours.",
+                                daysRemaining, hoursRemaining),
+                        nextAllowedAt);
+            }
+        }
+
+        if (userRepository.existsByUsername(newUsername)) {
+            throw new BadRequestException("Username already taken");
+        }
+
         String oldUsername = user.getUsername();
         user.setUsername(newUsername);
+        user.setUsernameChangedAt(now);
         userRepository.save(user);
         log.info("Username changed successfully from {} to {} for user: {}", oldUsername, newUsername, publicId);
         return newUsername;
+    }
+
+    /**
+     * Exposed for the {@code GET /api/auth/username-cooldown} endpoint so the
+     * UI can render its own countdown without parsing a 400 message.
+     */
+    public long getUsernameChangeCooldownSeconds() {
+        return usernameChangeCooldown.getSeconds();
+    }
+
+    private static final java.util.regex.Pattern USERNAME_PATTERN = java.util.regex.Pattern.compile("^[a-zA-Z0-9_-]{3,30}$");
+
+    private void validateUsernamePolicy(String username) {
+        if (username == null || !USERNAME_PATTERN.matcher(username).matches()) {
+            throw new BadRequestException("Username must be between 3 and 30 characters and contain only letters, numbers, underscores, and hyphens");
+        }
     }
 }

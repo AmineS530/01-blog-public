@@ -11,6 +11,7 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { AuthService } from './core/services/auth.service';
 import { NotificationService } from './core/services/notification.service';
 import { ThemeService } from './core/services/theme.service';
@@ -36,12 +37,23 @@ import { Subscription } from 'rxjs';
     MatDividerModule,
     MatFormFieldModule,
     MatInputModule,
+    MatProgressSpinnerModule,
     NotificationsComponent,
   ],
   templateUrl: './app.html',
   styleUrl: './app.css',
 })
 export class App implements OnInit, OnDestroy {
+  // ==========================================
+  // Connection state
+  // ==========================================
+  isBackendConnected = false;
+  checkingConnection = true;
+  retrying = false;
+  reconnectCountdown = 3;
+  private countdownTimer?: any;
+  private hasInitialized = false;
+
   // ==========================================
   // State Properties
   // ==========================================
@@ -77,6 +89,83 @@ export class App implements OnInit, OnDestroy {
   // ==========================================
 
   ngOnInit(): void {
+    this.checkBackendConnection();
+  }
+
+  ngOnDestroy(): void {
+    this.authSubscription?.unsubscribe();
+    this.messageSubscription?.unsubscribe();
+    this.profileSubscription?.unsubscribe();
+    this.clearCountdown();
+  }
+
+  // ==========================================
+  // Connection Checking Logic
+  // ==========================================
+
+  checkBackendConnection(isManual = false): void {
+    if (isManual) {
+      this.retrying = true;
+    }
+    this.authService.checkConnection().subscribe({
+      next: () => {
+        this.handleConnectionSuccess();
+      },
+      error: (err) => {
+        if (err.status === 0) {
+          this.handleConnectionFailure();
+        } else {
+          // If the backend responded with any HTTP status other than 0 (e.g. 401, 403, 404, 500),
+          // it means the server is running and we are successfully connected!
+          this.handleConnectionSuccess();
+        }
+      }
+    });
+  }
+
+  private handleConnectionSuccess(): void {
+    this.isBackendConnected = true;
+    this.checkingConnection = false;
+    this.retrying = false;
+    this.clearCountdown();
+    this.initializeAfterConnection();
+  }
+
+  private handleConnectionFailure(): void {
+    this.isBackendConnected = false;
+    this.checkingConnection = false;
+    this.retrying = false;
+    this.startCountdown();
+  }
+
+  private startCountdown(): void {
+    if (this.countdownTimer) return;
+    this.reconnectCountdown = 3;
+    this.countdownTimer = setInterval(() => {
+      this.reconnectCountdown--;
+      if (this.reconnectCountdown <= 0) {
+        this.clearCountdown();
+        this.checkBackendConnection();
+      }
+    }, 1000);
+  }
+
+  private clearCountdown(): void {
+    if (this.countdownTimer) {
+      clearInterval(this.countdownTimer);
+      this.countdownTimer = undefined;
+    }
+  }
+
+  retryConnection(): void {
+    this.clearCountdown();
+    this.checkBackendConnection(true);
+  }
+
+  private initializeAfterConnection(): void {
+    if (this.hasInitialized) return;
+    this.hasInitialized = true;
+
     // Mirror the cached current profile into the navbar view, reactively,
     // without ever issuing a second HTTP call. Profile is loaded lazily by
     // the only call site (state below) which kicks fetchMyProfile exactly once.
@@ -113,12 +202,6 @@ export class App implements OnInit, OnDestroy {
         this.authService.invalidateProfileCache();
       }
     });
-  }
-
-  ngOnDestroy(): void {
-    this.authSubscription?.unsubscribe();
-    this.messageSubscription?.unsubscribe();
-    this.profileSubscription?.unsubscribe();
   }
 
   // ==========================================

@@ -1,3 +1,4 @@
+<ng-container *ngIf="isBackendConnected">
 <mat-toolbar color="primary" *ngIf="authService.isLoggedIn()" class="global-header">
   <div class="header-content">
     <span class="brand" (click)="goToFeed()">Z1Spot</span>
@@ -83,6 +84,37 @@
 <main [class.main-bg]="authService.isLoggedIn()" [class.dark-mode]="themeService.isDarkMode()">
   <router-outlet></router-outlet>
 </main>
+</ng-container>
+
+<!-- Custom loading / offline view -->
+<div class="server-offline-container" *ngIf="!isBackendConnected" [class.dark-theme]="themeService.isDarkMode()">
+  <div class="server-offline-card glass-modal">
+    <div class="spinner-wrapper">
+      <mat-spinner diameter="64" color="primary"></mat-spinner>
+      <mat-icon class="offline-icon">{{ checkingConnection ? 'sync' : 'cloud_off' }}</mat-icon>
+    </div>
+    
+    <h2 class="offline-title">{{ checkingConnection ? 'Connecting to Server...' : 'Server Offline' }}</h2>
+    
+    <p class="offline-desc">
+      {{ checkingConnection 
+        ? 'Establishing connection to the Z1Spot backend services. Please wait.' 
+        : 'We are unable to reach the backend services. The server might be down or starting up.' }}
+    </p>
+
+    <div class="countdown-badge" *ngIf="!checkingConnection && !retrying">
+      <span class="pulse-dot"></span>
+      <span>Retrying in {{ reconnectCountdown }}s</span>
+    </div>
+
+    <div class="offline-footer" *ngIf="!checkingConnection">
+      <button mat-flat-button class="retry-btn" (click)="retryConnection()" [disabled]="retrying">
+        <mat-icon>sync</mat-icon>
+        <span>{{ retrying ? 'Connecting...' : 'Retry Now' }}</span>
+      </button>
+    </div>
+  </div>
+</div>
 
 <!-- Custom Glassmorphic Toast Notifications -->
 <div class="toast-container">

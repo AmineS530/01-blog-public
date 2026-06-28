@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, BehaviorSubject, of, tap, shareReplay, throwError } from 'rxjs';
-import { RegisterRequest, LoginRequest, AuthResponse } from '../../shared/models/auth.models';
+import { RegisterRequest, LoginRequest, AuthResponse, CooldownResponse } from '../../shared/models/auth.models';
 import { ProfileResponse } from '../../shared/models/profile.models';
 
 @Injectable({ providedIn: 'root' })
@@ -24,6 +24,21 @@ export class AuthService {
   // In-flight request, if any, shareReplay'd so concurrent subscribers don't
   // kick off duplicate HTTP calls for the same user.
   private profileFetch$?: Observable<ProfileResponse>;
+
+  /**
+   * Tracks the active username-change cooldown for the current user. The
+   * settings page subscribes to {@link cooldown$} to render its countdown
+   * and gate the submit button. null = not yet loaded; populated by
+   * {@link loadUsernameCooldown} once per session, refreshed after a
+   * successful username change so the next eligible time is observable
+   * without another network round-trip.
+   */
+  private cooldownSubject = new BehaviorSubject<CooldownResponse | null>(null);
+  public cooldown$ = this.cooldownSubject.asObservable();
+
+  // In-flight slot for /api/auth/username-cooldown, mirroring the profile
+  // cache pattern so concurrent subscribers share one HTTP call.
+  private cooldownFetch$?: Observable<CooldownResponse>;
 
   constructor(private http: HttpClient) {
     this.loggedInSubject = new BehaviorSubject<boolean>(this.isLoggedIn());
@@ -113,8 +128,47 @@ export class AuthService {
       .pipe(
         tap((res) => {
           this.usernameSubject.next(res.username);
+          // After a successful change, refresh the cached cooldown so the
+          // settings page's countdown reflects the new nextAllowedAt without
+          // waiting for a manual refresh. Drop the in-flight slot first so
+          // we don't replay a stale shareReplay'd value.
+          this.cooldownFetch$ = undefined;
+          this.loadUsernameCooldown().subscribe({
+            error: (err) => console.error('Failed to refresh cooldown after rename', err),
+          });
         })
       );
+  }
+
+  /**
+   * Loads (and caches) the username-change cooldown for the current user.
+   * The cache is mirrored to {@link cooldown$}; concurrent callers share
+   * one HTTP request via the {@link cooldownFetch$} in-flight slot +
+   * shareReplay.
+   *
+   * Returns {@code of(null)} when logged out so callers don't need to gate.
+   */
+  loadUsernameCooldown(): Observable<CooldownResponse | null> {
+    if (this.cooldownFetch$) {
+      return this.cooldownFetch$;
+    }
+    if (!this.isLoggedIn()) {
+      return of(null);
+    }
+    const req = this.http.get<CooldownResponse>(`${this.apiUrl}/username-cooldown`);
+    const shared = req.pipe(shareReplay({ bufferSize: 1, refCount: false }));
+    this.cooldownFetch$ = shared;
+    shared.subscribe({
+      next: (r) => this.cooldownSubject.next(r),
+      complete: () => (this.cooldownFetch$ = undefined),
+      error: () => (this.cooldownFetch$ = undefined),
+    });
+    return shared;
+  }
+
+  /** Synchronous read of the cached cooldown (null if not yet loaded). */
+  getCachedCooldown(): CooldownResponse | null {
+    return this.cooldownSubject.getValue();
   }
 
   /**
@@ -213,10 +267,12 @@ export class AuthService {
     );
   }
 
-  /** Invalidate the cached profile (call after mutations that change profile fields). */
+  /** Invalidate the cached profile + cooldown (call after mutations). */
   invalidateProfileCache(): void {
     this.profileSubject.next(null);
     this.profileFetch$ = undefined;
+    this.cooldownSubject.next(null);
+    this.cooldownFetch$ = undefined;
   }
 
   private saveSession(res: AuthResponse): void {
@@ -224,5 +280,9 @@ export class AuthService {
     this.usernameSubject.next(res.username);
     this.loggedInSubject.next(true);
     // Profile will be lazily fetched by the first component that needs it.
+  }
+
+  checkConnection(): Observable<any> {
+    return this.http.get('http://localhost:8080/api/posts?page=0&size=1');
   }
 }

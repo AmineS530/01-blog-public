@@ -72,6 +72,15 @@ public class User {
     @Builder.Default
     private boolean isBanned = false;
 
+    /**
+     * Timestamp of the last username change for this user. Null if the user has
+     * never changed their username. Used to enforce a cooldown period between
+     * successive changes — see AuthService.changeUsername and the
+     * app.username-change-cooldown property.
+     */
+    @Column
+    private LocalDateTime usernameChangedAt;
+
     @PrePersist
     public void prePersist() {
         if (this.publicId == null) {
