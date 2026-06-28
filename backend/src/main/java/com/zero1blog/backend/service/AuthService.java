@@ -161,12 +161,50 @@ public class AuthService {
         }
     }
 
-    public AuthResponse refreshToken(com.zero1blog.backend.dto.RefreshTokenRequest request) {
+    public AuthResponse refreshToken(String rawRefreshToken, String rawAccessToken) {
         log.info("Token refresh attempt");
-        RefreshToken refreshToken = refreshTokenService.findByToken(request.getRefreshToken());
+        RefreshToken refreshToken = refreshTokenService.findByToken(rawRefreshToken);
         refreshTokenService.verifyExpiration(refreshToken);
 
         User user = refreshToken.getUser();
+
+        // Perform access token checks if it was supplied
+        if (rawAccessToken != null && !rawAccessToken.isBlank()) {
+            try {
+                io.jsonwebtoken.Claims claims;
+                try {
+                    claims = jwtService.parseClaims(rawAccessToken);
+                    // If parsing succeeds, it means the token is valid and not expired.
+                    // Under security best practices, we only refresh expired access tokens.
+                    log.warn("Refresh attempt with non-expired access token for user {}", user.getUsername());
+                    throw new BadRequestException("Access token is not expired");
+                } catch (io.jsonwebtoken.ExpiredJwtException e) {
+                    claims = e.getClaims();
+                }
+
+                String publicIdFromAccessToken = claims.getSubject();
+                if (publicIdFromAccessToken == null || !publicIdFromAccessToken.equals(user.getPublicId())) {
+                    log.warn("Access token subject ({}) does not match refresh token user ({})", publicIdFromAccessToken, user.getPublicId());
+                    throw new UnauthorizedActionException("Invalid session mapping");
+                }
+            } catch (io.jsonwebtoken.security.SignatureException e) {
+                log.warn("Refresh token refresh rejected: invalid access token signature");
+                throw new UnauthorizedActionException("Invalid token signature");
+            } catch (io.jsonwebtoken.MalformedJwtException e) {
+                log.warn("Refresh token refresh rejected: malformed access token");
+                throw new UnauthorizedActionException("Malformed token");
+            } catch (io.jsonwebtoken.IncorrectClaimException e) {
+                log.warn("Refresh token refresh rejected: invalid token claims");
+                throw new UnauthorizedActionException("Invalid token issuer or audience");
+            } catch (io.jsonwebtoken.UnsupportedJwtException e) {
+                log.warn("Refresh token refresh rejected: unsupported token algorithm");
+                throw new UnauthorizedActionException("Unsupported token algorithm");
+            } catch (io.jsonwebtoken.JwtException e) {
+                log.warn("Refresh token refresh rejected: invalid token");
+                throw new UnauthorizedActionException("Invalid token");
+            }
+        }
+
         String accessToken = jwtService.generateToken(user.getPublicId(), user.getRole().name());
         RefreshToken newRefreshToken = refreshTokenService.createRefreshToken(user);
 

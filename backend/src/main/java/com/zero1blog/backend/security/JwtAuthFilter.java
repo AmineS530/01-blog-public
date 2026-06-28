@@ -66,21 +66,24 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         }
 
         String token = authHeader.substring(7);
+        String requestURI = request.getRequestURI();
+        boolean isRefreshRoute = requestURI.endsWith("/api/auth/refresh");
 
-        if (jwtService.isTokenValid(token)) {
-            String publicId = jwtService.extractPublicId(token);
+        try {
+            io.jsonwebtoken.Claims claims = jwtService.parseClaims(token);
+            String publicId = claims.getSubject();
             
             var userOpt = userRepository.findByPublicId(publicId);
             if (userOpt.isEmpty()) {
                 log.warn("JWT Valid but User not found in database: {}", publicId);
-                filterChain.doFilter(request, response);
+                writeErrorResponse(response, "User not found", HttpServletResponse.SC_UNAUTHORIZED);
                 return;
             }
 
             // Security constraint: Abort authenticated session mapping if the user has been banned
             if (userOpt.get().isBanned()) {
                 log.warn("Banned user attempted access: {}", publicId);
-                filterChain.doFilter(request, response);
+                writeErrorResponse(response, "Your account has been banned", HttpServletResponse.SC_FORBIDDEN);
                 return;
             }
 
@@ -104,8 +107,51 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     
             // Inject authentication token into current Spring security context
             SecurityContextHolder.getContext().setAuthentication(authentication);
+        } catch (io.jsonwebtoken.ExpiredJwtException e) {
+            if (isRefreshRoute) {
+                log.debug("Allowing expired JWT to proceed to refresh endpoint");
+            } else {
+                log.warn("JWT Expired: {}", e.getMessage());
+                writeErrorResponse(response, "Token expired", HttpServletResponse.SC_UNAUTHORIZED);
+                return;
+            }
+        } catch (io.jsonwebtoken.security.SignatureException e) {
+            log.warn("JWT Signature invalid: {}", e.getMessage());
+            writeErrorResponse(response, "Invalid token signature", HttpServletResponse.SC_UNAUTHORIZED);
+            return;
+        } catch (io.jsonwebtoken.MalformedJwtException e) {
+            log.warn("JWT Malformed: {}", e.getMessage());
+            writeErrorResponse(response, "Malformed token", HttpServletResponse.SC_UNAUTHORIZED);
+            return;
+        } catch (io.jsonwebtoken.IncorrectClaimException e) {
+            log.warn("JWT Claims invalid: {}", e.getMessage());
+            writeErrorResponse(response, "Invalid token issuer or audience", HttpServletResponse.SC_UNAUTHORIZED);
+            return;
+        } catch (io.jsonwebtoken.UnsupportedJwtException e) {
+            log.warn("JWT Unsupported: {}", e.getMessage());
+            writeErrorResponse(response, "Unsupported token algorithm", HttpServletResponse.SC_UNAUTHORIZED);
+            return;
+        } catch (io.jsonwebtoken.JwtException e) {
+            log.warn("JWT Invalid: {}", e.getMessage());
+            writeErrorResponse(response, "Invalid token", HttpServletResponse.SC_UNAUTHORIZED);
+            return;
         }
 
         filterChain.doFilter(request, response);
+    }
+
+    private void writeErrorResponse(HttpServletResponse response, String message, int status) throws IOException {
+        response.setStatus(status);
+        response.setContentType("application/json");
+        response.setCharacterEncoding("UTF-8");
+        
+        java.util.Map<String, Object> body = java.util.Map.of(
+            "error", message,
+            "status", status,
+            "timestamp", java.time.LocalDateTime.now().toString()
+        );
+        
+        String json = new com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(body);
+        response.getWriter().write(json);
     }
 }

@@ -46,9 +46,18 @@ public class SecurityConfig {
                 .anyRequest().authenticated()
             )
             .exceptionHandling(exception -> exception
-                .authenticationEntryPoint((request, response, authException) -> 
-                    response.sendError(jakarta.servlet.http.HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized")
-                )
+                .authenticationEntryPoint((request, response, authException) -> {
+                    response.setStatus(jakarta.servlet.http.HttpServletResponse.SC_UNAUTHORIZED);
+                    response.setContentType("application/json");
+                    response.setCharacterEncoding("UTF-8");
+                    java.util.Map<String, Object> body = java.util.Map.of(
+                        "error", "Missing authentication token",
+                        "status", jakarta.servlet.http.HttpServletResponse.SC_UNAUTHORIZED,
+                        "timestamp", java.time.LocalDateTime.now().toString()
+                    );
+                    String json = new com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(body);
+                    response.getWriter().write(json);
+                })
             )
             // Fix #5: rate limit auth endpoints before JWT processing
             .addFilterBefore(authRateLimitFilter, UsernamePasswordAuthenticationFilter.class)

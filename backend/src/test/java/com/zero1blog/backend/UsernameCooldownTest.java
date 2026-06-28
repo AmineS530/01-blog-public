@@ -205,4 +205,95 @@ class UsernameCooldownTest {
                 .isInstanceOf(BadRequestException.class)
                 .hasMessageContaining("letters, numbers, underscores, and hyphens");
     }
+
+    @Test
+    void refreshTokenWithValidRefreshTokenAndNoAccessTokenSucceeds() {
+        AuthService svc = buildService(1209600);
+        User u = userWithLastChangedAt(null);
+        com.zero1blog.backend.model.RefreshToken rt = new com.zero1blog.backend.model.RefreshToken();
+        rt.setToken("valid-rt");
+        rt.setUser(u);
+
+        when(refreshTokenService.findByToken("valid-rt")).thenReturn(rt);
+        when(jwtService.generateToken(u.getPublicId(), u.getRole().name())).thenReturn("new-access-token");
+        when(refreshTokenService.createRefreshToken(u)).thenReturn(rt);
+
+        com.zero1blog.backend.dto.AuthResponse res = svc.refreshToken("valid-rt", null);
+
+        assertThat(res.getToken()).isEqualTo("new-access-token");
+    }
+
+    @Test
+    void refreshTokenWithExpiredAccessTokenSucceeds() {
+        AuthService svc = buildService(1209600);
+        User u = userWithLastChangedAt(null);
+        com.zero1blog.backend.model.RefreshToken rt = new com.zero1blog.backend.model.RefreshToken();
+        rt.setToken("valid-rt");
+        rt.setUser(u);
+
+        io.jsonwebtoken.Claims mockClaims = org.mockito.Mockito.mock(io.jsonwebtoken.Claims.class);
+        when(mockClaims.getSubject()).thenReturn(u.getPublicId());
+
+        when(refreshTokenService.findByToken("valid-rt")).thenReturn(rt);
+        when(jwtService.parseClaims("expired-token")).thenThrow(new io.jsonwebtoken.ExpiredJwtException(null, mockClaims, "Token expired"));
+        when(jwtService.generateToken(u.getPublicId(), u.getRole().name())).thenReturn("new-access-token");
+        when(refreshTokenService.createRefreshToken(u)).thenReturn(rt);
+
+        com.zero1blog.backend.dto.AuthResponse res = svc.refreshToken("valid-rt", "expired-token");
+
+        assertThat(res.getToken()).isEqualTo("new-access-token");
+    }
+
+    @Test
+    void refreshTokenWithNonExpiredAccessTokenThrowsException() {
+        AuthService svc = buildService(1209600);
+        User u = userWithLastChangedAt(null);
+        com.zero1blog.backend.model.RefreshToken rt = new com.zero1blog.backend.model.RefreshToken();
+        rt.setToken("valid-rt");
+        rt.setUser(u);
+
+        io.jsonwebtoken.Claims mockClaims = org.mockito.Mockito.mock(io.jsonwebtoken.Claims.class);
+
+        when(refreshTokenService.findByToken("valid-rt")).thenReturn(rt);
+        when(jwtService.parseClaims("valid-token")).thenReturn(mockClaims);
+
+        assertThatThrownBy(() -> svc.refreshToken("valid-rt", "valid-token"))
+                .isInstanceOf(BadRequestException.class)
+                .hasMessageContaining("Access token is not expired");
+    }
+
+    @Test
+    void refreshTokenWithMismatchingUserAccessTokenThrowsException() {
+        AuthService svc = buildService(1209600);
+        User u = userWithLastChangedAt(null);
+        com.zero1blog.backend.model.RefreshToken rt = new com.zero1blog.backend.model.RefreshToken();
+        rt.setToken("valid-rt");
+        rt.setUser(u);
+
+        io.jsonwebtoken.Claims mockClaims = org.mockito.Mockito.mock(io.jsonwebtoken.Claims.class);
+        when(mockClaims.getSubject()).thenReturn("different-user");
+
+        when(refreshTokenService.findByToken("valid-rt")).thenReturn(rt);
+        when(jwtService.parseClaims("expired-token")).thenThrow(new io.jsonwebtoken.ExpiredJwtException(null, mockClaims, "Token expired"));
+
+        assertThatThrownBy(() -> svc.refreshToken("valid-rt", "expired-token"))
+                .isInstanceOf(com.zero1blog.backend.exception.UnauthorizedActionException.class)
+                .hasMessageContaining("Invalid session mapping");
+    }
+
+    @Test
+    void refreshTokenWithMalformedAccessTokenThrowsException() {
+        AuthService svc = buildService(1209600);
+        User u = userWithLastChangedAt(null);
+        com.zero1blog.backend.model.RefreshToken rt = new com.zero1blog.backend.model.RefreshToken();
+        rt.setToken("valid-rt");
+        rt.setUser(u);
+
+        when(refreshTokenService.findByToken("valid-rt")).thenReturn(rt);
+        when(jwtService.parseClaims("malformed-token")).thenThrow(new io.jsonwebtoken.MalformedJwtException("Malformed token"));
+
+        assertThatThrownBy(() -> svc.refreshToken("valid-rt", "malformed-token"))
+                .isInstanceOf(com.zero1blog.backend.exception.UnauthorizedActionException.class)
+                .hasMessageContaining("Malformed token");
+    }
 }

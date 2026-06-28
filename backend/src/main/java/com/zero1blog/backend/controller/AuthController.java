@@ -64,14 +64,19 @@ public class AuthController {
     }
 
     @PostMapping("/refresh")
-    public ResponseEntity<AuthResponse> refresh(@CookieValue(name = "refreshToken", required = false) String refreshToken) {
+    public ResponseEntity<AuthResponse> refresh(
+            @CookieValue(name = "refreshToken", required = false) String refreshToken,
+            @org.springframework.web.bind.annotation.RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader) {
         if (refreshToken == null || refreshToken.isBlank()) {
             throw new com.zero1blog.backend.exception.BadRequestException("Refresh token is missing");
         }
-        RefreshTokenRequest request = new RefreshTokenRequest();
-        request.setRefreshToken(refreshToken);
 
-        AuthResponse response = authService.refreshToken(request);
+        String accessToken = null;
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            accessToken = authHeader.substring(7);
+        }
+
+        AuthResponse response = authService.refreshToken(refreshToken, accessToken);
         ResponseCookie cookie = createCookie(response.getRefreshToken());
         response.setRefreshToken(null);
         return ResponseEntity.ok()

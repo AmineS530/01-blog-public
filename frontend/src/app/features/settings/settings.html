@@ -45,6 +45,7 @@
               #usernameInput="ngModel"
             />
             <mat-icon matSuffix>person_outline</mat-icon>
+            <mat-hint align="start">Must be 3-30 characters (letters, numbers, _ or - only)</mat-hint>
             <mat-hint align="end">{{ newUsername.length }}/30</mat-hint>
             <mat-error *ngIf="usernameInput.errors?.['required']">Username is required</mat-error>
             <mat-error *ngIf="usernameInput.errors?.['minlength']">At least 3 characters required</mat-error>

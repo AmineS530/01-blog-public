@@ -89,7 +89,7 @@ public class JwtService {
      * @param token JWT string to parse.
      * @return the set of verified claims.
      */
-    private Claims parseClaims(String token) {
+    public Claims parseClaims(String token) {
         return Jwts.parser()
                 .verifyWith(getSigningKey())
                 .build()
