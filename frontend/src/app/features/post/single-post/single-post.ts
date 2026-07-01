@@ -238,10 +238,12 @@ export class SinglePostComponent implements OnInit, OnDestroy {
     this.post.isLikedByCurrentUser = !this.post.isLikedByCurrentUser;
     this.post.likeCount += this.post.isLikedByCurrentUser ? 1 : -1;
     this.postService.togglePostLike(this.post.publicId).subscribe({
-      error: () => {
+      error: (err) => {
         this.post!.isLikedByCurrentUser = !this.post!.isLikedByCurrentUser;
         this.post!.likeCount += this.post!.isLikedByCurrentUser ? 1 : -1;
-        this.feedback.showToast('Failed to update post like status.', 'error');
+        if (err?.status !== 429) {
+          this.feedback.showToast('Failed to update post like status.', 'error');
+        }
       },
     });
   }
@@ -250,10 +252,12 @@ export class SinglePostComponent implements OnInit, OnDestroy {
     comment.isLikedByCurrentUser = !comment.isLikedByCurrentUser;
     comment.likeCount += comment.isLikedByCurrentUser ? 1 : -1;
     this.postService.toggleCommentLike(comment.id).subscribe({
-      error: () => {
+      error: (err) => {
         comment.isLikedByCurrentUser = !comment.isLikedByCurrentUser;
         comment.likeCount += comment.isLikedByCurrentUser ? 1 : -1;
-        this.feedback.showToast('Failed to update comment like status.', 'error');
+        if (err?.status !== 429) {
+          this.feedback.showToast('Failed to update comment like status.', 'error');
+        }
       },
     });
   }

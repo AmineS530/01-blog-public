@@ -24,6 +24,7 @@ public class SecurityConfig {
 
     private final JwtAuthFilter jwtAuthFilter;
     private final AuthRateLimitFilter authRateLimitFilter;
+    private final com.zero1blog.backend.security.InteractionRateLimitFilter interactionRateLimitFilter;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -61,7 +62,8 @@ public class SecurityConfig {
             )
             // Fix #5: rate limit auth endpoints before JWT processing
             .addFilterBefore(authRateLimitFilter, UsernamePasswordAuthenticationFilter.class)
-            .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+            .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
+            .addFilterAfter(interactionRateLimitFilter, JwtAuthFilter.class);
 
         return http.build();
     }

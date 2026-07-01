@@ -85,6 +85,9 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
             router.navigate(['/login']);
             feedback.showToast('Access denied. Please log in again.', 'error');
           }
+        } else if (error.status === 429) {
+          const errMsg = error.error?.error || 'Too many requests. Please try again later.';
+          feedback.showToast(errMsg, 'error');
         }
       }
       return throwError(() => error);

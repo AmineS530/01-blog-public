@@ -289,10 +289,12 @@ export class FeedComponent implements OnInit, OnDestroy {
     post.isLikedByCurrentUser = !post.isLikedByCurrentUser;
     post.likeCount += post.isLikedByCurrentUser ? 1 : -1;
     this.postService.togglePostLike(post.publicId).subscribe({
-      error: () => {
+      error: (err) => {
         post.isLikedByCurrentUser = !post.isLikedByCurrentUser;
         post.likeCount += post.isLikedByCurrentUser ? 1 : -1;
-        this.feedback.showToast('Failed to update like status.', 'error');
+        if (err?.status !== 429) {
+          this.feedback.showToast('Failed to update like status.', 'error');
+        }
       },
     });
   }

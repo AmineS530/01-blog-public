@@ -161,9 +161,12 @@ export class ProfileComponent implements OnInit {
     this.profile.followerCount += this.profile.isFollowing ? 1 : -1;
 
     this.profileService.toggleFollow(this.targetUsername).subscribe({
-      error: () => {
+      error: (err) => {
         this.profile!.isFollowing = wasFollowing;
         this.profile!.followerCount += wasFollowing ? 1 : -1;
+        if (err?.status !== 429) {
+          this.feedback.showToast('Failed to update follow status.', 'error');
+        }
       },
     });
   }
@@ -196,9 +199,12 @@ export class ProfileComponent implements OnInit {
     post.isLikedByCurrentUser = !post.isLikedByCurrentUser;
     post.likeCount += post.isLikedByCurrentUser ? 1 : -1;
     this.postService.togglePostLike(post.publicId).subscribe({
-      error: () => {
+      error: (err) => {
         post.isLikedByCurrentUser = !post.isLikedByCurrentUser;
         post.likeCount += post.isLikedByCurrentUser ? 1 : -1;
+        if (err?.status !== 429) {
+          this.feedback.showToast('Failed to update like status.', 'error');
+        }
       },
     });
   }
@@ -298,11 +304,14 @@ export class ProfileComponent implements OnInit {
     }
 
     this.profileService.toggleFollow(user.username).subscribe({
-      error: () => {
+      error: (err) => {
         user.isFollowing = wasFollowing;
         user.followerCount += wasFollowing ? 1 : -1;
         if (this.currentUsername === this.targetUsername && this.profile) {
           this.profile.followingCount += wasFollowing ? 1 : -1;
+        }
+        if (err?.status !== 429) {
+          this.feedback.showToast('Failed to update follow status.', 'error');
         }
       },
     });
