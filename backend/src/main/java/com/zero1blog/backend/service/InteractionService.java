@@ -41,12 +41,14 @@ public class InteractionService {
     private final CommentLikeRepository commentLikeRepository;
     private final UserBlockRepository userBlockRepository;
     private final NotificationService notificationService;
+    private final MediaService mediaService;
 
     public InteractionService(CommentRepository commentRepository, PostRepository postRepository,
                                UserRepository userRepository, PostLikeRepository postLikeRepository,
                                CommentLikeRepository commentLikeRepository,
                                UserBlockRepository userBlockRepository,
-                               NotificationService notificationService) {
+                               NotificationService notificationService,
+                               MediaService mediaService) {
         this.commentRepository = commentRepository;
         this.postRepository = postRepository;
         this.userRepository = userRepository;
@@ -54,6 +56,7 @@ public class InteractionService {
         this.commentLikeRepository = commentLikeRepository;
         this.userBlockRepository = userBlockRepository;
         this.notificationService = notificationService;
+        this.mediaService = mediaService;
     }
 
     /**
@@ -170,6 +173,11 @@ public class InteractionService {
 
         if (!comment.getAuthor().getId().equals(user.getId())) {
             throw new UnauthorizedActionException("Not authorized to delete this comment");
+        }
+
+        // Cleanup media associated with the comment if it exists
+        if (comment.getMediaUrl() != null) {
+            mediaService.cleanupMedia(comment.getMediaUrl());
         }
 
         commentRepository.delete(comment);

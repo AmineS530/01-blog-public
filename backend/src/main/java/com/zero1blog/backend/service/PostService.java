@@ -1,8 +1,5 @@
 package com.zero1blog.backend.service;
 
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -54,11 +51,12 @@ public class PostService {
     private final UserBlockRepository userBlockRepository;
     private final SubscriptionRepository subscriptionRepository;
     private final ApplicationEventPublisher eventPublisher; // Fix #12: decouple transport from service
+    private final MediaService mediaService;
 
     public PostService(PostRepository postRepository, UserRepository userRepository,
             CommentRepository commentRepository, PostLikeRepository postLikeRepository,
             UserBlockRepository userBlockRepository, SubscriptionRepository subscriptionRepository,
-            ApplicationEventPublisher eventPublisher) {
+            ApplicationEventPublisher eventPublisher, MediaService mediaService) {
         this.postRepository = postRepository;
         this.userRepository = userRepository;
         this.commentRepository = commentRepository;
@@ -66,6 +64,7 @@ public class PostService {
         this.userBlockRepository = userBlockRepository;
         this.subscriptionRepository = subscriptionRepository;
         this.eventPublisher = eventPublisher;
+        this.mediaService = mediaService;
     }
 
     /** Fix #10: single place to build a Pageable with a capped limit. */
@@ -307,21 +306,8 @@ public class PostService {
         }
 
         // Physical media storage cleanup
-        if (post.getMediaUrl() != null && post.getMediaUrl().startsWith("/api/media/files/")) {
-            try {
-                String fileName = post.getMediaUrl().substring("/api/media/files/".length());
-                Path uploadsDir = Paths.get("uploads").toAbsolutePath().normalize();
-                Path filePath = uploadsDir.resolve(fileName).normalize();
-
-                if (!filePath.startsWith(uploadsDir)) {
-                    log.warn("Attempted path traversal in deletePost: {}", fileName);
-                } else {
-                    Files.deleteIfExists(filePath);
-                }
-            } catch (Exception e) {
-                // Log exception internally and proceed so database delete is not blocked on
-                // file system glitches
-            }
+        if (post.getMediaUrl() != null) {
+            mediaService.cleanupMedia(post.getMediaUrl());
         }
 
         postRepository.delete(post);

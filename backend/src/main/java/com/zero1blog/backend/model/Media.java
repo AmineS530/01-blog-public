@@ -26,6 +26,9 @@ public class Media {
     @Column(nullable = false)
     private String mediaType;
 
+    @Column(nullable = false, columnDefinition = "VARCHAR(255) DEFAULT 'image'")
+    private String resourceType;
+
     @Column(nullable = false)
     private String fileName;
 

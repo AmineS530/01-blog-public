@@ -100,14 +100,17 @@ public class MediaController {
                 return ResponseEntity.badRequest().body(Map.of("error", "File size exceeds limit of " + maxFileSize));
             }
 
+            String resourceType = (req.getMediaType() != null && req.getMediaType().toLowerCase().startsWith("video/")) ? "video" : "image";
+
             // Upload directly to Cloudinary
-            Map<?, ?> uploadResult = cloudinary.uploader().upload(decoded, ObjectUtils.emptyMap());
+            Map<?, ?> uploadResult = cloudinary.uploader().upload(decoded, ObjectUtils.asMap("resource_type", resourceType));
             String secureUrl = (String) uploadResult.get("secure_url");
             String publicId = (String) uploadResult.get("public_id");
 
             Media media = Media.builder()
                     .url(secureUrl)
                     .mediaType(req.getMediaType())
+                    .resourceType(resourceType)
                     .fileName(publicId)
                     .uploader(uploader)
                     .size((long) decoded.length)
