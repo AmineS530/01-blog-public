@@ -127,6 +127,9 @@
         <button class="profile-tab-btn" [class.active]="activeTab === 'following'" (click)="setActiveTab('following')">
           Following <span class="tab-count">({{ profile.followingCount }})</span>
         </button>
+        <button class="profile-tab-btn" [class.active]="activeTab === 'blocked'" (click)="setActiveTab('blocked')" *ngIf="currentUsername === targetUsername">
+          Blocked
+        </button>
       </div>
 
       <!-- POSTS TAB VIEW -->
@@ -272,6 +275,43 @@
                 (click)="toggleFollowUser(user, $event)"
               >
                 {{ user.isFollowing ? 'Following' : 'Follow' }}
+              </button>
+            </div>
+          </div>
+        </div>
+      </ng-container>
+
+      <!-- BLOCKED TAB VIEW -->
+      <ng-container *ngIf="activeTab === 'blocked' && currentUsername === targetUsername">
+        <div *ngIf="loadingBlocked" class="centered list-loading">
+          <mat-spinner diameter="32"></mat-spinner>
+        </div>
+
+        <div *ngIf="!loadingBlocked && blockedUsers.length === 0" class="centered muted">
+          <div class="empty-state">
+            <mat-icon>security</mat-icon>
+            <p>No blocked users yet.</p>
+          </div>
+        </div>
+
+        <div *ngIf="!loadingBlocked && blockedUsers.length > 0" class="minimal-list-container">
+          <div *ngFor="let user of blockedUsers" class="minimal-list-row" (click)="navigateToProfile(user.username)">
+            <div class="row-left">
+              <div class="row-avatar">
+                <img *ngIf="user.avatarUrl" [src]="user.avatarUrl" alt="Avatar" class="avatar-img" />
+                <span *ngIf="!user.avatarUrl">{{ user.username.charAt(0).toUpperCase() }}</span>
+              </div>
+              <div class="row-info">
+                <div class="row-name">{{ user.displayName || user.username }}</div>
+                <div class="row-handle">@{{ user.username }}</div>
+              </div>
+            </div>
+            <div class="row-right">
+              <button 
+                class="minimal-action-btn block-action-btn"
+                (click)="unblockUser(user, $event)"
+              >
+                Unblock
               </button>
             </div>
           </div>

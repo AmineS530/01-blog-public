@@ -242,6 +242,18 @@ public class ProfileService {
                 return getProfiles(followed, currentUser);
         }
 
+        public List<ProfileResponse> getBlockedProfiles(String currentUserPublicId) {
+                User currentUser = userRepository.findByPublicId(currentUserPublicId)
+                                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+                List<UserBlock> blocks = userBlockRepository.findByBlocker(currentUser);
+                List<User> blockedUsers = blocks.stream()
+                                .map(UserBlock::getBlocked)
+                                .collect(Collectors.toList());
+
+                return getProfiles(blockedUsers, currentUser);
+        }
+
         public List<ProfileResponse> searchProfiles(String query, String currentUserPublicId, int page, int size) {
                 User currentUser = userRepository.findByPublicId(currentUserPublicId)
                                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));

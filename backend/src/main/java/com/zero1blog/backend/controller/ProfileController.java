@@ -99,6 +99,12 @@ public class ProfileController {
         return ResponseEntity.ok(profileService.getFollowing(username, currentUserPublicId, page, size));
     }
 
+    @GetMapping("/blocked")
+    public ResponseEntity<List<ProfileResponse>> getBlockedProfiles(
+            @AuthenticationPrincipal UserDetails userDetails) {
+        return ResponseEntity.ok(profileService.getBlockedProfiles(userDetails.getUsername()));
+    }
+
     @GetMapping("/search")
     public ResponseEntity<List<ProfileResponse>> searchProfiles(@RequestParam String query,
             @RequestParam(defaultValue = "0") int page,

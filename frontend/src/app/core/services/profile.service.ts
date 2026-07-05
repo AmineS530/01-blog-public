@@ -47,4 +47,8 @@ export class ProfileService {
   searchProfiles(query: string, page: number = 0, size: number = 20): Observable<ProfileResponse[]> {
     return this.http.get<ProfileResponse[]>(`${this.api}/search`, { params: { query, page: page.toString(), size: size.toString() } });
   }
+
+  getBlockedProfiles(): Observable<ProfileResponse[]> {
+    return this.http.get<ProfileResponse[]>(`${this.api}/blocked`);
+  }
 }

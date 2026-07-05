@@ -54,11 +54,13 @@ export class ProfileComponent implements OnInit {
   hasMorePosts = true;
   loadingMore = false;
 
-  activeTab: 'posts' | 'followers' | 'following' = 'posts';
+  activeTab: 'posts' | 'followers' | 'following' | 'blocked' = 'posts';
   followers: ProfileResponse[] = [];
   followingList: ProfileResponse[] = [];
+  blockedUsers: ProfileResponse[] = [];
   loadingFollowers = false;
   loadingFollowing = false;
+  loadingBlocked = false;
   uploadingAvatar = false;
 
   isEditingProfile = false;
@@ -264,13 +266,57 @@ export class ProfileComponent implements OnInit {
     this.router.navigate(['/profile', username]);
   }
 
-  setActiveTab(tab: 'posts' | 'followers' | 'following'): void {
+  setActiveTab(tab: 'posts' | 'followers' | 'following' | 'blocked'): void {
     this.activeTab = tab;
     if (tab === 'followers') {
       this.loadFollowers();
     } else if (tab === 'following') {
       this.loadFollowing();
+    } else if (tab === 'blocked') {
+      this.loadBlockedUsers();
     }
+  }
+
+  get isCurrentUser(): boolean {
+    return this.currentUsername === this.targetUsername;
+  }
+
+  loadBlockedUsers(): void {
+    if (!this.isCurrentUser) return;
+    this.loadingBlocked = true;
+    this.profileService.getBlockedProfiles().subscribe({
+      next: (list) => {
+        this.blockedUsers = list;
+        this.loadingBlocked = false;
+      },
+      error: () => {
+        this.feedback.showToast('Failed to load blocked users.', 'error');
+        this.loadingBlocked = false;
+      },
+    });
+  }
+
+  unblockUser(user: ProfileResponse, event: MouseEvent): void {
+    event.stopPropagation();
+    this.feedback.askConfirmation({
+      title: `Unblock @${user.username}?`,
+      message: `Are you sure you want to unblock @${user.username}? They will be able to follow you and message you again.`,
+      confirmText: 'Unblock',
+      onConfirm: () => {
+        this.profileService.toggleBlock(user.username).subscribe({
+          next: () => {
+            this.feedback.showToast(`Unblocked @${user.username}`, 'success');
+            this.blockedUsers = this.blockedUsers.filter(u => u.username !== user.username);
+            if (this.profile && this.profile.username === user.username) {
+              this.profile.isBlocked = false;
+            }
+          },
+          error: () => {
+            this.feedback.showToast('Failed to unblock user.', 'error');
+          },
+        });
+      },
+    });
   }
 
   loadFollowers(): void {

@@ -553,6 +553,14 @@
   opacity: 1;
 }
 
+.minimal-action-btn.block-action-btn {
+  color: var(--mat-sys-error) !important;
+}
+
+.minimal-action-btn.block-action-btn:hover {
+  background: rgba(239, 68, 68, 0.08) !important;
+}
+
 /* Avatar Uploader Styles */
 .large-avatar.editable {
   cursor: pointer;
