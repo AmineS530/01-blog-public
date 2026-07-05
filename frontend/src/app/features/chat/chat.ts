@@ -513,7 +513,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
   }
 
   goToProfile(username: string): void {
-    this.router.navigate(['/profile', username]);
+    this.feedback.showMiniProfile(username, this.profileService);
   }
 
   ngOnDestroy(): void {

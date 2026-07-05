@@ -1,0 +1,93 @@
+<div class="users-container">
+  <div class="users-header">
+    <h1>Explore Creators</h1>
+    <p class="muted">Find and connect with fellow students documenting their learning journey.</p>
+    
+    <div class="search-bar-row">
+      <mat-form-field appearance="outline" class="search-field">
+        <mat-label>Search by username or email</mat-label>
+        <input matInput type="text" [(ngModel)]="searchQuery" (keyup.enter)="onSearch()" placeholder="e.g. alice" />
+        <mat-icon matPrefix>search</mat-icon>
+        <button mat-icon-button matSuffix *ngIf="searchQuery" (click)="searchQuery = ''; onSearch()">
+          <mat-icon>close</mat-icon>
+        </button>
+      </mat-form-field>
+      <button mat-flat-button color="primary" class="search-btn" (click)="onSearch()">
+        Search
+      </button>
+    </div>
+  </div>
+
+  <div *ngIf="loading" class="centered">
+    <mat-spinner diameter="48"></mat-spinner>
+  </div>
+
+  <div *ngIf="error" class="centered error">{{ error }}</div>
+
+  <!-- Users Grid list -->
+  <div *ngIf="!loading && !error" class="users-grid">
+    <div *ngFor="let user of users" class="user-card glass-panel" (click)="showMiniProfile(user.username)">
+      <div class="card-banner"></div>
+      
+      <div class="card-avatar-container">
+        <img *ngIf="user.avatarUrl" [src]="user.avatarUrl" alt="Avatar" />
+        <span *ngIf="!user.avatarUrl">{{ user.username.charAt(0).toUpperCase() }}</span>
+      </div>
+
+      <div class="card-content">
+        <h3 class="user-display-name">{{ user.displayName || user.username }}</h3>
+        <p class="user-username">@{{ user.username }}</p>
+        
+        <p class="user-bio" *ngIf="user.bio">{{ user.bio }}</p>
+        <p class="user-bio empty-bio" *ngIf="!user.bio">No bio description yet.</p>
+
+        <div class="user-stats">
+          <div class="stat-box">
+            <strong>{{ user.followerCount }}</strong>
+            <span>Followers</span>
+          </div>
+          <div class="stat-box">
+            <strong>{{ user.followingCount }}</strong>
+            <span>Following</span>
+          </div>
+        </div>
+
+        <div class="card-actions" (click)="$event.stopPropagation()">
+          <button 
+            mat-flat-button 
+            [color]="user.isFollowing ? '' : 'primary'"
+            [class.following-btn]="user.isFollowing"
+            (click)="toggleFollow($event, user)"
+            class="action-btn"
+          >
+            <mat-icon>{{ user.isFollowing ? 'check' : 'person_add' }}</mat-icon>
+            <span>{{ user.isFollowing ? 'Following' : 'Follow' }}</span>
+          </button>
+
+          <button mat-icon-button (click)="startChat($event, user)" matTooltip="Send Message">
+            <mat-icon>chat</mat-icon>
+          </button>
+
+          <button mat-icon-button color="warn" (click)="toggleBlock($event, user)" matTooltip="Block User">
+            <mat-icon>block</mat-icon>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Empty state -->
+  <div *ngIf="!loading && !error && users.length === 0" class="centered empty-state">
+    <mat-icon class="empty-icon">people_outline</mat-icon>
+    <h3>No creators found</h3>
+    <p class="muted">Try adjusting your search keywords.</p>
+  </div>
+
+  <!-- Pagination Load More -->
+  <div class="pagination-row" *ngIf="hasMore && users.length > 0">
+    <button mat-flat-button class="load-more-btn" [disabled]="loadingMore" (click)="loadNextPage()">
+      <span *ngIf="!loadingMore">Show More Creators</span>
+      <mat-spinner diameter="24" *ngIf="loadingMore"></mat-spinner>
+    </button>
+  </div>
+</div>

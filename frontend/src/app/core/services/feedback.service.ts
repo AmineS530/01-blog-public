@@ -142,4 +142,42 @@ export class FeedbackService {
       this.promptState.isOpen = false;
     }
   }
+
+  miniProfileState: {
+    isOpen: boolean;
+    loading: boolean;
+    username: string;
+    profile: any | null;
+    error: string;
+  } = {
+    isOpen: false,
+    loading: false,
+    username: '',
+    profile: null,
+    error: '',
+  };
+
+  showMiniProfile(username: string, profileService: any): void {
+    this.miniProfileState = {
+      isOpen: true,
+      loading: true,
+      username,
+      profile: null,
+      error: '',
+    };
+    profileService.getProfile(username).subscribe({
+      next: (profile: any) => {
+        this.miniProfileState.profile = profile;
+        this.miniProfileState.loading = false;
+      },
+      error: () => {
+        this.miniProfileState.error = 'Failed to load user profile.';
+        this.miniProfileState.loading = false;
+      },
+    });
+  }
+
+  closeMiniProfile(): void {
+    this.miniProfileState.isOpen = false;
+  }
 }

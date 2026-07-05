@@ -508,3 +508,191 @@
   opacity: 0.7;
 }
 
+/* ==========================================================================
+   Custom Premium Mini-Profile Modal Overlay & Card
+   ========================================================================== */
+.mini-profile-card {
+  width: 100%;
+  max-width: 360px;
+  background: var(--mat-sys-surface-container-low);
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-radius: 16px;
+  overflow: hidden;
+  position: relative;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+  animation: modalScaleIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.dark-theme .mini-profile-card {
+  background: #09090b;
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.mini-profile-close-btn {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 10;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.4);
+  color: white;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.mini-profile-close-btn:hover {
+  background: rgba(0, 0, 0, 0.65);
+}
+
+.mini-profile-spinner,
+.mini-profile-error {
+  padding: 40px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  text-align: center;
+}
+
+.mini-profile-banner {
+  height: 80px;
+  background: linear-gradient(135deg, var(--mat-sys-primary), var(--mat-sys-tertiary));
+}
+
+.mini-profile-details {
+  padding: 0 20px 24px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  position: relative;
+}
+
+.mini-avatar-container {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: var(--mat-sys-primary-container);
+  color: var(--mat-sys-on-primary-container);
+  border: 4px solid var(--mat-sys-surface-container-low);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 32px;
+  margin-top: -40px;
+  overflow: hidden;
+  margin-bottom: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.dark-theme .mini-avatar-container {
+  border-color: #09090b;
+}
+
+.mini-avatar-container img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.mini-name {
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--mat-sys-on-surface);
+  margin: 0;
+}
+
+.mini-handle {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: var(--mat-sys-on-surface-variant);
+  margin: 2px 0 12px 0;
+}
+
+.mini-bio {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--mat-sys-on-surface);
+  margin: 0 0 16px 0;
+  max-height: 60px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+}
+
+.mini-stats {
+  display: flex;
+  gap: 24px;
+  margin-bottom: 20px;
+  border-top: 1px solid var(--mat-sys-outline-variant);
+  border-bottom: 1px solid var(--mat-sys-outline-variant);
+  width: 100%;
+  padding: 10px 0;
+  justify-content: center;
+}
+
+.dark-theme .mini-stats {
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.mini-stat-item {
+  display: flex;
+  flex-direction: column;
+  font-size: 13px;
+}
+
+.mini-stat-item strong {
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--mat-sys-on-surface);
+}
+
+.mini-stat-item span {
+  color: var(--mat-sys-on-surface-variant);
+  font-size: 11px;
+}
+
+.mini-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  justify-content: center;
+}
+
+.mini-action-btn {
+  flex: 1;
+  border-radius: 8px !important;
+  font-weight: 700 !important;
+  font-family: var(--font-display) !important;
+}
+
+.mini-follow-btn {
+  border-radius: 8px !important;
+  font-weight: 700 !important;
+  font-family: var(--font-display) !important;
+}
+
+.mini-follow-btn.following-active {
+  background: var(--mat-sys-surface-container-high) !important;
+  color: var(--mat-sys-on-surface) !important;
+}
+
+@keyframes modalScaleIn {
+  from { opacity: 0; transform: scale(0.92); }
+  to { opacity: 1; transform: scale(1); }
+}
+

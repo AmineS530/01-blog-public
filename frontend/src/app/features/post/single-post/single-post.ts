@@ -16,6 +16,7 @@ import { MediaService } from '../../../core/services/media.service';
 import { ReportService } from '../../../core/services/report.service';
 import { FeedbackService } from '../../../core/services/feedback.service';
 import { RealtimeService } from '../../../core/services/realtime.service';
+import { ProfileService } from '../../../core/services/profile.service';
 import { PostResponse, CommentResponse } from '../../../shared/models/post.models';
 import { MarkdownPipe } from '../../../shared/pipes/markdown.pipe';
 import { Subscription } from 'rxjs';
@@ -72,6 +73,7 @@ export class SinglePostComponent implements OnInit, OnDestroy {
     private feedback: FeedbackService,
     private realtimeService: RealtimeService,
     private location: Location,
+    private profileService: ProfileService,
   ) {
     this.commentForm = this.fb.group({
       content: ['', [Validators.required, Validators.maxLength(1000)]],
@@ -298,7 +300,7 @@ export class SinglePostComponent implements OnInit, OnDestroy {
   }
 
   goToProfile(username: string): void {
-    this.router.navigate(['/profile', username]);
+    this.feedback.showMiniProfile(username, this.profileService);
   }
 
   delete(): void {

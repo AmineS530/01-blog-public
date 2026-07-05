@@ -18,6 +18,7 @@ import { ThemeService } from './core/services/theme.service';
 import { FeedbackService } from './core/services/feedback.service';
 import { MessageService } from './core/services/message.service';
 import { RealtimeService } from './core/services/realtime.service';
+import { ProfileService } from './core/services/profile.service';
 import { NotificationsComponent } from './features/notifications/notifications';
 import { Subscription } from 'rxjs';
 
@@ -57,16 +58,9 @@ export class App implements OnInit, OnDestroy {
   // ==========================================
   // State Properties
   // ==========================================
-
-  /** Total count of unread user notifications. */
   unreadCount: number = 0;
-
-  /** Total count of unread chat messages. */
   unreadMessagesCount: number = 0;
-
-  /** Controls the visibility of the modal notifications overlay. */
   showNotificationsOverlay: boolean = false;
-
   currentUserAvatarUrl: string | null = null;
   currentUserDisplayName = '';
 
@@ -82,11 +76,8 @@ export class App implements OnInit, OnDestroy {
     private messageService: MessageService,
     private realtimeService: RealtimeService,
     private router: Router,
+    private profileService: ProfileService,
   ) {}
-
-  // ==========================================
-  // Lifecycle Hooks
-  // ==========================================
 
   ngOnInit(): void {
     this.checkBackendConnection();
@@ -98,10 +89,6 @@ export class App implements OnInit, OnDestroy {
     this.profileSubscription?.unsubscribe();
     this.clearCountdown();
   }
-
-  // ==========================================
-  // Connection Checking Logic
-  // ==========================================
 
   checkBackendConnection(isManual = false): void {
     if (isManual) {
@@ -115,8 +102,6 @@ export class App implements OnInit, OnDestroy {
         if (err.status === 0) {
           this.handleConnectionFailure();
         } else {
-          // If the backend responded with any HTTP status other than 0 (e.g. 401, 403, 404, 500),
-          // it means the server is running and we are successfully connected!
           this.handleConnectionSuccess();
         }
       }
@@ -166,9 +151,6 @@ export class App implements OnInit, OnDestroy {
     if (this.hasInitialized) return;
     this.hasInitialized = true;
 
-    // Mirror the cached current profile into the navbar view, reactively,
-    // without ever issuing a second HTTP call. Profile is loaded lazily by
-    // the only call site (state below) which kicks fetchMyProfile exactly once.
     this.profileSubscription = this.authService.profile$.subscribe((profile) => {
       this.currentUserAvatarUrl = profile?.avatarUrl ?? null;
       this.currentUserDisplayName = profile?.displayName || profile?.username || '';
@@ -179,12 +161,6 @@ export class App implements OnInit, OnDestroy {
         this.fetchUnreadCount();
         this.fetchUnreadMessagesCount();
         this.setupRealtimeMessages();
-        // Make sure the cached profile is loaded exactly once. Will skip fetching
-        // if a previous load (e.g. another component calling it) already populated
-        // the cache. Either way: only one HTTP call to /api/profiles/me.
-        // Cold-start note: at this point getUsername() may still be null because
-        // the username only becomes known after /me resolves — that's fine,
-        // loadCurrentUser has its own guard.
         if (!this.authService.getCachedProfile()) {
           this.authService.loadCurrentUser().subscribe({
             error: (err) => console.error('Failed to rehydrate current user', err),
@@ -204,13 +180,6 @@ export class App implements OnInit, OnDestroy {
     });
   }
 
-  // ==========================================
-  // Counter & Realtime Streams Setup
-  // ==========================================
-
-  /**
-   * Fetches the current unread notifications count from the backend service.
-   */
   fetchUnreadCount(): void {
     this.notificationService.getUnreadCount().subscribe({
       next: (res) => (this.unreadCount = res.count),
@@ -218,9 +187,6 @@ export class App implements OnInit, OnDestroy {
     });
   }
 
-  /**
-   * Fetches the current unread direct chat messages count from the backend service.
-   */
   fetchUnreadMessagesCount(): void {
     this.messageService.getUnreadCount().subscribe({
       next: (res) => (this.unreadMessagesCount = res.count),
@@ -228,10 +194,6 @@ export class App implements OnInit, OnDestroy {
     });
   }
 
-  /**
-   * Subscribes to the realtime message stream to increment unread count
-   * when a new message is received and the user is not actively viewing the chat view.
-   */
   setupRealtimeMessages(): void {
     if (this.messageSubscription) {
       this.messageSubscription.unsubscribe();
@@ -251,12 +213,10 @@ export class App implements OnInit, OnDestroy {
   // Navigation & Action Handlers
   // ==========================================
 
-  /** Navigates to the main user feed. */
   goToFeed(): void {
     this.router.navigate(['/feed']);
   }
 
-  /** Toggles the notifications modal overlay and refreshes unread counts. */
   goToNotifications(): void {
     this.showNotificationsOverlay = !this.showNotificationsOverlay;
     if (this.showNotificationsOverlay) {
@@ -264,12 +224,10 @@ export class App implements OnInit, OnDestroy {
     }
   }
 
-  /** Navigates to the admin panel dashboard. */
   goToAdmin(): void {
     this.router.navigate(['/admin']);
   }
 
-  /** Navigates to the active user's personal profile view. */
   goToMyProfile(): void {
     const username = this.authService.getUsername();
     if (username) {
@@ -277,25 +235,90 @@ export class App implements OnInit, OnDestroy {
     }
   }
 
-  /** Navigates to the post creation editor. */
   goToCreate(): void {
     this.router.navigate(['/posts/create']);
   }
 
-  /** Navigates to the chat view and clears the unread badge counter. */
   goToChat(): void {
     this.router.navigate(['/chat']);
     this.unreadMessagesCount = 0;
   }
 
-  /** Navigates to the settings view. */
   goToSettings(): void {
     this.router.navigate(['/settings']);
   }
 
-  /** Terminates user session and redirects to the login screen. */
+  goToUsers(): void {
+    this.router.navigate(['/users']);
+  }
+
   logout(): void {
     this.authService.logout();
     this.router.navigate(['/login']);
+  }
+
+  // ==========================================
+  // Mini Profile Interactive Actions
+  // ==========================================
+
+  viewFullProfile(username: string): void {
+    this.feedbackService.closeMiniProfile();
+    this.router.navigate(['/profile', username]);
+  }
+
+  toggleMiniFollow(): void {
+    const state = this.feedbackService.miniProfileState;
+    if (!state.profile) return;
+    const originalFollowing = state.profile.isFollowing;
+    
+    state.profile.isFollowing = !originalFollowing;
+    state.profile.followerCount += state.profile.isFollowing ? 1 : -1;
+
+    this.profileService.toggleFollow(state.profile.username).subscribe({
+      next: () => {
+        this.feedbackService.showToast(
+          state.profile.isFollowing ? `You followed @${state.profile.username}` : `You unfollowed @${state.profile.username}`,
+          'success'
+        );
+      },
+      error: (err) => {
+        state.profile.isFollowing = originalFollowing;
+        state.profile.followerCount += originalFollowing ? 1 : -1;
+        if (err?.status !== 429) {
+          this.feedbackService.showToast('Failed to update follow status.', 'error');
+        }
+      }
+    });
+  }
+
+  toggleMiniBlock(): void {
+    const state = this.feedbackService.miniProfileState;
+    if (!state.profile) return;
+    const originalBlocked = state.profile.isBlocked;
+    
+    state.profile.isBlocked = !originalBlocked;
+    if (state.profile.isBlocked) {
+      state.profile.isFollowing = false;
+    }
+
+    this.profileService.toggleBlock(state.profile.username).subscribe({
+      next: () => {
+        this.feedbackService.showToast(
+          state.profile.isBlocked ? `You blocked @${state.profile.username}` : `You unblocked @${state.profile.username}`,
+          'success'
+        );
+        this.feedbackService.closeMiniProfile();
+      },
+      error: () => {
+        state.profile.isBlocked = originalBlocked;
+        this.feedbackService.showToast('Failed to update block status.', 'error');
+      }
+    });
+  }
+
+  messageMiniUser(profile: any): void {
+    this.feedbackService.closeMiniProfile();
+    // Redirect to chat and select the user if ChatComponent supports it
+    this.router.navigate(['/chat'], { queryParams: { user: profile.publicId, username: profile.username, displayName: profile.displayName || profile.username, avatarUrl: profile.avatarUrl } });
   }
 }

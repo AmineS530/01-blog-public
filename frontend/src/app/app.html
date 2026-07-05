@@ -24,6 +24,10 @@
       <button mat-icon-button (click)="goToCreate()" matTooltip="Write a Post">
         <mat-icon>add_box</mat-icon>
       </button>
+
+      <button mat-icon-button (click)="goToUsers()" matTooltip="Discover People">
+        <mat-icon>people</mat-icon>
+      </button>
 <!-- 
       <button mat-icon-button (click)="goToSettings()" matTooltip="Settings">
         <mat-icon>settings</mat-icon>
@@ -213,4 +217,91 @@
     (close)="showNotificationsOverlay = false; fetchUnreadCount()"
     (click)="$event.stopPropagation()"
   ></app-notifications>
+</div>
+
+<!-- Custom Premium Mini-Profile Modal Overlay -->
+<div
+  class="confirm-modal-overlay"
+  *ngIf="feedbackService.miniProfileState.isOpen"
+  (click)="feedbackService.closeMiniProfile()"
+>
+  <div class="mini-profile-card glass-modal" (click)="$event.stopPropagation()">
+    <button class="mini-profile-close-btn" (click)="feedbackService.closeMiniProfile()">
+      <mat-icon>close</mat-icon>
+    </button>
+
+    <div *ngIf="feedbackService.miniProfileState.loading" class="mini-profile-spinner">
+      <mat-spinner diameter="40"></mat-spinner>
+      <p>Fetching creator details...</p>
+    </div>
+
+    <div *ngIf="feedbackService.miniProfileState.error" class="mini-profile-error">
+      <mat-icon color="warn">error_outline</mat-icon>
+      <p>{{ feedbackService.miniProfileState.error }}</p>
+    </div>
+
+    <div *ngIf="!feedbackService.miniProfileState.loading && !feedbackService.miniProfileState.error && feedbackService.miniProfileState.profile" class="mini-profile-content">
+      <div class="mini-profile-banner"></div>
+      
+      <div class="mini-profile-details">
+        <div class="mini-avatar-container">
+          <img *ngIf="feedbackService.miniProfileState.profile.avatarUrl" [src]="feedbackService.miniProfileState.profile.avatarUrl" alt="Avatar" />
+          <span *ngIf="!feedbackService.miniProfileState.profile.avatarUrl">{{ feedbackService.miniProfileState.profile.username.charAt(0).toUpperCase() }}</span>
+        </div>
+
+        <h2 class="mini-name">{{ feedbackService.miniProfileState.profile.displayName || feedbackService.miniProfileState.profile.username }}</h2>
+        <p class="mini-handle">@{{ feedbackService.miniProfileState.profile.username }}</p>
+
+        <p class="mini-bio" *ngIf="feedbackService.miniProfileState.profile.bio">{{ feedbackService.miniProfileState.profile.bio }}</p>
+        <p class="mini-bio empty-bio" *ngIf="!feedbackService.miniProfileState.profile.bio">No bio description yet.</p>
+
+        <div class="mini-stats">
+          <div class="mini-stat-item">
+            <strong>{{ feedbackService.miniProfileState.profile.followerCount }}</strong>
+            <span>Followers</span>
+          </div>
+          <div class="mini-stat-item">
+            <strong>{{ feedbackService.miniProfileState.profile.followingCount }}</strong>
+            <span>Following</span>
+          </div>
+        </div>
+
+        <div class="mini-actions">
+          <button mat-flat-button color="primary" class="mini-action-btn" (click)="viewFullProfile(feedbackService.miniProfileState.profile.username)">
+            <mat-icon>person</mat-icon> View Full Profile
+          </button>
+          
+          <button 
+            mat-stroked-button 
+            *ngIf="feedbackService.miniProfileState.profile.username !== authService.getUsername() && !feedbackService.miniProfileState.profile.isBlocked && !feedbackService.miniProfileState.profile.isBlockingMe"
+            [class.following-active]="feedbackService.miniProfileState.profile.isFollowing"
+            class="mini-follow-btn" 
+            (click)="toggleMiniFollow()"
+          >
+            <mat-icon>{{ feedbackService.miniProfileState.profile.isFollowing ? 'check' : 'person_add' }}</mat-icon>
+            {{ feedbackService.miniProfileState.profile.isFollowing ? 'Following' : 'Follow' }}
+          </button>
+          
+          <button 
+            mat-icon-button 
+            *ngIf="feedbackService.miniProfileState.profile.username !== authService.getUsername()"
+            [color]="feedbackService.miniProfileState.profile.isBlocked ? 'warn' : ''"
+            (click)="toggleMiniBlock()"
+            matTooltip="Block Creator"
+          >
+            <mat-icon>{{ feedbackService.miniProfileState.profile.isBlocked ? 'block' : 'not_interested' }}</mat-icon>
+          </button>
+
+          <button 
+            mat-icon-button 
+            *ngIf="feedbackService.miniProfileState.profile.username !== authService.getUsername() && !feedbackService.miniProfileState.profile.isBlocked && !feedbackService.miniProfileState.profile.isBlockingMe"
+            (click)="messageMiniUser(feedbackService.miniProfileState.profile)"
+            matTooltip="Send Direct Message"
+          >
+            <mat-icon>chat</mat-icon>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>

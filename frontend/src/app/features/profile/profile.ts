@@ -174,22 +174,33 @@ export class ProfileComponent implements OnInit {
   toggleBlock(): void {
     if (!this.profile) return;
     const wasBlocked = this.profile.isBlocked;
-    this.profile.isBlocked = !wasBlocked;
+    const newBlockedState = !wasBlocked;
+    this.profile.isBlocked = newBlockedState;
 
-    // If we just blocked them, also reset following statuses locally since backend does it
-    if (this.profile.isBlocked) {
+    if (newBlockedState) {
       if (this.profile.isFollowing) {
         this.profile.isFollowing = false;
         this.profile.followerCount = Math.max(0, this.profile.followerCount - 1);
       }
+      this.posts = [];
+      this.hasMorePosts = false;
     }
 
     this.profileService.toggleBlock(this.targetUsername).subscribe({
       next: () => {
-        this.loadProfile(); // Reload to get fresh follower/following counts
+        this.profileService.getProfile(this.targetUsername).subscribe((p) => {
+          if (this.profile) {
+            this.profile.followerCount = p.followerCount;
+            this.profile.followingCount = p.followingCount;
+          }
+        });
+        if (!newBlockedState) {
+          this.loadPosts();
+        }
       },
       error: () => {
         this.profile!.isBlocked = wasBlocked;
+        this.feedback.showToast('Failed to update block status.', 'error');
       },
     });
   }

@@ -281,7 +281,7 @@ export class FeedComponent implements OnInit, OnDestroy {
 
   goToProfile(event: Event, username: string): void {
     event.stopPropagation();
-    this.router.navigate(['/profile', username]);
+    this.feedback.showMiniProfile(username, this.profileService);
   }
 
   toggleLike(event: Event, post: PostResponse): void {

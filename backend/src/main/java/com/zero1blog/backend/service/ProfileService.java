@@ -139,8 +139,9 @@ public class ProfileService {
                         throw new BadRequestException("Cannot follow yourself");
                 }
 
-                if (userBlockRepository.existsByBlockerAndBlocked(targetUser, currentUser)) {
-                        throw new BadRequestException("You are blocked by this user");
+                if (userBlockRepository.existsByBlockerAndBlocked(targetUser, currentUser) ||
+                    userBlockRepository.existsByBlockerAndBlocked(currentUser, targetUser)) {
+                        throw new BadRequestException("Cannot follow a blocked user");
                 }
 
                 Optional<Subscription> existing = subscriptionRepository.findByFollowerAndFollowed(currentUser,
@@ -242,10 +243,6 @@ public class ProfileService {
         }
 
         public List<ProfileResponse> searchProfiles(String query, String currentUserPublicId, int page, int size) {
-                if (query == null || query.trim().isEmpty()) {
-                        return List.of();
-                }
-
                 User currentUser = userRepository.findByPublicId(currentUserPublicId)
                                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
@@ -256,13 +253,18 @@ public class ProfileService {
                 int safeSize = Math.min(Math.max(size, 1), 50);
                 org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(page,
                                 safeSize);
-                org.springframework.data.domain.Page<User> usersPage = userRepository
-                                .findByUsernameContainingIgnoreCaseOrEmailContainingIgnoreCase(query, query, pageable);
+                
+                org.springframework.data.domain.Page<User> usersPage;
+                if (query == null || query.trim().isEmpty()) {
+                        usersPage = userRepository.findAllWithProfile(pageable);
+                } else {
+                        usersPage = userRepository
+                                        .findByUsernameContainingIgnoreCaseOrEmailContainingIgnoreCase(query, query, pageable);
+                }
 
                 List<User> matchedUsers = usersPage.stream()
                                 .filter(u -> !u.getId().equals(currentUser.getId()))
                                 .filter(u -> !u.isBanned())
-                                .filter(u -> !blockedIds.contains(u.getId()))
                                 .filter(u -> !blockingMeIds.contains(u.getId()))
                                 .collect(Collectors.toList());
 

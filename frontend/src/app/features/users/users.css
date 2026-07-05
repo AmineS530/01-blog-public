@@ -1,0 +1,236 @@
+.users-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 32px 16px 64px 16px;
+  animation: usersFadeIn 0.5s ease;
+}
+
+.users-header {
+  margin-bottom: 32px;
+  text-align: center;
+}
+
+.users-header h1 {
+  font-size: 32px;
+  font-weight: 900;
+  margin-bottom: 8px;
+  letter-spacing: -1px;
+}
+
+.search-bar-row {
+  display: flex;
+  max-width: 600px;
+  margin: 24px auto 0 auto;
+  gap: 12px;
+  align-items: center;
+}
+
+.search-field {
+  flex: 1;
+}
+
+.search-field ::ng-deep .mat-mdc-form-field-wrapper {
+  padding-bottom: 0;
+}
+
+.search-btn {
+  height: 54px;
+  border-radius: 8px !important;
+  font-family: var(--font-display) !important;
+  font-weight: 700 !important;
+  font-size: 15px !important;
+  padding: 0 24px !important;
+}
+
+.users-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 24px;
+  margin-top: 16px;
+}
+
+.user-card {
+  border-radius: 16px;
+  overflow: hidden;
+  background: var(--mat-sys-surface-container-low);
+  border: 1px solid var(--mat-sys-outline-variant);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+}
+
+.user-card:hover {
+  transform: translateY(-4px);
+  border-color: var(--mat-sys-primary);
+  box-shadow: 0 12px 30px rgba(99, 102, 241, 0.15);
+}
+
+.card-banner {
+  height: 70px;
+  background: linear-gradient(135deg, var(--mat-sys-primary-container), var(--mat-sys-tertiary-container));
+}
+
+.card-avatar-container {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: var(--mat-sys-primary-container);
+  color: var(--mat-sys-on-primary-container);
+  border: 4px solid var(--mat-sys-surface-container-low);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 28px;
+  margin-top: -36px;
+  margin-left: 20px;
+  overflow: hidden;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+}
+
+.user-card:hover .card-avatar-container {
+  transform: scale(1.05);
+  transition: transform 0.3s ease;
+}
+
+.card-avatar-container img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.card-content {
+  padding: 16px 20px 20px 20px;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.user-display-name {
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 800;
+  margin: 0;
+  color: var(--mat-sys-on-surface);
+}
+
+.user-username {
+  font-size: 13px;
+  color: var(--mat-sys-on-surface-variant);
+  margin: 2px 0 12px 0;
+}
+
+.user-bio {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--mat-sys-on-surface);
+  margin: 0 0 16px 0;
+  height: 58px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+}
+
+.empty-bio {
+  color: var(--mat-sys-on-surface-variant);
+  font-style: italic;
+}
+
+.user-stats {
+  display: flex;
+  gap: 16px;
+  border-top: 1px solid var(--mat-sys-outline-variant);
+  padding-top: 12px;
+  margin-top: auto;
+  margin-bottom: 16px;
+}
+
+.stat-box {
+  display: flex;
+  flex-direction: column;
+  font-size: 12px;
+}
+
+.stat-box strong {
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--mat-sys-on-surface);
+}
+
+.stat-box span {
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.card-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.action-btn {
+  flex: 1;
+  border-radius: 8px !important;
+  font-family: var(--font-display) !important;
+  font-weight: 700 !important;
+}
+
+.following-btn {
+  background: var(--mat-sys-surface-container-high) !important;
+  color: var(--mat-sys-on-surface) !important;
+}
+
+.pagination-row {
+  display: flex;
+  justify-content: center;
+  margin-top: 40px;
+}
+
+.load-more-btn {
+  height: 48px;
+  border-radius: 8px !important;
+  font-family: var(--font-display) !important;
+  font-weight: 700 !important;
+  padding: 0 32px !important;
+}
+
+.centered {
+  display: flex;
+  justify-content: center;
+  margin-top: 48px;
+}
+
+.empty-state {
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  text-align: center;
+}
+
+.empty-icon {
+  font-size: 48px;
+  width: 48px;
+  height: 48px;
+  color: var(--mat-sys-outline);
+  opacity: 0.6;
+}
+
+@keyframes usersFadeIn {
+  from { opacity: 0; transform: translateY(15px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 600px) {
+  .search-bar-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+  
+  .search-btn {
+    height: 48px;
+  }
+}
