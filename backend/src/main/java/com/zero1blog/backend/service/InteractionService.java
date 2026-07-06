@@ -34,6 +34,8 @@ import com.zero1blog.backend.repository.UserRepository;
 @Service
 public class InteractionService {
 
+    private final java.util.concurrent.ConcurrentHashMap<Long, java.time.Instant> lastCommentTimeMap = new java.util.concurrent.ConcurrentHashMap<>();
+
     private final CommentRepository commentRepository;
     private final PostRepository postRepository;
     private final UserRepository userRepository;
@@ -84,6 +86,18 @@ public class InteractionService {
             userBlockRepository.existsByBlockerAndBlocked(user, post.getAuthor())) {
             throw new BadRequestException("Cannot comment on this post");
         }
+
+        java.time.LocalDateTime cooldownLimit = java.time.LocalDateTime.now().minusSeconds(5);
+        if (commentRepository.existsByAuthorIdAndCreatedAtAfter(user.getId(), cooldownLimit)) {
+            throw new BadRequestException("Please wait 5 seconds between comments");
+        }
+
+        java.time.Instant nowInstant = java.time.Instant.now();
+        java.time.Instant lastTime = lastCommentTimeMap.get(user.getId());
+        if (lastTime != null && java.time.Duration.between(lastTime, nowInstant).toMillis() < 5000) {
+            throw new BadRequestException("Please wait 5 seconds between comments");
+        }
+        lastCommentTimeMap.put(user.getId(), nowInstant);
 
         Comment comment = new Comment();
         comment.setContent(request.getContent());
@@ -204,20 +218,34 @@ public class InteractionService {
         }
 
         postLikeRepository.findByPostIdAndUserId(post.getId(), user.getId()).ifPresentOrElse(
-            postLikeRepository::delete,
+            like -> {
+                try {
+                    postLikeRepository.delete(like);
+                    postLikeRepository.flush();
+                } catch (org.springframework.orm.ObjectOptimisticLockingFailureException e) {
+                    // Another concurrent request already deleted this row.
+                    // End state (unliked) is what we wanted, so treat as success.
+                }
+            },
             () -> {
-                PostLike like = new PostLike();
-                like.setPost(post);
-                like.setUser(user);
-                postLikeRepository.save(like);
+                try {
+                    PostLike like = new PostLike();
+                    like.setPost(post);
+                    like.setUser(user);
+                    postLikeRepository.save(like);
+                    postLikeRepository.flush();
 
-                notificationService.createNotification(
-                    "LIKE",
-                    user.getUsername() + " liked your post: " + post.getTitle(),
-                    post.getAuthor(),
-                    user,
-                    post
-                );
+                    notificationService.createNotification(
+                        "LIKE",
+                        user.getUsername() + " liked your post: " + post.getTitle(),
+                        post.getAuthor(),
+                        user,
+                        post
+                    );
+                } catch (org.springframework.dao.DataIntegrityViolationException e) {
+                    // Another concurrent request already inserted this row.
+                    // Skip the notification: their insert already fired one.
+                }
             }
         );
 
@@ -245,20 +273,32 @@ public class InteractionService {
         }
 
         commentLikeRepository.findByCommentIdAndUserId(comment.getId(), user.getId()).ifPresentOrElse(
-            commentLikeRepository::delete,
+            like -> {
+                try {
+                    commentLikeRepository.delete(like);
+                    commentLikeRepository.flush();
+                } catch (org.springframework.orm.ObjectOptimisticLockingFailureException e) {
+                    // Another concurrent request already deleted this row.
+                }
+            },
             () -> {
-                CommentLike like = new CommentLike();
-                like.setComment(comment);
-                like.setUser(user);
-                commentLikeRepository.save(like);
+                try {
+                    CommentLike like = new CommentLike();
+                    like.setComment(comment);
+                    like.setUser(user);
+                    commentLikeRepository.save(like);
+                    commentLikeRepository.flush();
 
-                notificationService.createNotification(
-                    "LIKE",
-                    user.getUsername() + " liked your comment: " + comment.getContent(),
-                    comment.getAuthor(),
-                    user,
-                    comment.getPost()
-                );
+                    notificationService.createNotification(
+                        "LIKE",
+                        user.getUsername() + " liked your comment: " + comment.getContent(),
+                        comment.getAuthor(),
+                        user,
+                        comment.getPost()
+                    );
+                } catch (org.springframework.dao.DataIntegrityViolationException e) {
+                    // Another concurrent request already inserted this row.
+                }
             }
         );
 

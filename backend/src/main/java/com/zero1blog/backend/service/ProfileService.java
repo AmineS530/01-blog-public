@@ -147,20 +147,32 @@ public class ProfileService {
                 Optional<Subscription> existing = subscriptionRepository.findByFollowerAndFollowed(currentUser,
                                 targetUser);
                 if (existing.isPresent()) {
-                        subscriptionRepository.delete(existing.get());
+                        try {
+                                subscriptionRepository.delete(existing.get());
+                                subscriptionRepository.flush();
+                        } catch (org.springframework.orm.ObjectOptimisticLockingFailureException e) {
+                                // Another concurrent request already deleted this row.
+                                // End state (unfollowed) is what we wanted, so treat as success.
+                        }
                 } else {
-                        Subscription sub = Subscription.builder()
-                                        .follower(currentUser)
-                                        .followed(targetUser)
-                                        .build();
-                        subscriptionRepository.save(sub);
+                        try {
+                                Subscription sub = Subscription.builder()
+                                                .follower(currentUser)
+                                                .followed(targetUser)
+                                                .build();
+                                subscriptionRepository.save(sub);
+                                subscriptionRepository.flush();
 
-                        notificationService.createNotification(
-                                        "FOLLOW",
-                                        currentUser.getUsername() + " started following you",
-                                        targetUser,
-                                        currentUser,
-                                        null);
+                                notificationService.createNotification(
+                                                "FOLLOW",
+                                                currentUser.getUsername() + " started following you",
+                                                targetUser,
+                                                currentUser,
+                                                null);
+                        } catch (org.springframework.dao.DataIntegrityViolationException e) {
+                                // Another concurrent request already inserted this row.
+                                // Skip the notification: their insert already fired one.
+                        }
                 }
         }
 
@@ -176,19 +188,43 @@ public class ProfileService {
 
                 Optional<UserBlock> existing = userBlockRepository.findByBlockerAndBlocked(currentUser, targetUser);
                 if (existing.isPresent()) {
-                        userBlockRepository.delete(existing.get());
+                        try {
+                                userBlockRepository.delete(existing.get());
+                                userBlockRepository.flush();
+                        } catch (org.springframework.orm.ObjectOptimisticLockingFailureException e) {
+                                // Another concurrent request already deleted this row.
+                        }
                 } else {
-                        UserBlock block = UserBlock.builder()
-                                        .blocker(currentUser)
-                                        .blocked(targetUser)
-                                        .build();
-                        userBlockRepository.save(block);
+                        try {
+                                UserBlock block = UserBlock.builder()
+                                                .blocker(currentUser)
+                                                .blocked(targetUser)
+                                                .build();
+                                userBlockRepository.save(block);
+                                userBlockRepository.flush();
+                        } catch (org.springframework.dao.DataIntegrityViolationException e) {
+                                // Another concurrent request already inserted this row.
+                        }
 
                         // Remove any follow relationships between them
                         subscriptionRepository.findByFollowerAndFollowed(currentUser, targetUser)
-                                        .ifPresent(subscriptionRepository::delete);
+                                        .ifPresent(sub -> {
+                                                try {
+                                                        subscriptionRepository.delete(sub);
+                                                        subscriptionRepository.flush();
+                                                } catch (org.springframework.orm.ObjectOptimisticLockingFailureException e) {
+                                                        // Already removed concurrently — fine.
+                                                }
+                                        });
                         subscriptionRepository.findByFollowerAndFollowed(targetUser, currentUser)
-                                        .ifPresent(subscriptionRepository::delete);
+                                        .ifPresent(sub -> {
+                                                try {
+                                                        subscriptionRepository.delete(sub);
+                                                        subscriptionRepository.flush();
+                                                } catch (org.springframework.orm.ObjectOptimisticLockingFailureException e) {
+                                                        // Already removed concurrently — fine.
+                                                }
+                                        });
                 }
         }
 

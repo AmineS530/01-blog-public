@@ -260,9 +260,10 @@
             mat-flat-button
             color="primary"
             type="submit"
-            [disabled]="commentForm.invalid || uploadingCommentMedia"
+            [disabled]="commentForm.invalid || uploadingCommentMedia || isCommentCooldown || submittingComment"
           >
-            Reply
+            <span *ngIf="!isCommentCooldown">Reply</span>
+            <span *ngIf="isCommentCooldown">Wait ({{ cooldownSeconds }}s)</span>
           </button>
         </div>
       </form>

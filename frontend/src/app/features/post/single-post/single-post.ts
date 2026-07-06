@@ -50,6 +50,10 @@ export class SinglePostComponent implements OnInit, OnDestroy {
   currentUserAvatarUrl: string | null = null;
   currentUserDisplayName = '';
 
+  isCommentCooldown = false;
+  cooldownSeconds = 0;
+  submittingComment = false;
+
   commentForm: FormGroup;
   comments: CommentResponse[] = [];
 
@@ -173,8 +177,9 @@ export class SinglePostComponent implements OnInit, OnDestroy {
   }
 
   submitComment(): void {
-    if (this.commentForm.invalid || !this.post || this.uploadingCommentMedia) return;
+    if (this.commentForm.invalid || !this.post || this.uploadingCommentMedia || this.isCommentCooldown || this.submittingComment) return;
 
+    this.submittingComment = true;
     const request = {
       ...this.commentForm.value,
       mediaUrl: this.commentMediaUrl,
@@ -185,8 +190,25 @@ export class SinglePostComponent implements OnInit, OnDestroy {
         this.comments.push(comment);
         this.post!.commentCount++;
         this.commentForm.reset();
+        this.commentForm.get('content')?.setValue('');
+        this.commentForm.get('content')?.setErrors(null);
         this.commentMediaUrl = null;
         this.feedback.showToast('Comment posted!', 'success');
+        this.submittingComment = false;
+
+        // Start 5-second cooldown
+        this.isCommentCooldown = true;
+        this.cooldownSeconds = 5;
+        const interval = setInterval(() => {
+          this.cooldownSeconds--;
+          if (this.cooldownSeconds <= 0) {
+            this.isCommentCooldown = false;
+            clearInterval(interval);
+          }
+        }, 1000);
+      },
+      error: () => {
+        this.submittingComment = false;
       },
     });
   }
