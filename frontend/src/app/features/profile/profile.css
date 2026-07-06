@@ -89,6 +89,15 @@
   color: #ff5252;
 }
 
+.report-btn {
+  color: var(--mat-sys-on-surface-variant);
+  transition: color 0.2s ease;
+}
+
+.report-btn:hover {
+  color: var(--mat-sys-error) !important;
+}
+
 .profile-name {
   margin: 0;
   font-size: 26px;

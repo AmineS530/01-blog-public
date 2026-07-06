@@ -13,7 +13,7 @@ public interface ReportRepository extends JpaRepository<Report, Long> {
 
     @Query(value = "SELECT r FROM Report r LEFT JOIN FETCH r.reporter " +
                    "LEFT JOIN FETCH r.targetUser LEFT JOIN FETCH r.targetPost " +
-                   "LEFT JOIN FETCH r.targetComment WHERE r.status = :status",
+                   "LEFT JOIN FETCH r.targetComment WHERE r.status = :status ORDER BY r.createdAt DESC",
            countQuery = "SELECT COUNT(r) FROM Report r WHERE r.status = :status")
     Page<Report> findByStatusWithTargets(@Param("status") String status, Pageable pageable);
 

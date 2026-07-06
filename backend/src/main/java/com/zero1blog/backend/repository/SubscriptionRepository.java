@@ -24,6 +24,9 @@ public interface SubscriptionRepository extends JpaRepository<Subscription, Long
     @Query("SELECT s.follower.id FROM Subscription s WHERE s.followed.id = :followedId")
     List<Long> findFollowerUserIdsByFollowedId(@Param("followedId") Long followedId);
 
+    @Query("SELECT s.follower FROM Subscription s WHERE s.followed.id = :followedId")
+    List<User> findFollowersByFollowedId(@Param("followedId") Long followedId);
+
     // Paginated ID-only queries — single query returns just the IDs for the page,
     // avoids loading Subscription entities then re-querying Users.
     @Query("SELECT s.follower.id FROM Subscription s WHERE s.followed.id = :followedId ORDER BY s.createdAt DESC")

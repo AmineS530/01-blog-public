@@ -157,3 +157,35 @@ a:hover {
     width: 100%;
   }
 }
+
+/* Markdown Code blocks and Inline code styles */
+.md-code-block {
+  background-color: var(--mat-sys-surface-container-high);
+  color: var(--mat-sys-on-surface);
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-radius: 6px;
+  padding: 12px 16px;
+  margin: 12px 0;
+  overflow-x: auto;
+  font-family: 'Fira Code', 'Courier New', Courier, monospace;
+  font-size: 14px;
+}
+
+.md-code-block code {
+  background: transparent;
+  padding: 0;
+  border-radius: 0;
+  color: inherit;
+  font-size: inherit;
+}
+
+.md-inline-code {
+  background-color: var(--mat-sys-surface-container-high);
+  color: var(--mat-sys-primary);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: 'Fira Code', 'Courier New', Courier, monospace;
+  font-size: 85%;
+  border: 1px solid var(--mat-sys-outline-variant);
+  word-break: break-word;
+}

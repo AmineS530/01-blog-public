@@ -35,8 +35,11 @@
           <input type="file" #fileInput style="display: none;" (change)="onAvatarSelected($event)" accept="image/*" />
           
           <div class="profile-actions">
-            <!-- If viewing another profile: show Block / Follow buttons -->
+            <!-- If viewing another profile: show Block / Follow / Report buttons -->
             <ng-container *ngIf="currentUsername !== targetUsername">
+              <button mat-icon-button (click)="reportUser()" matTooltip="Report Profile" class="report-btn">
+                <mat-icon>flag</mat-icon>
+              </button>
               <button mat-stroked-button color="warn" (click)="toggleBlock()" class="block-btn" matTooltip="Block User">
                 <mat-icon>{{ profile.isBlocked ? 'block' : 'not_interested' }}</mat-icon>
                 {{ profile.isBlocked ? 'Unblock' : 'Block' }}

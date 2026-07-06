@@ -19,6 +19,7 @@ import { FeedbackService } from './core/services/feedback.service';
 import { MessageService } from './core/services/message.service';
 import { RealtimeService } from './core/services/realtime.service';
 import { ProfileService } from './core/services/profile.service';
+import { ReportService } from './core/services/report.service';
 import { NotificationsComponent } from './features/notifications/notifications';
 import { Subscription } from 'rxjs';
 
@@ -77,6 +78,7 @@ export class App implements OnInit, OnDestroy {
     private realtimeService: RealtimeService,
     private router: Router,
     private profileService: ProfileService,
+    private reportService: ReportService,
   ) {}
 
   ngOnInit(): void {
@@ -320,5 +322,23 @@ export class App implements OnInit, OnDestroy {
     this.feedbackService.closeMiniProfile();
     // Redirect to chat and select the user if ChatComponent supports it
     this.router.navigate(['/chat'], { queryParams: { user: profile.publicId, username: profile.username, displayName: profile.displayName || profile.username, avatarUrl: profile.avatarUrl } });
+  }
+
+  reportMiniUser(): void {
+    const profile = this.feedbackService.miniProfileState.profile;
+    if (!profile) return;
+    this.feedbackService.closeMiniProfile();
+    this.feedbackService.askPrompt({
+      title: 'Report User',
+      message: `Why are you reporting user ${profile.displayName || profile.username}?`,
+      placeholder: 'Reason for reporting',
+      confirmText: 'Report',
+      onConfirm: (reason) => {
+        this.reportService.reportUser(profile.id, reason).subscribe({
+          next: () => this.feedbackService.showToast('User reported successfully.', 'success'),
+          error: () => this.feedbackService.showToast('Failed to report user.', 'error'),
+        });
+      },
+    });
   }
 }

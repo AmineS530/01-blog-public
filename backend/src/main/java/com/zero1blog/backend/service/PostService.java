@@ -11,6 +11,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
+import org.springframework.transaction.annotation.Transactional;
+
 import com.zero1blog.backend.config.PostCreatedEvent;
 import com.zero1blog.backend.dto.PostRequest;
 import com.zero1blog.backend.dto.PostResponse;
@@ -52,11 +54,13 @@ public class PostService {
     private final SubscriptionRepository subscriptionRepository;
     private final ApplicationEventPublisher eventPublisher; // Fix #12: decouple transport from service
     private final MediaService mediaService;
+    private final NotificationService notificationService;
 
     public PostService(PostRepository postRepository, UserRepository userRepository,
             CommentRepository commentRepository, PostLikeRepository postLikeRepository,
             UserBlockRepository userBlockRepository, SubscriptionRepository subscriptionRepository,
-            ApplicationEventPublisher eventPublisher, MediaService mediaService) {
+            ApplicationEventPublisher eventPublisher, MediaService mediaService,
+            NotificationService notificationService) {
         this.postRepository = postRepository;
         this.userRepository = userRepository;
         this.commentRepository = commentRepository;
@@ -65,6 +69,7 @@ public class PostService {
         this.subscriptionRepository = subscriptionRepository;
         this.eventPublisher = eventPublisher;
         this.mediaService = mediaService;
+        this.notificationService = notificationService;
     }
 
     /** Fix #10: single place to build a Pageable with a capped limit. */
@@ -85,6 +90,7 @@ public class PostService {
      * @param authorPublicId public ID of the publishing author user.
      * @return structured PostResponse mapping the new post.
      */
+    @Transactional
     public PostResponse createPost(PostRequest request, String authorPublicId) {
         User author = userRepository.findByPublicId(authorPublicId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
@@ -97,6 +103,19 @@ public class PostService {
 
         Post saved = postRepository.save(post);
         PostResponse response = toResponse(saved, author);
+
+        // Notify followers
+        List<User> followers = subscriptionRepository.findFollowersByFollowedId(author.getId());
+        for (User follower : followers) {
+            notificationService.createNotification(
+                "POST",
+                author.getUsername() + " published a new post: " + saved.getTitle(),
+                follower,
+                author,
+                saved
+            );
+        }
+
         // Fix #12: publish a domain event; the WebSocket handler listens independently
         eventPublisher.publishEvent(new PostCreatedEvent(this, response));
         return response;

@@ -181,6 +181,8 @@ export class NotificationsComponent implements OnInit {
         return 'favorite';
       case 'COMMENT':
         return 'comment';
+      case 'POST':
+        return 'post_add';
       default:
         return 'notifications';
     }

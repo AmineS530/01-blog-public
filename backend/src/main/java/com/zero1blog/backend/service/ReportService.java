@@ -46,6 +46,10 @@ public class ReportService {
             throw new BadRequestException("Report must have exactly one target (User, Post, or Comment)");
         }
 
+        if (request.getReason() == null || request.getReason().trim().isEmpty()) {
+            throw new BadRequestException("Reason is required");
+        }
+
         Report report = Report.builder()
                 .reason(request.getReason())
                 .reporter(reporter)

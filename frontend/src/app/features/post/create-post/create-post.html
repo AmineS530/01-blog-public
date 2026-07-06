@@ -32,11 +32,48 @@
           <mat-error *ngIf="postForm.get('title')?.hasError('required')">Title is required.</mat-error>
         </mat-form-field>
 
-        <mat-form-field appearance="outline" class="full-width content-field">
-          <mat-label>What's on your mind?</mat-label>
-          <textarea matInput formControlName="content" rows="10" placeholder="Write your post content here..."></textarea>
-          <mat-error *ngIf="postForm.get('content')?.hasError('required')">Content is required.</mat-error>
-        </mat-form-field>
+        <div class="editor-tabs">
+          <button type="button" class="tab-btn" [class.active]="editorTab === 'write'" (click)="editorTab = 'write'">
+            <mat-icon>edit</mat-icon> Write
+          </button>
+          <button type="button" class="tab-btn" [class.active]="editorTab === 'preview'" (click)="editorTab = 'preview'">
+            <mat-icon>visibility</mat-icon> Preview
+          </button>
+        </div>
+
+        <div class="editor-container" [hidden]="editorTab !== 'write'">
+          <div class="editor-box">
+            <div class="formatting-toolbar">
+              <button type="button" class="toolbar-btn" (click)="insertMarkdown('bold', contentArea)" matTooltip="Bold text">
+                <mat-icon>format_bold</mat-icon>
+              </button>
+              <button type="button" class="toolbar-btn" (click)="insertMarkdown('italic', contentArea)" matTooltip="Italic text">
+                <mat-icon>format_italic</mat-icon>
+              </button>
+              <button type="button" class="toolbar-btn" (click)="insertMarkdown('link', contentArea)" matTooltip="Add link">
+                <mat-icon>insert_link</mat-icon>
+              </button>
+              <button type="button" class="toolbar-btn" (click)="insertMarkdown('list', contentArea)" matTooltip="Bulleted list">
+                <mat-icon>format_list_bulleted</mat-icon>
+              </button>
+              <button type="button" class="toolbar-btn" (click)="insertMarkdown('numlist', contentArea)" matTooltip="Numbered list">
+                <mat-icon>format_list_numbered</mat-icon>
+              </button>
+              <button type="button" class="toolbar-btn" (click)="insertMarkdown('code', contentArea)" matTooltip="Code block">
+                <mat-icon>code</mat-icon>
+              </button>
+            </div>
+            <textarea formControlName="content" rows="12" placeholder="Write your post content here... (Supports Markdown)" #contentArea class="editor-textarea"></textarea>
+          </div>
+          <div class="editor-error" *ngIf="postForm.get('content')?.touched && postForm.get('content')?.hasError('required')">
+            Content is required.
+          </div>
+        </div>
+
+        <div class="preview-container animate-fade" *ngIf="editorTab === 'preview'">
+          <div class="markdown-preview-pane" [innerHTML]="postForm.get('content')?.value | markdown"></div>
+          <div *ngIf="!postForm.get('content')?.value" class="preview-empty">No content to preview yet. Start typing under the Write tab!</div>
+        </div>
 
         <div class="media-upload-section">
           <input type="file" id="mediaUpload" (change)="onFileSelected($event)" accept="image/*,video/*" style="display: none" #fileInput>

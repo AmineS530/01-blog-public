@@ -10,7 +10,7 @@ export interface NotificationResponse {
   message: string;
   isRead: boolean;
   actorUsername: string;
-  postId: number;
+  postId: string;
   createdAt: string;
 }
 

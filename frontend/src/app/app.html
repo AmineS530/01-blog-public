@@ -291,6 +291,15 @@
           >
             <mat-icon>{{ feedbackService.miniProfileState.profile.isBlocked ? 'block' : 'not_interested' }}</mat-icon>
           </button>
+          
+          <button 
+            mat-icon-button 
+            *ngIf="feedbackService.miniProfileState.profile.username !== authService.getUsername()"
+            (click)="reportMiniUser()"
+            matTooltip="Report Creator"
+          >
+            <mat-icon>flag</mat-icon>
+          </button>
 
           <button 
             mat-icon-button 
