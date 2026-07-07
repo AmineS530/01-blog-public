@@ -330,3 +330,24 @@ form {
     font-size: 28px;
   }
 }
+
+/* Strength Bar */
+.password-strength-bar {
+  display: flex;
+  gap: 4px;
+  margin: -8px 0 12px 0;
+  width: 100%;
+  max-width: 340px;
+}
+
+.strength-segment {
+  flex: 1;
+  height: 3px;
+  border-radius: 3px;
+  background: var(--mat-sys-outline-variant);
+  transition: background 0.3s ease;
+}
+
+.strength-segment.active.weak   { background: #ef4444; }
+.strength-segment.active.medium { background: #f59e0b; }
+.strength-segment.active.strong { background: #10b981; }

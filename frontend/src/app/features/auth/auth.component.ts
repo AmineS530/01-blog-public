@@ -50,7 +50,11 @@ export class AuthComponent implements OnInit {
         Validators.pattern('^[a-zA-Z0-9_-]+$')
       ]],
       email: ['', [Validators.required, Validators.email]],
-      password: ['', [Validators.required, Validators.minLength(6)]],
+      password: ['', [
+        Validators.required,
+        Validators.minLength(8),
+        Validators.pattern(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^a-zA-Z0-9]).+$/)
+      ]],
     });
   }
 
@@ -75,7 +79,7 @@ export class AuthComponent implements OnInit {
     this.auth.login(this.loginForm.value).subscribe({
       next: () => this.router.navigate(['/feed']),
       error: (err) => {
-        this.error = err.error?.message || 'Invalid credentials';
+        this.error = err.error?.error || 'Invalid credentials';
         this.loading = false;
       },
     });
@@ -93,6 +97,19 @@ export class AuthComponent implements OnInit {
       },
     });
   }
+
+  getPasswordStrength(): number {
+    const pwd = this.registerForm.get('password')?.value || '';
+    if (!pwd) return 0;
+    let score = 0;
+    if (pwd.length >= 8) score++;
+    if (/[a-z]/.test(pwd)) score++;
+    if (/[A-Z]/.test(pwd)) score++;
+    if (/\d/.test(pwd)) score++;
+    if (/[^a-zA-Z0-9]/.test(pwd)) score++;
+    return score;
+  }
+
   hidePassword = true;
 
   togglePassword(): void {

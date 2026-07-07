@@ -9,3 +9,4 @@ application-local.properties
 vscode
 lab
 logs
+backend/src/main/resources/application.properties

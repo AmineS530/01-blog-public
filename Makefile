@@ -5,27 +5,12 @@ BLUE = \033[0;34m
 NC = \033[0m # No Color
 
 
-all: run-backend run-frontend
+all: run-production
 
 help:
 	@echo "${BLUE}Available commands:${NC}"
-	@echo "  ${GREEN}make all${NC}             - Start the backend and frontend in development mode"
-	@echo "  ${GREEN}make run-backend${NC}     - Start the Spring Boot API in development mode"
-	@echo "  ${GREEN}make run-frontend${NC}    - Start the Angular UI in development mode"
+	@echo "  ${GREEN}make all${NC}             - Start the backend and frontend"
 	@echo "  ${GREEN}make run-production${NC} - Build and start the backend and frontend in production mode"
-	
-run-backend:
-	@echo "${YELLOW}Starting Spring Boot Backend...${NC}"
-	@mkdir -p backend/logs
-	@cd backend && env -u SPRING_DATASOURCE_URL -u SPRING_DATASOURCE_USERNAME -u SPRING_DATASOURCE_PASSWORD -u DATABASE_URL -u JDBC_DATABASE_URL -u JDBC_DATABASE_USERNAME -u JDBC_DATABASE_PASSWORD ./mvnw clean spring-boot:run > logs/console.log 2>&1 &
-	@echo "📝 Backend logs are being written to ${BLUE}backend/logs/console.log${NC}"
-	@echo "🚀 Backend is running at ${BLUE}http://localhost:8080${NC}"
-
-run-frontend: node_modules
-	@echo "${YELLOW}Starting Angular Frontend...${NC}"
-	@cd frontend && npx ng serve > console.log 2>&1 &
-	@echo "📝 Frontend logs are being written to ${BLUE}frontend/console.log${NC}"
-	@echo "🚀 Frontend is running at ${BLUE}http://localhost:4200${NC}"
 
 run-production: run-production-backend run-production-frontend
 

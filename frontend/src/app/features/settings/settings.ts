@@ -194,6 +194,18 @@ export class SettingsComponent implements OnInit, OnDestroy {
     });
   }
 
+  getPasswordStrength(): number {
+    const pwd = this.newPassword || '';
+    if (!pwd) return 0;
+    let score = 0;
+    if (pwd.length >= 8) score++;
+    if (/[a-z]/.test(pwd)) score++;
+    if (/[A-Z]/.test(pwd)) score++;
+    if (/\d/.test(pwd)) score++;
+    if (/[^a-zA-Z0-9]/.test(pwd)) score++;
+    return score;
+  }
+
   updatePassword(): void {
     if (!this.currentPassword) {
       this.feedback.showToast('Please enter your current password', 'error');
@@ -205,8 +217,17 @@ export class SettingsComponent implements OnInit, OnDestroy {
       return;
     }
 
-    if (this.newPassword.length < 6) {
-      this.feedback.showToast('New password must be at least 6 characters long', 'error');
+    if (this.newPassword.length < 8) {
+      this.feedback.showToast('New password must be at least 8 characters long', 'error');
+      return;
+    }
+
+    const passwordPattern = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^a-zA-Z0-9]).+$/;
+    if (!passwordPattern.test(this.newPassword)) {
+      this.feedback.showToast(
+        'New password must contain at least one uppercase letter, one lowercase letter, one number, and one special character',
+        'error'
+      );
       return;
     }
 

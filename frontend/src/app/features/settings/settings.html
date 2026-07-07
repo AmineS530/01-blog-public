@@ -113,8 +113,9 @@
               name="newPassword"
               [(ngModel)]="newPassword"
               required
-              minlength="6"
-              placeholder="At least 6 characters"
+              minlength="8"
+              pattern="^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^a-zA-Z0-9]).+$"
+              placeholder="At least 8 characters"
               #newPassInput="ngModel"
             />
             <mat-icon matSuffix>lock_open</mat-icon>
@@ -122,26 +123,29 @@
               New password is required
             </mat-error>
             <mat-error *ngIf="newPassInput.errors?.['minlength'] && (newPassInput.dirty || newPassInput.touched)">
-              Password must be at least 6 characters
+              Password must be at least 8 characters
+            </mat-error>
+            <mat-error *ngIf="newPassInput.errors?.['pattern'] && (newPassInput.dirty || newPassInput.touched)">
+              Must include uppercase, lowercase, number, and special character
             </mat-error>
           </mat-form-field>
 
           <!-- Password strength bar -->
           <div class="password-strength-bar" *ngIf="newPassword.length > 0">
             <div class="strength-segment"
-              [class.active]="newPassword.length >= 1"
-              [class.weak]="newPassword.length < 6"
-              [class.medium]="newPassword.length >= 6 && newPassword.length < 10"
-              [class.strong]="newPassword.length >= 10">
+              [class.active]="getPasswordStrength() >= 1"
+              [class.weak]="getPasswordStrength() <= 2"
+              [class.medium]="getPasswordStrength() === 3 || getPasswordStrength() === 4"
+              [class.strong]="getPasswordStrength() === 5">
             </div>
             <div class="strength-segment"
-              [class.active]="newPassword.length >= 6"
-              [class.medium]="newPassword.length >= 6 && newPassword.length < 10"
-              [class.strong]="newPassword.length >= 10">
+              [class.active]="getPasswordStrength() >= 3"
+              [class.medium]="getPasswordStrength() === 3 || getPasswordStrength() === 4"
+              [class.strong]="getPasswordStrength() === 5">
             </div>
             <div class="strength-segment"
-              [class.active]="newPassword.length >= 10"
-              [class.strong]="newPassword.length >= 10">
+              [class.active]="getPasswordStrength() === 5"
+              [class.strong]="getPasswordStrength() === 5">
             </div>
           </div>
 
