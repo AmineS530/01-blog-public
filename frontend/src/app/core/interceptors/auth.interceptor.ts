@@ -60,7 +60,7 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
                 isRefreshing = false;
                 authService.logout();
                 router.navigate(['/login']);
-                feedback.showToast('Session expired. Please log in again.', 'error');
+                // feedback.showToast('Session expired. Please log in again.', 'error');
                 return throwError(() => refreshError);
               })
             );

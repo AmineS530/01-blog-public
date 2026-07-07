@@ -442,6 +442,9 @@
   color: var(--mat-sys-on-surface);
   margin-bottom: 10px;
   transition: color 0.2s ease;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
 }
 
 .post-card:hover .post-title {
@@ -461,6 +464,9 @@
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
 }
 
 .post-media-container {

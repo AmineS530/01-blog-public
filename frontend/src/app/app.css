@@ -678,12 +678,40 @@
   border-radius: 8px !important;
   font-weight: 700 !important;
   font-family: var(--font-display) !important;
+  font-size: 13px !important;
+  padding: 0 8px !important;
+  min-width: 0 !important;
+  height: 38px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 4px !important;
 }
 
 .mini-follow-btn {
+  flex: 1;
   border-radius: 8px !important;
   font-weight: 700 !important;
   font-family: var(--font-display) !important;
+  font-size: 13px !important;
+  padding: 0 8px !important;
+  min-width: 0 !important;
+  height: 38px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 4px !important;
+}
+
+.mini-action-btn mat-icon,
+.mini-follow-btn mat-icon {
+  font-size: 18px !important;
+  width: 18px !important;
+  height: 18px !important;
+  margin: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
 }
 
 .mini-follow-btn.following-active {

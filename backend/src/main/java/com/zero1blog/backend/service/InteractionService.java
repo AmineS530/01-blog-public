@@ -172,7 +172,11 @@ public class InteractionService {
             throw new UnauthorizedActionException("Not authorized to edit this comment");
         }
 
+        if (comment.getMediaUrl() != null && !comment.getMediaUrl().equals(request.getMediaUrl())) {
+            mediaService.cleanupMedia(comment.getMediaUrl());
+        }
         comment.setContent(request.getContent());
+        comment.setMediaUrl(request.getMediaUrl());
         Comment saved = commentRepository.save(comment);
         return toCommentResponse(saved, userPublicId);
     }

@@ -95,10 +95,30 @@ public class NotificationService {
     }
 
     @Transactional
+    public void toggleReadStatus(Long id, String userPublicId) {
+        Notification notification = notificationRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Notification not found"));
+
+        if (!notification.getUser().getPublicId().equals(userPublicId)) {
+            throw new UnauthorizedActionException("Unauthorized");
+        }
+
+        notification.setRead(!notification.isRead());
+        notificationRepository.save(notification);
+    }
+
+    @Transactional
     public void markAllAsRead(String userPublicId) {
         User user = userRepository.findByPublicId(userPublicId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
         notificationRepository.markAllAsRead(user);
+    }
+
+    @Transactional
+    public void clearAllNotifications(String userPublicId) {
+        User user = userRepository.findByPublicId(userPublicId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        notificationRepository.deleteAllByUser(user);
     }
 
     private NotificationResponse toResponse(Notification n) {

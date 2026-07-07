@@ -13,6 +13,7 @@ import lombok.Builder;
 @Builder
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class ProfileResponse {
+    private Long id;
     private String publicId;
     private String username;
     private String displayName;

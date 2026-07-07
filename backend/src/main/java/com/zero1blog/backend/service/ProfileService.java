@@ -71,6 +71,7 @@ public class ProfileService {
                 }
 
                 return ProfileResponse.builder()
+                                .id(targetUser.getId())
                                 .publicId(targetUser.getPublicId())
                                 .username(targetUser.getUsername())
                                 .displayName(profile.getDisplayName())
@@ -370,6 +371,7 @@ public class ProfileService {
                         boolean isBlockingMe = blockingMeIds.contains(u.getId());
 
                         return ProfileResponse.builder()
+                                        .id(u.getId())
                                         .publicId(u.getPublicId())
                                         .username(u.getUsername())
                                         .displayName(profile != null ? profile.getDisplayName() : null)

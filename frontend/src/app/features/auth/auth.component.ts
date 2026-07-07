@@ -88,7 +88,7 @@ export class AuthComponent implements OnInit {
     this.auth.register(this.registerForm.value).subscribe({
       next: () => this.router.navigate(['/feed']),
       error: (err) => {
-        this.error = err.error?.message || 'Registration failed';
+        this.error = err.error?.error || 'Registration failed';
         this.loading = false;
       },
     });

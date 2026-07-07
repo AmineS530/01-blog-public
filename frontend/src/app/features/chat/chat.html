@@ -225,12 +225,12 @@
               <!-- Attached Media Preview -->
               <div class="message-media" *ngIf="msg.mediaUrl">
                 <img
-                  *ngIf="msg.mediaUrl.toLowerCase().match('\\.(jpg|jpeg|png|gif|webp)$')"
+                  *ngIf="isImage(msg.mediaUrl)"
                   [src]="msg.mediaUrl"
                   alt="Attachment"
                 />
                 <video
-                  *ngIf="msg.mediaUrl.toLowerCase().match('\\.(mp4|webm|ogg)$')"
+                  *ngIf="isVideo(msg.mediaUrl)"
                   [src]="msg.mediaUrl"
                   controls
                 ></video>
@@ -267,12 +267,12 @@
             <mat-icon>close</mat-icon>
           </button>
           <img
-            *ngIf="attachedMediaUrl.toLowerCase().match('\\.(jpg|jpeg|png|gif|webp)$')"
+            *ngIf="isImage(attachedMediaUrl)"
             [src]="attachedMediaUrl"
             alt="Attachment"
           />
           <video
-            *ngIf="attachedMediaUrl.toLowerCase().match('\\.(mp4|webm|ogg)$')"
+            *ngIf="isVideo(attachedMediaUrl)"
             [src]="attachedMediaUrl"
             controls
           ></video>

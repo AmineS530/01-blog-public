@@ -82,8 +82,8 @@
           
           <div class="media-preview" *ngIf="mediaUrl">
             <div class="media-preview-inner">
-              <img *ngIf="mediaUrl.toLowerCase().match('\\.(jpg|jpeg|png|gif|webp)$')" [src]=" mediaUrl" alt="Preview" />
-              <video *ngIf="mediaUrl.toLowerCase().match('\\.(mp4|webm|ogg)$')" [src]=" mediaUrl" controls></video>
+              <img *ngIf="isImage(mediaUrl)" [src]="mediaUrl" alt="Preview" />
+              <video *ngIf="isVideo(mediaUrl)" [src]="mediaUrl" controls></video>
               <button mat-icon-button color="warn" type="button" class="remove-media-btn" (click)="removeMedia()">
                 <mat-icon>close</mat-icon>
               </button>

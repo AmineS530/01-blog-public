@@ -247,8 +247,9 @@
 .comment-media img, .comment-media video { max-width: 100%; border-radius: 8px; max-height: 300px; object-fit: contain; }
 .comment-media-upload { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
 .comment-media-preview { position: relative; display: inline-block; }
-.comment-media-preview img { height: 60px; border-radius: 4px; }
-.remove-comment-media { position: absolute; top: -10px; right: -10px; transform: scale(0.7); background: rgba(0,0,0,0.5); }
+.comment-media-preview img { height: 160px; border-radius: 8px; object-fit: cover; }
+.comment-media-preview video { max-height: 160px; border-radius: 8px; object-fit: contain; }
+.remove-comment-media { position: absolute; top: -8px; right: -8px; transform: scale(0.95); background: rgba(0,0,0,0.6); color: white !important; }
 
 
 .actions-left { display: flex; align-items: center; }

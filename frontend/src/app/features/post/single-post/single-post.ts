@@ -213,20 +213,73 @@ export class SinglePostComponent implements OnInit, OnDestroy {
     });
   }
 
+  editCommentMediaUrl: string | null = null;
+  uploadingEditCommentMedia = false;
+
+  isImage(url: string | null | undefined): boolean {
+    if (!url) return false;
+    const lowercase = url.toLowerCase();
+    return lowercase.includes('.jpg') || 
+           lowercase.includes('.jpeg') || 
+           lowercase.includes('.png') || 
+           lowercase.includes('.gif') || 
+           lowercase.includes('.webp') ||
+           lowercase.startsWith('data:image/');
+  }
+
+  isVideo(url: string | null | undefined): boolean {
+    if (!url) return false;
+    const lowercase = url.toLowerCase();
+    return lowercase.includes('.mp4') || 
+           lowercase.includes('.webm') || 
+           lowercase.includes('.ogg') ||
+           lowercase.startsWith('data:video/');
+  }
+
+  onEditCommentFileSelected(event: Event): void {
+    const file = (event.target as HTMLInputElement).files?.[0];
+    if (!file) return;
+
+    this.uploadingEditCommentMedia = true;
+    this.mediaService.upload(file).subscribe({
+      next: (res) => {
+        this.editCommentMediaUrl = res.url;
+        this.uploadingEditCommentMedia = false;
+        this.feedback.showToast('Comment media uploaded!', 'success');
+      },
+      error: () => {
+        this.feedback.showToast('Failed to upload comment media', 'error');
+        this.uploadingEditCommentMedia = false;
+      },
+    });
+  }
+
+  removeEditCommentMedia(): void {
+    this.editCommentMediaUrl = null;
+    this.feedback.showToast('Comment media removed.', 'info');
+  }
+
   startEditComment(comment: CommentResponse): void {
     this.editingCommentId = comment.id;
     this.editCommentForm.patchValue({ content: comment.content });
+    this.editCommentMediaUrl = comment.mediaUrl || null;
   }
 
   cancelEditComment(): void {
     this.editingCommentId = null;
     this.editCommentForm.reset();
+    this.editCommentMediaUrl = null;
   }
 
   saveEditComment(comment: CommentResponse): void {
-    if (this.editCommentForm.invalid) return;
+    if (this.editCommentForm.invalid || this.uploadingEditCommentMedia) return;
 
-    this.postService.updateComment(comment.id, this.editCommentForm.value).subscribe({
+    const requestData = {
+      content: this.editCommentForm.value.content,
+      mediaUrl: this.editCommentMediaUrl || undefined
+    };
+
+    this.postService.updateComment(comment.id, requestData).subscribe({
       next: (updatedComment) => {
         const index = this.comments.findIndex((c) => c.id === updatedComment.id);
         if (index !== -1) {

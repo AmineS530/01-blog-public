@@ -75,7 +75,19 @@ export class NotificationService {
     return this.http.post<void>(`${this.apiUrl}/${id}/read`, {});
   }
 
+  toggleReadStatus(id: number): Observable<void> {
+    return this.http.post<void>(`${this.apiUrl}/${id}/toggle-read`, {});
+  }
+
   markAllAsRead(): Observable<void> {
     return this.http.post<void>(`${this.apiUrl}/read-all`, {});
+  }
+
+  clearAllNotifications(): Observable<void> {
+    return this.http.post<void>(`${this.apiUrl}/clear`, {}).pipe(
+      tap(() => {
+        this.notificationsSubject.next([]);
+      })
+    );
   }
 }

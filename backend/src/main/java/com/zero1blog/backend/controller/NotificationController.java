@@ -44,9 +44,21 @@ public class NotificationController {
         return ResponseEntity.ok().build();
     }
 
+    @PostMapping("/{id}/toggle-read")
+    public ResponseEntity<Void> toggleReadStatus(@PathVariable Long id, Authentication authentication) {
+        notificationService.toggleReadStatus(id, authentication.getName());
+        return ResponseEntity.ok().build();
+    }
+
     @PostMapping("/read-all")
     public ResponseEntity<Void> markAllAsRead(Authentication authentication) {
         notificationService.markAllAsRead(authentication.getName());
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/clear")
+    public ResponseEntity<Void> clearAllNotifications(Authentication authentication) {
+        notificationService.clearAllNotifications(authentication.getName());
         return ResponseEntity.ok().build();
     }
 }

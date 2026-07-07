@@ -47,12 +47,12 @@
       <h1 class="post-title">{{ post.title }}</h1>
       <div class="post-media" *ngIf="post.mediaUrl">
         <img
-          *ngIf="post.mediaUrl.toLowerCase().match('\\.(jpg|jpeg|png|gif|webp)$')"
+          *ngIf="isImage(post.mediaUrl)"
           [src]="post.mediaUrl"
           alt="Media"
         />
         <video
-          *ngIf="post.mediaUrl.toLowerCase().match('\\.(mp4|webm|ogg)$')"
+          *ngIf="isVideo(post.mediaUrl)"
           [src]="post.mediaUrl"
           controls
         ></video>
@@ -145,13 +145,56 @@
             <mat-form-field appearance="outline" class="full-width">
               <textarea matInput formControlName="content" rows="2" autoFocus></textarea>
             </mat-form-field>
+
+            <div class="comment-media-upload" style="margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+              <input
+                type="file"
+                id="editCommentMediaUpload"
+                (change)="onEditCommentFileSelected($event)"
+                accept="image/*,video/*"
+                style="display: none"
+                #editCommentFileInput
+              />
+              <button
+                mat-icon-button
+                type="button"
+                (click)="editCommentFileInput.click()"
+                [disabled]="uploadingEditCommentMedia"
+                matTooltip="Attach Image or Video"
+              >
+                <mat-icon>add_photo_alternate</mat-icon>
+              </button>
+
+              <div class="comment-media-preview" *ngIf="editCommentMediaUrl">
+                <img
+                  *ngIf="isImage(editCommentMediaUrl)"
+                  [src]="editCommentMediaUrl"
+                  alt="Preview"
+                />
+                <video
+                  *ngIf="isVideo(editCommentMediaUrl)"
+                  [src]="editCommentMediaUrl"
+                  controls
+                ></video>
+                <button
+                  mat-icon-button
+                  color="warn"
+                  type="button"
+                  class="remove-comment-media"
+                  (click)="removeEditCommentMedia()"
+                >
+                  <mat-icon style="font-size: 16px; width: 16px; height: 16px; display: flex; align-items: center; justify-content: center;">close</mat-icon>
+                </button>
+              </div>
+            </div>
+
             <div class="actions">
               <button mat-button type="button" (click)="cancelEditComment()">Cancel</button>
               <button
                 mat-flat-button
                 color="primary"
                 type="submit"
-                [disabled]="editCommentForm.invalid"
+                [disabled]="editCommentForm.invalid || uploadingEditCommentMedia"
               >
                 Save
               </button>
@@ -166,12 +209,12 @@
         ></p>
         <div class="comment-media" *ngIf="comment.mediaUrl && editingCommentId !== comment.id">
           <img
-            *ngIf="comment.mediaUrl.toLowerCase().match('\\.(jpg|jpeg|png|gif|webp)$')"
+            *ngIf="isImage(comment.mediaUrl)"
             [src]="comment.mediaUrl"
             alt="Comment Media"
           />
           <video
-            *ngIf="comment.mediaUrl.toLowerCase().match('\\.(mp4|webm|ogg)$')"
+            *ngIf="isVideo(comment.mediaUrl)"
             [src]="comment.mediaUrl"
             controls
           ></video>
@@ -239,10 +282,16 @@
 
           <div class="comment-media-preview" *ngIf="commentMediaUrl">
             <img
-              *ngIf="commentMediaUrl.toLowerCase().match('\\.(jpg|jpeg|png|gif|webp)$')"
+              *ngIf="isImage(commentMediaUrl)"
               [src]="commentMediaUrl"
               alt="Preview"
             />
+            <video
+              *ngIf="isVideo(commentMediaUrl)"
+              [src]="commentMediaUrl"
+              controls
+              style="max-width: 100%; max-height: 150px; border-radius: 8px;"
+            ></video>
             <button
               mat-icon-button
               color="warn"

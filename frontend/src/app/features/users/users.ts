@@ -125,18 +125,26 @@ export class UsersComponent implements OnInit {
 
   toggleBlock(event: Event, user: ProfileResponse): void {
     event.stopPropagation();
+    const isBlocked = user.isBlocked;
     this.feedback.askConfirmation({
-      title: `Block @${user.username}?`,
-      message: `Are you sure you want to block @${user.username}? You will not see their posts anymore, and they won't be able to message you or follow you.`,
-      confirmText: 'Block',
+      title: isBlocked ? `Unblock @${user.username}?` : `Block @${user.username}?`,
+      message: isBlocked
+        ? `Are you sure you want to unblock @${user.username}? They will be able to follow you and message you again.`
+        : `Are you sure you want to block @${user.username}? You will not see their posts anymore, and they won't be able to message you or follow you.`,
+      confirmText: isBlocked ? 'Unblock' : 'Block',
       onConfirm: () => {
         this.profileService.toggleBlock(user.username).subscribe({
           next: () => {
-            this.feedback.showToast(`Blocked @${user.username}`, 'success');
-            this.users = this.users.filter((u) => u.username !== user.username);
+            if (isBlocked) {
+              user.isBlocked = false;
+              this.feedback.showToast(`Unblocked @${user.username}`, 'success');
+            } else {
+              this.feedback.showToast(`Blocked @${user.username}`, 'success');
+              this.users = this.users.filter((u) => u.username !== user.username);
+            }
           },
           error: () => {
-            this.feedback.showToast('Failed to block user.', 'error');
+            this.feedback.showToast(isBlocked ? 'Failed to unblock user.' : 'Failed to block user.', 'error');
           },
         });
       },

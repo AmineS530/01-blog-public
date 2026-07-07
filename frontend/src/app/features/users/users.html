@@ -55,6 +55,7 @@
         <div class="card-actions" (click)="$event.stopPropagation()">
           <button 
             mat-flat-button 
+            *ngIf="!user.isBlocked"
             [color]="user.isFollowing ? '' : 'primary'"
             [class.following-btn]="user.isFollowing"
             (click)="toggleFollow($event, user)"
@@ -64,12 +65,22 @@
             <span>{{ user.isFollowing ? 'Following' : 'Follow' }}</span>
           </button>
 
-          <button mat-icon-button (click)="startChat($event, user)" matTooltip="Send Message">
+          <button 
+            mat-icon-button 
+            *ngIf="!user.isBlocked"
+            (click)="startChat($event, user)" 
+            matTooltip="Send Message"
+          >
             <mat-icon>chat</mat-icon>
           </button>
 
-          <button mat-icon-button color="warn" (click)="toggleBlock($event, user)" matTooltip="Block User">
-            <mat-icon>block</mat-icon>
+          <button 
+            mat-icon-button 
+            [color]="user.isBlocked ? 'warn' : ''" 
+            (click)="toggleBlock($event, user)" 
+            [matTooltip]="user.isBlocked ? 'Unblock User' : 'Block User'"
+          >
+            <mat-icon>{{ user.isBlocked ? 'block' : 'not_interested' }}</mat-icon>
           </button>
         </div>
       </div>

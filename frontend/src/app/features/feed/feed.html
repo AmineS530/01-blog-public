@@ -45,8 +45,8 @@
           <button class="remove-media-btn" (click)="removeMedia()" matTooltip="Remove media">
             <mat-icon>close</mat-icon>
           </button>
-          <img *ngIf="quickPostMediaUrl.toLowerCase().match('\\.(jpg|jpeg|png|gif|webp)$')" [src]="quickPostMediaUrl" alt="Preview" />
-          <video *ngIf="quickPostMediaUrl.toLowerCase().match('\\.(mp4|webm|ogg)$')" [src]="quickPostMediaUrl" controls></video>
+          <img *ngIf="isImage(quickPostMediaUrl)" [src]="quickPostMediaUrl" alt="Preview" />
+          <video *ngIf="isVideo(quickPostMediaUrl)" [src]="quickPostMediaUrl" controls></video>
         </div>
       </div>
 
@@ -140,8 +140,8 @@
         <mat-card-content class="post-card-body">
           <h3 class="post-title">{{ post.title }}</h3>
           <div class="post-media-container" *ngIf="post.mediaUrl" (click)="$event.stopPropagation()">
-            <img *ngIf="post.mediaUrl.toLowerCase().match('\\.(jpg|jpeg|png|gif|webp)$')" [src]="post.mediaUrl" alt="Media" />
-            <video *ngIf="post.mediaUrl.toLowerCase().match('\\.(mp4|webm|ogg)$')" [src]="post.mediaUrl" controls></video>
+            <img *ngIf="isImage(post.mediaUrl)" [src]="post.mediaUrl" alt="Media" />
+            <video *ngIf="isVideo(post.mediaUrl)" [src]="post.mediaUrl" controls></video>
           </div>
           <p class="preview-text" [innerHTML]="(post.content | slice:0:260) + (post.content.length > 260 ? '...' : '') | markdown"></p>
         </mat-card-content>

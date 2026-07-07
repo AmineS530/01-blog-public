@@ -315,6 +315,26 @@ export class FeedComponent implements OnInit, OnDestroy {
     });
   }
 
+  isImage(url: string | null | undefined): boolean {
+    if (!url) return false;
+    const lowercase = url.toLowerCase();
+    return lowercase.includes('.jpg') || 
+           lowercase.includes('.jpeg') || 
+           lowercase.includes('.png') || 
+           lowercase.includes('.gif') || 
+           lowercase.includes('.webp') ||
+           lowercase.startsWith('data:image/');
+  }
+
+  isVideo(url: string | null | undefined): boolean {
+    if (!url) return false;
+    const lowercase = url.toLowerCase();
+    return lowercase.includes('.mp4') || 
+           lowercase.includes('.webm') || 
+           lowercase.includes('.ogg') ||
+           lowercase.startsWith('data:video/');
+  }
+
   logout(): void {
     this.authService.logout();
     this.router.navigate(['/login']);
